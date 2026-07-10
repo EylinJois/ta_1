@@ -39,16 +39,12 @@
                         {{ auth()->user()->name }}
                     </h3>
 
-                    <span class="badge bg-danger">
-                        {{ auth()->user()->role }}
-                    </span>
-
                 </div>
 
             </div>
 
             {{-- Form --}}
-            <form action="#"
+            <form action="{{ route('profile.update', auth()->user()->id) }}"
                   method="POST"
                   enctype="multipart/form-data">
 
@@ -84,34 +80,6 @@
                                class="form-control"
                                value="{{ old('email', auth()->user()->email) }}"
                                required>
-
-                    </div>
-
-                    {{-- Role --}}
-                    <div class="col-md-6 mb-4">
-
-                        <label class="form-label">
-                            Role
-                        </label>
-
-                        <input type="text"
-                               class="form-control"
-                               value="{{ auth()->user()->role }}"
-                               disabled>
-
-                    </div>
-
-                    {{-- Status --}}
-                    <div class="col-md-6 mb-4">
-
-                        <label class="form-label">
-                            Status
-                        </label>
-
-                        <input type="text"
-                               class="form-control"
-                               value="{{ auth()->user()->is_active ? 'Active' : 'Inactive' }}"
-                               disabled>
 
                     </div>
 

@@ -20,6 +20,10 @@
 
     {{-- Custom CSS --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/6jg5r5fxnxszclixu4n46rn1zod6g8l2yu2ah7fcauadjalp/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
     @stack('styles')
 
@@ -52,6 +56,15 @@
                         <i class="bi bi-grid-fill"></i>
                         <span class="menu-text">
                             Dashboard
+                        </span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('courses.index') }}">
+                        <i class="bi bi-book-fill"></i>
+                        <span class="menu-text">
+                            Courses
                         </span>
                     </a>
                 </li>
@@ -130,8 +143,15 @@
                     <div class="profile-trigger">
 
                         <i class="bi bi-bell-fill fs-5"></i>
-
-                        <img src="https://i.pravatar.cc/100" alt="">
+                        @if(auth()->user()->img)
+                        <img src="{{ asset('storage/' . auth()->user()->img) }}"
+                            alt="Profile Image"
+                            class="profile-image">
+                        @else
+                        <img src="https://ui-avatars.com/api/?name={{ auth()->user()->name }}"
+                            alt="Profile Image"
+                            class="profile-image">
+                        @endif
 
                         <div class="d-none d-md-block">
                             <strong>Admin</strong>
@@ -143,7 +163,7 @@
 
                     <div class="profile-menu">
 
-                        <a href="#">
+                        <a href="{{ route('profile.edit') }}">
                             <i class="bi bi-person-circle"></i>
                             Edit Profile
                         </a>
@@ -195,16 +215,40 @@
 
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-        // Desktop Collapse
+        // =========================
+        // LOAD SAVED STATE
+        // =========================
+
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+
+            sidebar.classList.add('collapsed');
+
+            mainContent.classList.add('expanded');
+
+        }
+
+        // =========================
+        // DESKTOP TOGGLE
+        // =========================
+
         desktopToggle.addEventListener('click', () => {
 
             sidebar.classList.toggle('collapsed');
 
             mainContent.classList.toggle('expanded');
 
+            // Save state
+            localStorage.setItem(
+                'sidebar-collapsed',
+                sidebar.classList.contains('collapsed')
+            );
+
         });
 
-        // Mobile Open
+        // =========================
+        // MOBILE OPEN
+        // =========================
+
         mobileToggle.addEventListener('click', () => {
 
             sidebar.classList.add('mobile-show');
@@ -213,7 +257,10 @@
 
         });
 
-        // Mobile Close
+        // =========================
+        // MOBILE CLOSE
+        // =========================
+
         sidebarOverlay.addEventListener('click', () => {
 
             sidebar.classList.remove('mobile-show');

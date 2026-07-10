@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Material extends Model
 {
@@ -38,4 +39,41 @@ class Material extends Model
             MaterialUnlockRule::class
         );
     }
+
+    public function materialType(): BelongsTo
+    {
+        return $this->belongsTo(
+            MaterialType::class
+        );
+    }
+
+    public function materialLink(): HasOne
+    {
+        return $this->hasOne(
+            MaterialLink::class
+        );
+    }
+
+    public function materialYoutube(): HasOne
+    {
+        return $this->hasOne(
+            MaterialYoutube::class
+        );
+    }
+
+    public function materialPage(): HasOne
+    {
+        return $this->hasOne(
+            MaterialPage::class
+        );
+    }
+
+    public function materialAsset(): HasOne
+    {
+        return $this->hasOne(
+            MaterialAsset::class
+        );
+    }
+
+
 }

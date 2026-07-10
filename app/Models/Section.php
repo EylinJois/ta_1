@@ -15,7 +15,8 @@ class Section extends Model
     protected $fillable = [
         'name',
         'visibility',
-        'course_id'
+        'course_id',
+        'order_idx',
     ];
 
     public function course(): BelongsTo

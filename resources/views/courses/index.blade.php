@@ -25,7 +25,7 @@
 
     </div>
 
-    <a href="#"
+    <a href="{{ route('courses.create') }}"
        class="btn btn-theme">
         <i class="bi bi-plus-circle"></i>
         Add Course
@@ -72,7 +72,7 @@
                     </h4>
 
                     <p>
-                        {{ Str::limit($course->description, 120) }}
+                        {{ Str::limit($course->description, 80) }}
                     </p>
 
                     <div class="course-footer">

@@ -43,11 +43,12 @@ class Course extends Model
     {
         return $this->belongsToMany(
             User::class,
-            'course_user_role'
+            'course_user_role',
+            'course_id',
+            'user_id'
         )
-        ->using(CourseUserRole::class)
-        ->withPivot('role')
-        ->withTimestamps();
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     /*
