@@ -1,0 +1,979 @@
+/* =====================================
+   HEADER
+===================================== */
+
+.courses-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:2rem;
+}
+
+.courses-header h3{
+    font-weight:700;
+}
+
+.courses-header p{
+    color:#6c757d;
+}
+
+.btn-theme{
+    background:#D62828;
+    color:#fff;
+    border:none;
+    border-radius:14px;
+    padding:12px 22px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.btn-theme:hover{
+    background:#b91f1f;
+    color:#fff;
+    transform:translateY(-2px);
+}
+
+/* =====================================
+   QUESTION BANK CARD
+===================================== */
+
+.qbank-card{
+    background:#fff;
+    border-radius:24px;
+    overflow:hidden;
+    height:100%;
+    box-shadow:0 12px 35px rgba(0,0,0,.06);
+    transition:.3s;
+    border:1px solid #f2f2f2;
+}
+
+.qbank-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 40px rgba(0,0,0,.1);
+}
+
+/* =====================================
+   TOP BANNER
+===================================== */
+
+.qbank-banner{
+    height:200px;
+    background:linear-gradient(
+        135deg,
+        #D62828,
+        #F77F00
+    );
+
+    position:relative;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    overflow:hidden;
+}
+
+.qbank-banner::before{
+    content:"";
+    position:absolute;
+
+    width:280px;
+    height:280px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.08);
+
+    top:-120px;
+    right:-70px;
+}
+
+.qbank-banner::after{
+    content:"";
+    position:absolute;
+
+    width:180px;
+    height:180px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.05);
+
+    bottom:-80px;
+    left:-40px;
+}
+
+.icon-action-btn{
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    text-decoration: none;
+
+    transition: .3s;
+
+    font-size: 16px;
+}
+
+/* Edit */
+.edit-btn{
+    background: rgba(247,127,0,0.12);
+    color: #F77F00;
+}
+
+.edit-btn:hover{
+    background: #F77F00;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Delete */
+.delete-btn{
+    background: rgba(214,40,40,0.12);
+    color: #D62828;
+}
+
+.delete-btn:hover{
+    background: #D62828;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.qbank-icon{
+
+    width:95px;
+    height:95px;
+
+    border-radius:24px;
+
+    background:rgba(255,255,255,.18);
+
+    backdrop-filter:blur(8px);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    color:white;
+
+    z-index:2;
+}
+
+.qbank-icon i{
+    font-size:42px;
+}
+
+/* =====================================
+   OVERLAY
+===================================== */
+
+.qbank-overlay{
+    position:absolute;
+    inset:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:rgba(0,0,0,.45);
+
+    opacity:0;
+    transition:.3s;
+}
+
+.qbank-card:hover .qbank-overlay{
+    opacity:1;
+}
+
+/* =====================================
+   CONTENT
+===================================== */
+
+.qbank-content{
+    padding:25px;
+}
+
+.qbank-content h4{
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.qbank-content p{
+    color:#666;
+    line-height:1.7;
+    margin-bottom:20px;
+}
+
+/* =====================================
+   BADGES
+===================================== */
+
+.qbank-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+    background:#fff5ef;
+    color:#D62828;
+
+    padding:8px 16px;
+
+    border-radius:999px;
+
+    font-size:14px;
+    font-weight:600;
+}
+
+.qbank-badge i{
+    font-size:15px;
+}
+
+/* =====================================
+   FOOTER
+===================================== */
+
+.qbank-footer{
+    margin-top:22px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.qbank-author{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    color:#D62828;
+    font-weight:600;
+}
+
+.qbank-author i{
+    font-size:16px;
+}
+
+/* =====================================
+   EMPTY STATE
+===================================== */
+
+.empty-state{
+    text-align:center;
+    padding:80px 20px;
+}
+
+.empty-state i{
+    font-size:70px;
+    color:#D62828;
+    margin-bottom:20px;
+}
+
+.empty-state h5{
+    font-weight:700;
+    margin-bottom:10px;
+}
+
+.empty-state p{
+    color:#777;
+    max-width:500px;
+    margin:auto;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media(max-width:768px){
+
+    .courses-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+    }
+
+    .courses-header .btn-theme{
+        width:100%;
+    }
+
+    .qbank-banner{
+        height:170px;
+    }
+
+    .qbank-icon{
+        width:80px;
+        height:80px;
+    }
+
+    .qbank-icon i{
+        font-size:36px;
+    }
+
+    .qbank-footer{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:12px;
+    }
+
+}
+
+/* ==========================
+   SCROLLABLE MODAL FIX
+========================== */
+
+.modal-dialog-scrollable .modal-content{
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - 2rem);
+}
+
+.modal-dialog-scrollable form{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    min-height:0;
+}
+
+.modal-dialog-scrollable .modal-body{
+    flex:1 1 auto;
+    overflow-y:auto;
+    min-height:0;
+}
+
+.modal-footer{
+    flex-shrink:0;
+}
+
+.modal-header{
+    flex-shrink:0;
+}
+
+/* =====================================
+   QUESTION BANK CARD
+===================================== */
+
+.qbank-card{
+    background:#fff;
+    border-radius:24px;
+    overflow:hidden;
+    border:1px solid #ececec;
+
+    box-shadow:0 12px 35px rgba(0,0,0,.06);
+
+    transition:all .3s ease;
+
+    height:100%;
+
+    display:flex;
+    flex-direction:column;
+}
+
+.qbank-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 18px 45px rgba(0,0,0,.12);
+}
+
+/* =====================================
+   HEADER
+===================================== */
+
+.qbank-header{
+
+    position:relative;
+
+    height:170px;
+
+    background:linear-gradient(
+        135deg,
+        #D62828,
+        #F77F00
+    );
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    overflow:hidden;
+}
+
+.qbank-header::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:240px;
+    height:240px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.08);
+
+    top:-110px;
+    right:-80px;
+}
+
+.qbank-header::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:170px;
+    height:170px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.06);
+
+    left:-60px;
+    bottom:-60px;
+}
+
+.qbank-icon{
+
+    width:90px;
+    height:90px;
+
+    border-radius:22px;
+
+    background:rgba(255,255,255,.18);
+
+    backdrop-filter:blur(8px);
+
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    z-index:2;
+}
+
+.qbank-icon i{
+    font-size:40px;
+}
+
+/* =====================================
+   ACTION OVERLAY
+===================================== */
+
+.qbank-overlay{
+
+    position:absolute;
+    inset:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+
+    background:rgba(0,0,0,.45);
+
+    opacity:0;
+
+    transition:.3s;
+
+    z-index:3;
+}
+
+.qbank-card:hover .qbank-overlay{
+    opacity:1;
+}
+
+/* =====================================
+   CONTENT
+===================================== */
+
+.qbank-content{
+
+    padding:24px;
+
+    flex:1;
+
+    display:flex;
+    flex-direction:column;
+}
+
+.qbank-content h4{
+
+    font-weight:700;
+
+    margin-bottom:12px;
+}
+
+.qbank-content p{
+
+    color:#666;
+
+    line-height:1.7;
+
+    flex-grow:1;
+
+    margin-bottom:18px;
+}
+
+/* =====================================
+   BADGES
+===================================== */
+
+.qbank-badges{
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+
+    margin-bottom:18px;
+}
+
+.qbank-badge{
+
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+
+    padding:7px 14px;
+
+    border-radius:999px;
+
+    background:#fff3eb;
+
+    color:#D62828;
+
+    font-size:13px;
+    font-weight:600;
+}
+
+.qbank-badge i{
+    font-size:14px;
+}
+
+/* =====================================
+   FOOTER
+===================================== */
+
+.qbank-footer{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding-top:18px;
+
+    border-top:1px solid #f2f2f2;
+}
+
+.qbank-author{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    color:#D62828;
+    font-weight:600;
+    font-size:14px;
+}
+
+.qbank-date{
+
+    color:#888;
+    font-size:13px;
+}
+
+/* =====================================
+   ACTION BUTTONS
+===================================== */
+
+.qbank-actions{
+
+    display:flex;
+    gap:8px;
+}
+
+.qbank-actions .icon-action-btn{
+
+    width:34px;
+    height:34px;
+
+    border-radius:10px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    transition:.25s;
+}
+
+.edit-btn{
+
+    background:rgba(247,127,0,.12);
+    color:#F77F00;
+}
+
+.edit-btn:hover{
+
+    background:#F77F00;
+    color:#fff;
+}
+
+.delete-btn{
+
+    background:rgba(214,40,40,.12);
+    color:#D62828;
+}
+
+.delete-btn:hover{
+
+    background:#D62828;
+    color:#fff;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media(max-width:768px){
+
+    .qbank-header{
+        height:150px;
+    }
+
+    .qbank-icon{
+
+        width:75px;
+        height:75px;
+    }
+
+    .qbank-icon i{
+        font-size:34px;
+    }
+
+    .qbank-footer{
+
+        flex-direction:column;
+        align-items:flex-start;
+        gap:10px;
+    }
+
+    .qbank-actions{
+        margin-top:10px;
+    }
+
+}
+.question-bank-banner{
+
+    background:linear-gradient(135deg,#D62828,#F77F00);
+
+    color:white;
+
+    padding:40px;
+
+    border-radius:30px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.stat-card{
+
+    background:white;
+
+    padding:25px;
+
+    border-radius:20px;
+
+    text-align:center;
+
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+
+}
+
+.stat-card h3{
+
+    color:#D62828;
+
+    font-weight:700;
+
+}
+
+.question-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+}
+
+.question-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:white;
+
+    border-radius:22px;
+
+    padding:20px 24px;
+
+    border:1px solid #eee;
+
+    transition:.3s;
+
+}
+
+.question-item:hover{
+
+    background:#fff8f5;
+
+}
+
+.question-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+.drag-handle{
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:12px;
+
+    background:#f5f5f5;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    cursor:grab;
+
+}
+
+.question-icon{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:18px;
+
+    background:rgba(214,40,40,.1);
+
+    color:#D62828;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+.question-icon i{
+
+    font-size:24px;
+
+}
+
+.question-meta{
+
+    display:flex;
+
+    gap:10px;
+
+    margin-top:8px;
+
+}
+
+.question-actions{
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+.sortable-ghost{
+
+    opacity:.4;
+
+}
+
+.sortable-chosen{
+
+    transform:scale(1.02);
+
+}
+
+/* =====================================
+   TOOLBAR: SEARCH + FILTER
+===================================== */
+
+.qbank-toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.qbank-search{
+    position:relative;
+    flex:1;
+    min-width:240px;
+    max-width:400px;
+}
+
+.qbank-search i{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#aaa;
+}
+
+.qbank-search .form-control{
+    padding-left:42px;
+    border-radius:14px;
+}
+
+.qbank-filter-pills{
+    display:flex;
+    gap:8px;
+    background:#f5f5f5;
+    padding:6px;
+    border-radius:999px;
+}
+
+.filter-pill{
+    padding:8px 18px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:14px;
+    color:#666;
+    text-decoration:none;
+    transition:.25s;
+    white-space:nowrap;
+}
+
+.filter-pill:hover{
+    color:#D62828;
+}
+
+.filter-pill.active{
+    background:#D62828;
+    color:#fff;
+}
+
+/* =====================================
+   SHARED TAG
+===================================== */
+
+.qbank-shared-tag{
+    position:absolute;
+    top:14px;
+    right:14px;
+    z-index:2;
+
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+
+    background:rgba(255,255,255,.9);
+    color:#D62828;
+
+    padding:6px 12px;
+    border-radius:999px;
+
+    font-size:12px;
+    font-weight:700;
+}
+
+@media(max-width:768px){
+
+    .qbank-toolbar{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .qbank-search{
+        max-width:none;
+    }
+
+    .qbank-filter-pills{
+        justify-content:space-between;
+    }
+
+}
+/* =====================================
+   TYPE FILTER PILLS
+===================================== */
+
+.type-filter-pills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.type-pill{
+    border:1px solid #eee;
+    background:#fff;
+    color:#666;
+
+    padding:8px 16px;
+    border-radius:999px;
+
+    font-size:14px;
+    font-weight:600;
+
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+
+    cursor:pointer;
+    transition:.25s;
+}
+
+.type-pill:hover{
+    border-color:#D62828;
+    color:#D62828;
+}
+
+.type-pill.active{
+    background:#D62828;
+    border-color:#D62828;
+    color:#fff;
+}
+
+.type-pill-count{
+    background:rgba(0,0,0,.08);
+    border-radius:999px;
+    padding:1px 8px;
+    font-size:12px;
+}
+
+.type-pill.active .type-pill-count{
+    background:rgba(255,255,255,.25);
+}

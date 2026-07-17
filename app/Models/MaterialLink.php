@@ -9,6 +9,11 @@ class MaterialLink extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'material_id';
+
+    public $incrementing = false;
+
+    protected $keyType = 'int';
     protected $fillable = ['material_id','url'];
 
     public function material(){

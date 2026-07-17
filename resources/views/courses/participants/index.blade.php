@@ -17,7 +17,7 @@
         <h4 class="section-title mb-0">
             {{$course->name}} Participants
         </h4>
-
+@if(Auth::user()->isAdmin($course->id))
         <div>
 
             <button class="btn btn-theme"
@@ -28,6 +28,7 @@
                 Add Participant
             </button>
         </div>
+        @endif
     </div>
 
     <div class="table-responsive">
@@ -40,7 +41,9 @@
                     <th>User</th>
                     <th>Email</th>
                     <th>Role</th>
+                    @if(Auth::user()->isAdmin($course->id))
                     <th class="text-center">Actions</th>
+                    @endif
                 </tr>
 
             </thead>
@@ -98,7 +101,7 @@
                         </span>
 
                     </td>
-
+@if(Auth::user()->isAdmin($course->id))
                     <td class="text-center">
 
                         {{-- Edit Button --}}
@@ -132,7 +135,7 @@
                         </form>
 
                     </td>
-
+@endif
                 </tr>
 
                 @endforeach

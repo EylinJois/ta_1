@@ -16,6 +16,8 @@ class MediaAsset extends Model
         'original_name',
         'mime',
         'size',
-        'uploaded_by'
+        'uploaded_by',
+        'created_at',
+        'updated_at',
     ];
 }

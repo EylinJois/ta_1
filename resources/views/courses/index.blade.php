@@ -33,6 +33,7 @@
 
 </div>
 
+@if(Auth::user()->courses()->count() > 0)
 {{-- Course List --}}
 <div class="row g-4">
 
@@ -101,4 +102,5 @@
 
 </div>
 
+@endif
 @endsection

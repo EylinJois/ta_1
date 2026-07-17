@@ -662,6 +662,38 @@ textarea.form-control{
     padding: 12px;
 }
 
+.material-card-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:20px;
+}
+
+.material-card-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.material-card-actions form{
+    margin:0;
+}
+
+/* Remove the bottom margin since the header provides spacing */
+.material-display-icon{
+    margin-bottom:0;
+    flex-shrink:0;
+}
+
+.material-card-actions .icon-action-btn{
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+}
+
+.material-card-actions .icon-action-btn i{
+    font-size: 12px;
+}
 /* =========================
    RESPONSIVE
 ========================= */
@@ -784,4 +816,18 @@ textarea.form-control{
     flex: 1 1 auto;
     overflow-y: auto;
     min-height: 0;
+}
+
+.pdf-container {
+    width: 100%;
+    height: 75vh;
+    overflow: auto;
+    padding: 15px;
+    background: #f8f9fa;
+}
+
+#pdfCanvas {
+    display: block;
+    max-width: none;
+    height: auto;
 }

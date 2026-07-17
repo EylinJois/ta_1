@@ -9,6 +9,11 @@ class MaterialYoutube extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'material_id';
+
+    public $incrementing = false;
+
+    protected $keyType = 'int';
     protected $fillable = ['material_id', 'url', 'video_id', 'start_sec', 'end_sec'];
 
     public function material(){

@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourseUserRole;
 use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use App\Models\MaterialType;
+use Auth;
 
 class CourseController extends Controller
 {
     public function index()
     {
-        $courses = Course::all();
+        $user=User::findOrFail(Auth::user()->id);
+        $courses = $user->courses()->with('users')->get();
         return view('courses.index', compact('courses'));
     }
 
@@ -39,6 +42,13 @@ class CourseController extends Controller
         }
 
         $course->save();
+
+        CourseUserRole::create([
+            'course_id' => $course->id,
+            'user_id' => auth()->user()->id,
+            'role' => 'admin',
+        ]);
+        // $course->users()->attach(auth()->user()->id, ['role' => 'admin']);
 
         return redirect()->route('courses.index')->with('success', 'Course created successfully.');
     }

@@ -74,30 +74,45 @@ class User extends Authenticatable
         return $this->hasMany(UserCertification::class);
     }
 
+    public function folders(): HasMany  {
+        return $this->hasMany(Folder::class);
+    }
+
+    public function attempts(): HasMany  {
+        return $this->hasMany(Attempt::class);
+    }
+
+    public function questionBanks(): HasMany  {
+        return $this->hasMany(QuestionBank::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers
     |--------------------------------------------------------------------------
     */
 
-    public function isAdmin(): bool
-    {
-        return $this->is_admin;
-    }
-
-    public function isTeacherInCourse(int $courseId): bool
+    public function isAdmin(int $courseId): bool
     {
         return $this->courses()
             ->where('course_id', $courseId)
-            ->wherePivot('role', 'Teacher')
+            ->wherePivot('role', 'admin')
             ->exists();
     }
 
-    public function isStudentInCourse(int $courseId): bool
+    public function isTeacher(int $courseId): bool
     {
         return $this->courses()
             ->where('course_id', $courseId)
-            ->wherePivot('role', 'Student')
+            ->wherePivot('role', 'teacher')
+            ->exists();
+    }
+
+    public function isStudent(int $courseId): bool
+    {
+        return $this->courses()
+            ->where('course_id', $courseId)
+            ->wherePivot('role', 'student')
             ->exists();
     }
 }

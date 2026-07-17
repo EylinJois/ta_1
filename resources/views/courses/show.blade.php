@@ -63,7 +63,7 @@
                     Participants
 
                 </a>
-
+@if(Auth::user()->isAdmin($course->id))
                 <a href="{{ route('courses.edit', $course->id) }}"
                     class="btn btn-light">
 
@@ -71,7 +71,6 @@
                     Edit Course
 
                 </a>
-
                 {{-- Delete Course --}}
                 <form action="{{ route('courses.destroy', $course->id) }}"
                     method="POST"
@@ -89,6 +88,7 @@
                     </button>
 
                 </form>
+                @endif
             </div>
 
         </div>
@@ -119,7 +119,7 @@
     <h4 class="section-title mb-0">
         Course Sections
     </h4>
-
+@if(Auth::user()->isAdmin($course->id))
     <button class="btn btn-theme add-section-btn"
         data-bs-toggle="modal"
         data-bs-target="#addSectionModal">
@@ -128,7 +128,7 @@
         Add Section
 
     </button>
-
+@endif
 </div>
 
 
@@ -137,19 +137,38 @@
 
 <div id="sectionsContainer">
     @foreach($course->sections as $section)
-    <a href="{{ route('sections.show', $section->id) }}"
-        class="section-link-wrapper">
-        <div class="section-item" data-id="{{ $section->id }}">
+    @if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id) || $section->visibility)
+    {{--
+        NOTE: this used to be an <a> wrapping the whole card, with the
+        Edit button and Delete form nested inside it. Nesting interactive
+        elements (buttons/forms) inside an <a> is invalid HTML and the
+        browser's own "follow this link" behavior for the <a> isn't
+        cancelable via event.stopPropagation() on a child - only
+        event.preventDefault() cancels it, and calling that indiscriminately
+        would also cancel the Delete button's own form-submit action.
+
+        Instead: no <a>, no stopPropagation/preventDefault anywhere. A single
+        click handler on the card itself decides whether to navigate, based
+        on whether the click landed inside the actions area or drag handle.
+        Bootstrap's modal trigger and the delete form's submit both keep
+        working exactly as the browser expects.
+    --}}
+    <div class="section-item section-link-wrapper"
+        data-id="{{ $section->id }}"
+        role="link"
+        tabindex="0"
+        style="cursor: pointer;"
+        onclick="if (!event.target.closest('.section-actions, .drag-handle')) { window.location = '{{ route('sections.show', $section->id) }}'; }"
+        onkeydown="if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.section-actions, .drag-handle')) { event.preventDefault(); window.location = '{{ route('sections.show', $section->id) }}'; }">
 
             <div class="section-top">
 
                 <div class="section-left">
-
-                    <div class="drag-handle"
-                        onclick="event.preventDefault()">
+@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
+                    <div class="drag-handle">
                         <i class="bi bi-grip-vertical"></i>
                     </div>
-
+@endif
                     <div class="section-icon">
                         <i class="bi bi-journal-text"></i>
                     </div>
@@ -159,9 +178,8 @@
                         <h5 class="mb-1">
                             {{ $section->name ?? '-' }}
                         </h5>
-
+@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
                         @if(isset($section->visibility) && $section->visibility)
-
                         <span class="badge bg-success">
                             Visible
                         </span>
@@ -173,11 +191,11 @@
                         </span>
 
                         @endif
-
+@endif
                     </div>
                 </div>
-
-                <div class="section-actions" onclick="event.stopPropagation()">
+@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
+                <div class="section-actions">
 
 
                     {{-- Edit Section --}}
@@ -208,13 +226,10 @@
                     </form>
 
                 </div>
-
+@endif
             </div>
 
-
-
-        </div>
-    </a>
+    </div>
 
 
 
@@ -323,6 +338,7 @@
         </div>
 
     </div>
+    @endif
     @endforeach
 </div>
 @else

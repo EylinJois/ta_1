@@ -73,103 +73,115 @@
 
     <div class="courses-header mb-4">
 
+        <a
+            href="{{ route('courses.show',$course) }}"
+            class="btn btn-secondary-custom">
+            <i class="bi bi-arrow-left"></i>
+        </a>
         <h4 class="section-title mb-0">
             {{ $section->name }}
         </h4>
-
-        <button class="btn btn-theme"
-            data-bs-toggle="modal"
-            data-bs-target="#addMaterialModal{{ $section->id }}">
+@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
+        <a href="{{ route('materials.create', $section) }}"
+            class="btn btn-theme">
 
             <i class="bi bi-plus-circle"></i>
             Add Material
 
-        </button>
-
+        </a>
+@endif
     </div>
-
-    @if($section->materials && $section->materials->count() > 0)
 
     <div class="row g-4">
 
-        @forelse($section->materials as $material)
+        @forelse($visibleMaterials as $material)
 
-        <div class="col-lg-4">
+            <div class="col-lg-4">
 
-            <a
-                href="{{ route('materials.show',$material) }}"
-                class="text-decoration-none text-dark">
+                <a
+                    href="{{ route('materials.show',$material) }}"
+                    class="text-decoration-none text-dark">
 
-                <div class="material-display-card h-100">
+                    <div class="material-display-card h-100">
 
-                    <div class="material-display-icon">
+                        <div class="material-card-header">
 
-                        @switch($material->materialType->name)
+                            <div class="material-display-icon">
+                                @switch($material->materialType->name)
+                                @case('Youtube Video')
+                                <i class="bi bi-youtube"></i>
+                                @break
 
-                        @case('Youtube Video')
+                                @case('PDF')
+                                <i class="bi bi-file-earmark-pdf-fill"></i>
+                                @break
 
-                        <i class="bi bi-youtube"></i>
+                                @case('EPUB')
+                                <i class="bi bi-book-fill"></i>
+                                @break
 
-                        @break
+                                @case('Page')
+                                <i class="bi bi-file-earmark-richtext-fill"></i>
+                                @break
 
-                        @case('PDF')
+                                @case('Link')
+                                <i class="bi bi-link-45deg"></i>
+                                @break
 
-                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                @default
+                                <i class="bi bi-file-earmark-fill"></i>
+                                @endswitch
+                            </div>
+@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
+                            <div class="material-card-actions">
 
-                        @break
+                                <a
+                                    class="icon-action-btn edit-btn"
+                                    href="{{ route('materials.edit', $material) }}">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
 
-                        @case('EPUB')
+                                <form action="{{ route('materials.destroy', $material) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Delete this material?')">
+                                    @csrf
+                                    @method('DELETE')
 
-                        <i class="bi bi-book-fill"></i>
+                                    <button type="submit" class="icon-action-btn delete-btn">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </form>
 
-                        @break
+                            </div>
+@endif
+                        </div>
 
-                        @case('Page')
+                        <h5>
 
-                        <i class="bi bi-file-earmark-richtext-fill"></i>
+                            {{ $material->name }}
 
-                        @break
+                        </h5>
 
-                        @case('Link')
+                        <span class="material-type">
 
-                        <i class="bi bi-link-45deg"></i>
+                            {{ $material->materialType->name }}
 
-                        @break
+                        </span>
 
-                        @default
+                        <p>
 
-                        <i class="bi bi-file-earmark-fill"></i>
+                            {{ Str::limit(
+                        $material->description,
+                        120
+                    ) }}
 
-                        @endswitch
+                        </p>
 
                     </div>
 
-                    <h5>
+                </a>
 
-                        {{ $material->name }}
-
-                    </h5>
-
-                    <span class="material-type">
-
-                        {{ $material->materialType->name }}
-
-                    </span>
-
-                    <p>
-
-                        {{ Str::limit(
-                    $material->description,
-                    120
-                ) }}
-
-                    </p>
-
-                </div>
-
-            </a>
-
-        </div>
+            </div>
 
         @empty
 
@@ -180,15 +192,11 @@
                 <i class="bi bi-folder-x"></i>
 
                 <h4>
-
                     No Materials
-
                 </h4>
 
                 <p>
-
                     This section doesn't contain any learning materials yet.
-
                 </p>
 
             </div>
@@ -199,27 +207,6 @@
 
     </div>
 
-    @else
-
-    <div class="empty-state">
-
-        <i class="bi bi-folder-x"></i>
-
-        <h5>
-            No Materials Yet
-        </h5>
-
-        <p>
-            Start adding learning materials.
-        </p>
-
-    </div>
-
-    @endif
-
 </div>
-
-@include('courses.materials.add-material-modal')
-
 
 @endsection
