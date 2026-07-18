@@ -28,4 +28,14 @@ class Section extends Model
     {
         return $this->hasMany(Material::class);
     }
+
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class);
+    }
 }

@@ -92,11 +92,7 @@
 ========================= */
 
 .course-detail-banner{
-    background: linear-gradient(
-        135deg,
-        #D62828,
-        #F77F00
-    );
+    background: linear-gradient(135deg, #D62828, #F77F00);
     border-radius: 30px;
     padding: 40px;
     color: white;
@@ -150,10 +146,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    border-radius: 20px;
+
+    background: white;
+    padding: 25px;
+    border-radius: 24px;
     border: 1px solid #eee;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     transition: .3s;
 }
 
@@ -188,6 +186,28 @@
     gap: 10px;
 }
 
+.section-top{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+/* =========================
+   CLICKABLE SECTION
+========================= */
+
+.section-link-wrapper{
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.section-link-wrapper:hover{
+    color: inherit;
+}
+
 /* =========================
    EMPTY STATE
 ========================= */
@@ -206,37 +226,6 @@
 .empty-state h5{
     font-weight: 700;
     margin-bottom: 10px;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media(max-width: 768px){
-
-    .courses-header{
-        flex-direction: column;
-        gap: 20px;
-        align-items: flex-start;
-    }
-
-    .course-detail-banner{
-        padding: 30px;
-    }
-
-    .section-item{
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
-    .section-actions{
-        width: 100%;
-    }
-
-    .section-actions .btn{
-        flex: 1;
-    }
 }
 
 /* =========================
@@ -374,29 +363,12 @@ textarea.form-control{
     background: #ddd;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media(max-width: 768px){
-
-    .form-card{
-        padding: 25px;
-    }
-
-    .form-card-header{
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
-    }
-
-    .form-actions{
-        flex-direction: column;
-    }
-
-    .form-actions .btn{
-        width: 100%;
-    }
+.btn-delete-course{
+    background: #D62828;
+    color: white;
+    border-radius: 12px;
+    border: none;
+    padding: 12px;
 }
 
 /* =========================
@@ -416,6 +388,22 @@ textarea.form-control{
     object-fit: cover;
 }
 
+.participant-info-box{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 18px;
+    background: #fafafa;
+}
+
+.participant-modal-img{
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
 /* =========================
    MODAL
 ========================= */
@@ -426,19 +414,45 @@ textarea.form-control{
 }
 
 .modal-content{
+    border: none;
     box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+.modal-dialog{
+    padding: 15px;
+}
+
+.modal-body{
+    padding: 25px;
+}
+
+.modal-header,
+.modal-footer{
+    padding: 20px 25px;
+}
+
+.modal-dialog-scrollable .modal-content{
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2rem);
+}
+
+.modal-dialog-scrollable .modal-content > form{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.modal-dialog-scrollable .modal-body{
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 /* =========================
    EDIT IMAGE
 ========================= */
-
-.edit-course-image{
-    width: 100%;
-    max-height: 300px;
-    object-fit: cover;
-    border-radius: 24px;
-}
 
 .image-preview-container{
     width: 100%;
@@ -475,7 +489,6 @@ textarea.form-control{
     font-size: 16px;
 }
 
-/* Edit */
 .edit-btn{
     background: rgba(247,127,0,0.12);
     color: #F77F00;
@@ -487,7 +500,6 @@ textarea.form-control{
     transform: translateY(-2px);
 }
 
-/* Delete */
 .delete-btn{
     background: rgba(214,40,40,0.12);
     color: #D62828;
@@ -497,94 +509,6 @@ textarea.form-control{
     background: #D62828;
     color: white;
     transform: translateY(-2px);
-}
-
-/* =========================
-   PARTICIPANT MODAL
-========================= */
-
-.participant-info-box{
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px;
-    border-radius: 18px;
-    background: #fafafa;
-}
-
-.participant-modal-img{
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-/* =========================
-   RESPONSIVE MODAL FIX
-========================= */
-
-.custom-modal{
-    border: none;
-    border-radius: 24px;
-}
-
-.modal-content{
-    border: none;
-}
-
-.modal-dialog{
-    padding: 15px;
-}
-
-.modal-body{
-    padding: 25px;
-}
-
-.modal-header,
-.modal-footer{
-    padding: 20px 25px;
-}
-
-@media(max-width: 768px){
-
-    .modal-dialog{
-        margin: 10px;
-    }
-
-    .modal-body{
-        padding: 20px;
-    }
-
-    .modal-header,
-    .modal-footer{
-        padding: 18px 20px;
-    }
-
-}
-
-/* =========================
-   SECTION LAYOUT
-========================= */
-
-.section-item{
-    padding: 25px;
-    border-radius: 24px;
-    border: 1px solid #eee;
-    margin-bottom: 25px;
-    transition: .3s;
-    background: white;
-}
-
-.section-item:hover{
-    background: #fff8f5;
-}
-
-.section-top{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 25px;
 }
 
 /* =========================
@@ -621,7 +545,8 @@ textarea.form-control{
     align-items: center;
     justify-content: center;
 
-    margin-bottom: 20px;
+    margin-bottom: 0; /* header wrapper already provides spacing */
+    flex-shrink: 0;
 }
 
 .material-display-icon i{
@@ -653,36 +578,21 @@ textarea.form-control{
     line-height: 1.7;
 }
 
-
-.btn-delete-course{
-    background: #D62828;
-    color: white;
-    border-radius: 12px;
-    border: none;
-    padding: 12px;
-}
-
 .material-card-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
 }
 
 .material-card-actions{
-    display:flex;
-    gap:10px;
-    align-items:center;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .material-card-actions form{
-    margin:0;
-}
-
-/* Remove the bottom margin since the header provides spacing */
-.material-display-icon{
-    margin-bottom:0;
-    flex-shrink:0;
+    margin: 0;
 }
 
 .material-card-actions .icon-action-btn{
@@ -693,22 +603,6 @@ textarea.form-control{
 
 .material-card-actions .icon-action-btn i{
     font-size: 12px;
-}
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media(max-width: 768px){
-
-    .section-top{
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .material-card{
-        min-width: 200px;
-    }
-
 }
 
 /* =========================
@@ -742,7 +636,6 @@ textarea.form-control{
     cursor: grabbing;
 }
 
-/* Sortable dragging */
 .sortable-ghost{
     opacity: .4;
 }
@@ -752,73 +645,28 @@ textarea.form-control{
 }
 
 /* =========================
-   CLICKABLE SECTION
+   PAGE / VIEWER CONTENT
 ========================= */
 
-.section-link-wrapper{
-    text-decoration: none;
-    color: inherit;
-    display: block;
-}
-
-.section-link-wrapper:hover{
-    color: inherit;
-}
-
-
-
 .html-page{
-
-    font-size:16px;
-
-    line-height:1.9;
-
+    font-size: 16px;
+    line-height: 1.9;
 }
 
 .html-page img{
-
-    max-width:100%;
-
+    max-width: 100%;
 }
 
 .html-page table{
-
-    width:100%;
-
+    width: 100%;
 }
 
-#pdfViewer{
-
-    height:80vh;
-
-}
-
+#pdfViewer,
 #epubViewer{
-
-    height:80vh;
-
+    height: 80vh;
 }
 
-.modal-dialog-scrollable .modal-content {
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 2rem);
-}
-
-.modal-dialog-scrollable .modal-content > form {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-}
-
-.modal-dialog-scrollable .modal-body {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    min-height: 0;
-}
-
-.pdf-container {
+.pdf-container{
     width: 100%;
     height: 75vh;
     overflow: auto;
@@ -826,8 +674,100 @@ textarea.form-control{
     background: #f8f9fa;
 }
 
-#pdfCanvas {
+#pdfCanvas{
     display: block;
     max-width: none;
     height: auto;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width: 768px){
+
+    .courses-header{
+        flex-direction: column;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .course-detail-banner{
+        padding: 30px;
+    }
+
+    .section-item{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .section-actions{
+        width: 100%;
+    }
+
+    .section-actions .btn{
+        flex: 1;
+    }
+
+    .section-top{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .material-card{
+        min-width: 200px;
+    }
+
+    .form-card{
+        padding: 25px;
+    }
+
+    .form-card-header{
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .form-actions{
+        flex-direction: column;
+    }
+
+    .form-actions .btn{
+        width: 100%;
+    }
+
+    .modal-dialog{
+        margin: 10px;
+    }
+
+    .modal-body{
+        padding: 20px;
+    }
+
+    .modal-header,
+    .modal-footer{
+        padding: 18px 20px;
+    }
+
+}
+
+.activity-choice-card {
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    transition: 0.2s;
+}
+
+.activity-choice-card:hover {
+    border-color: #F77F00;
+    background: #fff8f0;
+    transform: translateY(-2px);
+}
+
+.activity-choice-icon {
+    font-size: 28px;
+    color: #F77F00;
+    margin-bottom: 10px;
 }

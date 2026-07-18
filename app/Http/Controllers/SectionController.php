@@ -72,66 +72,93 @@ class SectionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
-    {
-        $section = Section::with([
-            'course',
-            'materials.materialType',
-            'materials.unlockRules.unlockType',
-        ])->findOrFail($id);
+   public function show($id)
+{
+    $section = Section::with([
+        'course',
+        'materials.materialType',
+        'materials.unlockRules.unlockType',
+        'quizzes',
+        'assignments',
+    ])->findOrFail($id);
 
-        $course = $section->course;
+    $course = $section->course;
 
-        $materialTypes = \App\Models\MaterialType::all();
-        $unlockRuleTypes = \App\Models\UnlockRuleType::all();
+    $materialTypes = \App\Models\MaterialType::all();
+    $unlockRuleTypes = \App\Models\UnlockRuleType::all();
 
-        $roles = [
-            'student' => 'Student',
-            'teacher' => 'Teacher',
-            'admin' => 'Admin',
-        ];
+    $roles = [
+        'student' => 'Student',
+        'teacher' => 'Teacher',
+        'admin' => 'Admin',
+    ];
 
-        $user = auth()->user();
+    $user = auth()->user();
+    $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
 
-        // All materials in the section (e.g. used to populate "completed
-        // activity" target pickers when adding/editing a material's unlock rule).
-        $materials = $section->materials;
+    $materials = $section->materials;
 
-        $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
+    $materialProgress = \App\Models\UserMaterialProgress::where('user_id', $user->id)
+        ->whereIn('material_id', $materials->pluck('id'))
+        ->get()
+        ->keyBy('material_id');
 
-        // Progress rows for this user across every material in the section,
-        // fetched once instead of per-material/per-rule.
-        $materialProgress = \App\Models\UserMaterialProgress::where('user_id', $user->id)
-            ->whereIn('material_id', $materials->pluck('id'))
-            ->get()
-            ->keyBy('material_id');
+    $visibleMaterials = $materials->filter(function ($material) use ($user, $isManager, $materialProgress) {
+        if ($isManager || auth()->id() == $material->created_by) {
+            return true;
+        }
+        if (!$material->visibility) {
+            return false;
+        }
+        return $this->materialIsUnlocked($material, $user, $materialProgress);
+    })->values();
 
-        // Only the materials the current user is actually allowed to see on
-        // this page: visible ones (with unlock rules satisfied), plus anything
-        // they created themselves. Admins/teachers of the course bypass unlock
-        // rules entirely.
-        $visibleMaterials = $materials->filter(function ($material) use ($user, $isManager, $materialProgress) {
-            if ($isManager || auth()->id() == $material->created_by) {
-                return true;
-            }
+    // Quizzes: no created_by column, so visibility is the only gate for
+    // non-managers.
+    $visibleQuizzes = $section->quizzes
+        ->filter(fn ($quiz) => $isManager || $quiz->visibility)
+        ->map(function ($quiz) {
+            $quiz->activity_kind = 'quiz';
+            return $quiz;
+        });
 
-            if (!$material->visibility) {
-                return false;
-            }
+    // Assignments: has created_by, so its creator can see their own even
+    // while hidden, same rule as materials.
+    $visibleAssignments = $section->assignments
+    ->filter(function ($a) use ($isManager, $user) {
+        if ($isManager || auth()->id() == $a->created_by) {
+            return true;
+        }
+        if (!$a->visibility) {
+            return false;
+        }
+        if ($a->opened_at && now()->lt($a->opened_at)) {
+            return false;
+        }
+        return true;
+    })
+    ->map(function ($assignment) {
+        $assignment->activity_kind = 'assignment';
+        return $assignment;
+    });
 
-            return $this->materialIsUnlocked($material, $user, $materialProgress);
-        })->values();
+    // Merge both into one feed, newest first.
+    $visibleActivities = $visibleQuizzes->concat($visibleAssignments)
+        ->sortByDesc('created_at')
+        ->values();
 
-        return view('courses.sections.show', compact(
-            'section',
-            'course',
-            'materialTypes',
-            'unlockRuleTypes',
-            'roles',
-            'materials',
-            'visibleMaterials',
-        ));
-    }
+    return view('courses.sections.show', compact(
+        'section',
+        'course',
+        'materialTypes',
+        'unlockRuleTypes',
+        'roles',
+        'materials',
+        'visibleMaterials',
+        'visibleActivities',
+        'visibleQuizzes'
+    ));
+}
 
     /**
      * Whether all of a material's unlock rules are satisfied for the given

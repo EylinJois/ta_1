@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attempt extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    protected $table = 'attempt';
+    protected $table = 'attempts';
 
     protected $fillable = [
         'quiz_id',
@@ -21,15 +21,28 @@ class Attempt extends Model
         'attempt_no',
         'status'
     ];
+    
+    protected $casts = [
+        'started_at' => 'datetime',
+        'submitted_at' => 'datetime',
+    ];
 
-    public function quiz()
+    public function getDurationSecondsAttribute()
     {
-        return $this->belongsTo(Quiz::class);
+        if (!$this->submitted_at) {
+            return null; // still in progress — no duration yet
+        }
+
+        return $this->started_at->diffInSeconds($this->submitted_at);
     }
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function quiz()
+    {
+        return $this->belongsTo(Quiz::class);
     }
 
     public function answers()
@@ -37,8 +50,4 @@ class Attempt extends Model
         return $this->hasMany(AttemptAnswer::class);
     }
 
-    protected $casts = [
-        'started_at' => 'datetime',
-        'submitted_at' => 'datetime'
-    ];
 }

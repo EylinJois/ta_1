@@ -1,4 +1,3 @@
--- Active: 1775722836730@@127.0.0.1@3306@ta_1
 <?php
 
 namespace App\Models;
