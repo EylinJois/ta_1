@@ -12,6 +12,8 @@ use App\Http\Controllers\QuizQuestionController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TTSController;
+use App\Http\Controllers\NoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -156,17 +158,37 @@ Route::middleware(['auth'])->group(function () {
     // collisions with the routes just above this.
     Route::resource('assignments', AssignmentController::class)
         ->only(['index', 'destroy']);
-
     /*
     |----------------------------------------------------------------------
     | Submissions
     |----------------------------------------------------------------------
     */
 
+    
+Route::get('assignments/{assignment}/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
+Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
+Route::put('submissions/{submission}', [SubmissionController::class, 'gradeUpdate'])->name('submissions.grade.update');
     Route::prefix('assignments/{assignment}/submission')->name('submissions.')->group(function () {
         Route::post('/', [SubmissionController::class, 'store'])->name('store');
         Route::post('/file', [SubmissionController::class, 'uploadFile'])->name('file.store');
         Route::delete('/file/{mediaAsset}', [SubmissionController::class, 'deleteFile'])->name('file.delete');
     });
 
+
+
+    /*
+    |----------------------------------------------------------------------
+    | TTS
+    |----------------------------------------------------------------------
+    */
+    Route::get('/tts', [TTSController::class, 'index'])->name('tts.index');
+    Route::post('/tts/generate', [TTSController::class, 'generate'])->name('tts.generate');
+
+     /*
+    |----------------------------------------------------------------------
+    | NOTES
+    |----------------------------------------------------------------------
+    */
+    Route::resource('notes', NoteController::class);
 });

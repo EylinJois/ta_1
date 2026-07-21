@@ -1,4 +1,5 @@
 {{-- Edit Point Override (works for both bank and quiz-only questions) --}}
+@if($question)
 <div class="modal fade question-modal"
     id="editPointModal{{ $question->id }}"
     tabindex="-1"
@@ -64,3 +65,4 @@
     </div>
 
 </div>
+@endif

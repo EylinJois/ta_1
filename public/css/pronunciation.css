@@ -1,0 +1,96 @@
+.pronunciation-card {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.pronunciation-header h4 {
+    margin-bottom: 6px;
+    font-weight: 700;
+    color: #1f1f1f;
+}
+
+.pronunciation-subtitle {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+/* Shared textarea look for both the Hanzi input and the pinyin result */
+.pronunciation-textarea {
+    margin-top: 16px;
+    border: 1px solid #eee;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 18px;
+    font-family: inherit;
+    resize: vertical;
+    transition: 0.2s;
+}
+
+.pronunciation-textarea:focus {
+    border-color: #F77F00;
+    box-shadow: 0 0 0 3px rgba(247, 127, 0, 0.12);
+    outline: none;
+}
+
+.pronunciation-textarea-result {
+    color: #D62828;
+    font-weight: 600;
+    background: #fff8f0;
+    border-color: #fde3d0;
+}
+
+.pronunciation-btn {
+    background: #D62828;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.pronunciation-btn:hover {
+    background: #b81f1f;
+    color: #fff;
+}
+
+.pronunciation-btn:active {
+    transform: translateY(1px);
+}
+
+.pronunciation-divider {
+    margin: 28px 0;
+    border: none;
+    border-top: 1px solid #f0f0f0;
+}
+
+.pronunciation-audio {
+    width: 100%;
+    border-radius: 12px;
+}
+
+.pronunciation-result {
+    margin-top: 28px;
+}
+
+.pronunciation-result h4 {
+    font-weight: 700;
+    color: #1f1f1f;
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .pronunciation-card {
+        padding: 20px;
+        border-radius: 16px;
+    }
+}

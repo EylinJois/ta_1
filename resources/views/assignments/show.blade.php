@@ -6,7 +6,6 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
 @endpush
 
 @section('content')
@@ -18,7 +17,6 @@
 </div>
 
 <div class="question-bank-banner mb-4">
-
     <div>
         <span class="badge bg-light text-dark mb-3">
             Assignment
@@ -26,12 +24,9 @@
             <span class="text-danger">— Hidden from students</span>
             @endif
         </span>
-
         <h2>{{ $assignment->name }}</h2>
-
         <p class="mb-0">{{ $assignment->description }}</p>
     </div>
-
 </div>
 
 <div class="row g-3 mb-4">
@@ -47,17 +42,34 @@
         </div>
     </div>
 
+    @if($isManager)
+
     <div class="col-md-3">
         <div class="stat-card">
-            <span>Due on:</span>
-            <h4>{{ $assignment->due_at ? $assignment->due_at->format('d M Y, H:m') : '—' }}</h4>
+            <span>Total submissions:</span>
+            <h4>{{ $submissions->count() }}</h4>
         </div>
     </div>
 
+    <div class="col-md-3">
+        <div class="stat-card">
+            <span>Graded:</span>
+            <h4>{{ $submissions->where('status', 'graded')->count() }} / {{ $submissions->count() }}</h4>
+        </div>
+    </div>
+
+    @else
 
     <div class="col-md-3">
         <div class="stat-card">
-            <span>Submission status:</span></h3>
+            <span>Score:</span>
+            <h4>{{ $submission?->score ?? '-' }}</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card">
+            <span>Submission status:</span>
             <h4>
                 @if($submission)
                 @switch($submission->status)
@@ -73,7 +85,111 @@
         </div>
     </div>
 
+    @endif
+
+    <div class="col-md-3">
+        <div class="stat-card">
+            <span>Due on:</span>
+            <h4>{{ $assignment->due_at ? $assignment->due_at->format('d M Y, H:i') : '—' }}</h4>
+        </div>
+    </div>
+
 </div>
+
+@if($isManager)
+
+{{-- ===================== MANAGER VIEW: SUBMISSIONS LIST ===================== --}}
+
+<div class="table-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <i class="bi bi-list-check"></i>
+            Submissions
+        </h5>
+    </div>
+
+    @if($submissions->isNotEmpty())
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Submitted</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($submissions as $sub)
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ $sub->user->name }}</div>
+                        <div class="text-muted small">{{ $sub->user->email }}</div>
+                    </td>
+
+                    <td>
+                        @switch($sub->status)
+                        @case('draft')
+                        <span class="badge bg-secondary">Draft</span>
+                        @break
+                        @case('submitted')
+                        <span class="badge bg-info text-dark">Submitted</span>
+                        @break
+                        @case('late')
+                        <span class="badge bg-warning text-dark">Late</span>
+                        @break
+                        @case('graded')
+                        <span class="badge bg-success">Graded</span>
+                        @break
+                        @endswitch
+                    </td>
+
+                    <td>
+                        {{ !is_null($sub->score) ? rtrim(rtrim(number_format($sub->score, 2), '0'), '.') : '—' }}
+                    </td>
+
+                    <td>
+                        {{ $sub->submitted_at ? $sub->submitted_at->format('d M Y, H:i') : '—' }}
+                    </td>
+
+                    <td class="text-end">
+
+                        <a href="{{ route('submissions.show', $sub) }}" class="btn btn-secondary-custom btn-sm">
+                            <i class="bi bi-eye"></i>
+                            View
+                        </a>
+
+                        @if($sub->status !== 'draft')
+                        <a href="{{ route('submissions.edit', $sub) }}" class="icon-action-btn edit-btn">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        @endif
+
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @else
+
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h5>No Submissions Yet</h5>
+        <p class="text-muted">No students have submitted this assignment yet.</p>
+    </div>
+
+    @endif
+
+</div>
+
+@else
+
+{{-- ===================== STUDENT VIEW: SUBMISSION FORM ===================== --}}
 
 @if($isPastDue && !$assignment->allow_late_submission && (!$submission || $submission->status === 'draft'))
 <div class="alert alert-danger">
@@ -88,7 +204,6 @@
 @endif
 
 @if($submission && $submission->status === 'graded')
-
 <div class="table-card mb-4">
     <h5 class="mb-3"><i class="bi bi-clipboard-check"></i> Grade</h5>
     <div class="d-flex align-items-center gap-3 mb-3">
@@ -101,7 +216,6 @@
     </div>
     @endif
 </div>
-
 @endif
 
 <div class="table-card">
@@ -121,7 +235,7 @@
         @if(in_array($assignment->submission_type, ['text', 'both']))
         <div class="mb-4">
             <label class="form-label">Your Answer</label>
-            <textarea class="form-control tinymce-editor" id="submittedText" rows="10" {{ !$canEdit ? 'disabled' : '' }}>{!! $submission->submitted_text ?? '' !!}</textarea>
+            <textarea class="form-control tinymce-editor" id="submittedText" rows="10" {{ $canEdit ? '': 'disabled'}}>{!! $submission->submitted_text ?? '' !!}</textarea>
         </div>
         @endif
 
@@ -172,95 +286,113 @@
 
 </div>
 
+@endif
+
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        const assignmentId = {{ $assignment->id }};
+        const isManager = @json($isManager);
+        if (isManager) {
+            return; // manager view has no submission form/JS to wire up
+        }
+
+        const assignmentId = {
+            {
+                $assignment - > id
+            }
+        };
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const canEdit = @json($canEdit);
 
         /*=================================================
-    TINYMCE
-=================================================*/
+            TINYMCE
+        =================================================*/
 
         function initTinyMCE() {
-
-            if (!document.getElementById("submittedText")) {
+            const textarea = document.getElementById('submittedText');
+            if (!textarea) {
                 return;
             }
-
-            if (tinymce.get("submittedText")) {
-                tinymce.get("submittedText").remove();
+            if (typeof tinymce === 'undefined') {
+                console.error('TinyMCE failed to load — falling back to plain textarea.');
+                textarea.style.display = '';
+                return;
             }
-
-             tinymce.init({
-                selector: "#pageContent",
-                height: 500,
+            if (tinymce.get('submittedText')) {
+                tinymce.get('submittedText').remove();
+            }
+            tinymce.init({
+                selector: '#submittedText',
+                height: 300,
                 menubar: true,
-                plugins: "lists link fullscreen",
-                toolbar: "undo redo | blocks | bold italic | code"
+                plugins: 'lists link',
+                toolbar: 'bold italic underline | bullist numlist | link',
+                readonly: !canEdit, // prevents editing from the very first render
+                setup: function(editor) {
+                    editor.on('init', function() {
+                        if (!canEdit) {
+                            editor.mode.set('readonly'); // belt-and-suspenders — some TinyMCE 6 builds need this called post-init too
+                        }
+                    });
+                },
+            }).catch(function(err) {
+                console.error('TinyMCE init failed:', err);
+                textarea.style.display = '';
             });
-
         }
 
         initTinyMCE();
 
         function getSubmittedText() {
-
-            const editor = tinymce.get("submittedText");
-
+            const editor = tinymce.get('submittedText');
             if (editor) {
                 return editor.getContent();
             }
-
-            const textarea = document.getElementById("submittedText");
-            return textarea ? textarea.value : "";
-
+            const textarea = document.getElementById('submittedText');
+            return textarea ? textarea.value : '';
         }
 
-       function submitForm(action) {
-    const formData = new FormData();
-    formData.append('action', action);
-    if (document.getElementById('submittedText')) {
-        formData.append('submitted_text', getSubmittedText());
-    }
-
-    fetch(`/assignments/${assignmentId}/submission`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-        },
-        body: formData,
-    })
-        .then(async function (r) {
-            const contentType = r.headers.get('content-type') || '';
-
-            if (r.ok) {
-                window.location.reload();
-                return;
+        function submitForm(action) {
+            const formData = new FormData();
+            formData.append('action', action);
+            if (document.getElementById('submittedText')) {
+                formData.append('submitted_text', getSubmittedText());
             }
 
-            if (contentType.includes('application/json')) {
-                const body = await r.json();
-                const message = body.errors
-                    ? Object.values(body.errors).flat().join(' ')
-                    : (body.message || 'Failed to save.');
-                throw new Error(message);
-            }
+            fetch(`/assignments/${assignmentId}/submission`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                })
+                .then(async function(r) {
+                    const contentType = r.headers.get('content-type') || '';
 
-            // Non-JSON error response (HTML error page, etc.) — surface
-            // the status instead of trying to parse it as JSON.
-            console.error('Non-JSON error response:', await r.text());
-            throw new Error(`Something went wrong (HTTP ${r.status}). Check the console for details.`);
-        })
-        .catch(function (err) {
-            alert(err.message);
-        });
-}
+                    if (r.ok) {
+                        window.location.reload();
+                        return;
+                    }
+
+                    if (contentType.includes('application/json')) {
+                        const body = await r.json();
+                        const message = body.errors ?
+                            Object.values(body.errors).flat().join(' ') :
+                            (body.message || 'Failed to save.');
+                        throw new Error(message);
+                    }
+
+                    console.error('Non-JSON error response:', await r.text());
+                    throw new Error(`Something went wrong (HTTP ${r.status}). Check the console for details.`);
+                })
+                .catch(function(err) {
+                    alert(err.message);
+                });
+        }
 
         const saveDraftBtn = document.getElementById('saveDraftBtn');
         if (saveDraftBtn) {
@@ -319,7 +451,7 @@
             const btn = e.target.closest('.remove-submission-file-btn');
             if (!btn) return;
 
-            fetch(`/assignments/${assignmentId}/submission/file/${btn.dataset.mediaId}`, {
+            fetch(`/attempts/${assignmentId}/submission/file/${btn.dataset.mediaId}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken

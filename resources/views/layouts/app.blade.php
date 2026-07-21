@@ -24,7 +24,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
     <script src="https://cdn.tiny.cloud/1/6jg5r5fxnxszclixu4n46rn1zod6g8l2yu2ah7fcauadjalp/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
     @stack('styles')
@@ -111,7 +111,15 @@
                     <a href="#">
                         <i class="bi bi-award-fill"></i>
                         <span class="menu-text">
-                            Certificates
+                            Progress
+                        </span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('tts.index') }}">
+                        <i class="bi bi-volume-up-fill"></i>
+                        <span class="menu-text">
+                            Pronunciation
                         </span>
                     </a>
                 </li>

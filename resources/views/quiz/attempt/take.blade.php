@@ -6,7 +6,6 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin"></script>
 <style>
     .attempt-layout {
         display: flex;

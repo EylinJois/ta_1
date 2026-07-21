@@ -91,7 +91,7 @@
         <div class="stat-card">
             <h3>
                 @if(!is_null($bestScore))
-                {{ rtrim(rtrim(number_format($bestScore, 2), '0'), '.') }}
+                {{ rtrim(rtrim(number_format($bestScore, 2), '0'), '.') }}%
                 @else
                 —
                 @endif
@@ -196,7 +196,7 @@
                     </td>
                     <td>
                         @if(!is_null($attempt->score))
-                        {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}
+                        {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}%
                         @if($quiz->pass_score)
                             @if($attempt->score >= $quiz->pass_score)
                             <span class="badge bg-success ms-1">Passed</span>

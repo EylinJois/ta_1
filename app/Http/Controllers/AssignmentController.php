@@ -24,49 +24,83 @@ class AssignmentController extends Controller
      * Display the specified resource.
      */
     public function show(Assignment $assignment)
-{
-    $user = auth()->user();
-    $course = $assignment->section->course;
-    $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
+    {
+        $user = auth()->user();
+        $course = $assignment->section->course;
+        $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
 
-    $isVisible = $isManager || $user->id === $assignment->created_by || $assignment->visibility;
-    abort_unless($isVisible, 404);
+        $isVisible = $isManager || $user->id === $assignment->created_by || $assignment->visibility;
+        abort_unless($isVisible, 404);
 
-    $isOpen = !$assignment->opened_at || now()->gte($assignment->opened_at);
-    abort_unless($isManager || $isOpen, 404, 'This assignment is not open yet.');
+        $isOpen = !$assignment->opened_at || now()->gte($assignment->opened_at);
+        abort_unless($isManager || $isOpen, 404, 'This assignment is not open yet.');
 
-    $isPastDue = $assignment->due_at && now()->gt($assignment->due_at);
+        $isPastDue = $assignment->due_at && now()->gt($assignment->due_at);
 
-    $submission = Submission::with('mediaAssets')
-        ->where('assignment_id', $assignment->id)
-        ->where('user_id', $user->id)
-        ->first();
+        $submission = Submission::with('mediaAssets')
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', $user->id)
+            ->first();
 
-    // Editable if:
-    // - never graded, AND
-    // - either it's a fresh/draft submission (always editable pre-submit),
-    //   or edit_submission is on for edits after the first submit, AND
-    // - not past due UNLESS allow_late_submission covers it.
-    $canEdit = true;
+        $canEdit = $this->computeCanEdit($assignment, $submission, $isPastDue);
 
-    if ($submission) {
-        if ($submission->status === 'graded') {
-            $canEdit = false;
-        } elseif ($submission->status !== 'draft' && !$assignment->edit_submission) {
+        // Auto-finalize: a draft left sitting once the window has genuinely
+        // closed (past due AND no longer editable) gets submitted as-is,
+        // rather than staying an invisible draft forever. Only applies to
+        // students who actually started something — see store() for the
+        // separate rule blocking brand-new submissions after this point.
+        if ($submission && $submission->status === 'draft' && $isPastDue && !$canEdit) {
+            $submission->update([
+                'status' => 'late',
+                'submitted_at' => now(),
+            ]);
+            $submission->refresh();
+        }
+
+        $canSubmitLate = !$isPastDue || $assignment->allow_late_submission;
+
+        $submissions = $isManager
+            ? Submission::with('user')
+            ->where('assignment_id', $assignment->id)
+            ->orderByRaw("FIELD(status, 'submitted', 'late', 'graded', 'draft')")
+            ->orderByDesc('submitted_at')
+            ->get()
+            : collect();
+
+        return view('assignments.show', compact(
+            'assignment',
+            'submission',
+            'isOpen',
+            'isPastDue',
+            'canEdit',
+            'canSubmitLate',
+            'isManager',
+            'submissions'
+        ));
+    }
+
+    /**
+     * Shared editability rule — used here and mirrored in
+     * SubmissionController::editableGuard() so both stay in sync.
+     */
+    private function computeCanEdit(Assignment $assignment, ?Submission $submission, bool $isPastDue): bool
+    {
+        $canEdit = true;
+
+        if ($submission) {
+            if ($submission->status === 'graded') {
+                $canEdit = false;
+            } elseif ($submission->status !== 'draft' && !$assignment->edit_submission) {
+                $canEdit = false;
+            }
+        }
+
+        if ($canEdit && $isPastDue && !$assignment->allow_late_submission) {
             $canEdit = false;
         }
+
+        return $canEdit;
     }
-
-    if ($canEdit && $isPastDue && !$assignment->allow_late_submission) {
-        $canEdit = false;
-    }
-
-    $canSubmitLate = !$isPastDue || $assignment->allow_late_submission;
-
-    return view('assignments.show', compact(
-        'assignment', 'submission', 'isOpen', 'isPastDue', 'canEdit', 'canSubmitLate', 'isManager'
-    ));
-}
 
     /**
      * Show the form for editing the specified resource.

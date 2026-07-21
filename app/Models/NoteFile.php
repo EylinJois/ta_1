@@ -15,4 +15,14 @@ class NoteFile extends Model
         'note_id',
         'original_name'
     ];
+
+    public function mediaAsset()
+    {
+        return $this->belongsTo(MediaAsset::class);
+    }
+
+    public function note()
+    {
+        return $this->belongsTo(Note::class);
+    }
 }

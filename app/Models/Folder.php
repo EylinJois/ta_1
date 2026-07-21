@@ -30,4 +30,9 @@ class Folder extends Model
             'parent_folder_id'
         );
     }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

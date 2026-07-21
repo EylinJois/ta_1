@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Note extends Model
 {
@@ -29,5 +30,18 @@ class Note extends Model
             Material::class,
             'note_materials'
         );
+    }
+
+    public function notefiles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            NoteFile::class,
+            'note_files'
+        );
+    }
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(Folder::class);
     }
 }

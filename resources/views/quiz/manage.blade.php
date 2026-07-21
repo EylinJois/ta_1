@@ -208,6 +208,7 @@
                 <p class="text-muted text-center py-4" id="emptyQuizQuestions">
                     No questions added yet. Use the panel on the left to add some.
                 </p>
+                @include('quiz.edit-point')
                 @endforelse
             </div>
 
@@ -219,46 +220,49 @@
 
 @include('quiz.questions.create-standalone')
 @include('quiz.edit-quiz')
-@include('quiz.edit-point')
 
 @endsection
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    /* ===================== QUIZ QUESTION MANAGEMENT (existing) ===================== */
+        /* ===================== QUIZ QUESTION MANAGEMENT (existing) ===================== */
 
-    const quizId = {{ $quiz->id }};
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    const availableList = document.getElementById('availableList');
-    const selectedCountEl = document.getElementById('selectedCount');
-    const addSelectedBtn = document.getElementById('addSelectedBtn');
-    const quizQuestionList = document.getElementById('quizQuestionList');
-    const quizQuestionCount = document.getElementById('quizQuestionCount');
-    const filterBank = document.getElementById('filterBank');
-    const searchInput = document.getElementById('searchQuestions');
+        const quizId = {
+            {
+                $quiz - > id
+            }
+        };
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const availableList = document.getElementById('availableList');
+        const selectedCountEl = document.getElementById('selectedCount');
+        const addSelectedBtn = document.getElementById('addSelectedBtn');
+        const quizQuestionList = document.getElementById('quizQuestionList');
+        const quizQuestionCount = document.getElementById('quizQuestionCount');
+        const filterBank = document.getElementById('filterBank');
+        const searchInput = document.getElementById('searchQuestions');
 
-    let selectedIds = new Set();
-    let searchDebounce;
+        let selectedIds = new Set();
+        let searchDebounce;
 
-    function loadAvailable() {
+        function loadAvailable() {
 
-        const params = new URLSearchParams();
-        if (filterBank.value) params.set('question_bank_id', filterBank.value);
-        if (searchInput.value) params.set('search', searchInput.value);
+            const params = new URLSearchParams();
+            if (filterBank.value) params.set('question_bank_id', filterBank.value);
+            if (searchInput.value) params.set('search', searchInput.value);
 
-        fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
-            .then(r => r.json())
-            .then(questions => {
+            fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
+                .then(r => r.json())
+                .then(questions => {
 
-                if (questions.length === 0) {
-                    availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
-                    return;
-                }
+                    if (questions.length === 0) {
+                        availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
+                        return;
+                    }
 
-                availableList.innerHTML = questions.map(q => `
+                    availableList.innerHTML = questions.map(q => `
                     <div class="form-check border-bottom py-2">
                         <input
                             class="form-check-input available-question-checkbox"
@@ -272,209 +276,236 @@ document.addEventListener('DOMContentLoaded', function () {
                         </label>
                     </div>
                 `).join('');
-            });
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    filterBank.addEventListener('change', loadAvailable);
-
-    searchInput.addEventListener('input', function () {
-        clearTimeout(searchDebounce);
-        searchDebounce = setTimeout(loadAvailable, 300);
-    });
-
-    availableList.addEventListener('change', function (e) {
-        if (!e.target.classList.contains('available-question-checkbox')) return;
-
-        const id = parseInt(e.target.value, 10);
-        if (e.target.checked) {
-            selectedIds.add(id);
-        } else {
-            selectedIds.delete(id);
+                });
         }
 
-        selectedCountEl.textContent = selectedIds.size;
-        addSelectedBtn.disabled = selectedIds.size === 0;
-    });
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
 
-    loadAvailable();
+        filterBank.addEventListener('change', loadAvailable);
 
-    addSelectedBtn.addEventListener('click', function () {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(loadAvailable, 300);
+        });
 
-        fetch(`/quizzes/${quizId}/questions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ question_ids: Array.from(selectedIds) }),
-        })
-            .then(r => r.ok ? window.location.reload() : Promise.reject())
-            .catch(() => alert('Failed to add questions. Please try again.'));
-    });
+        availableList.addEventListener('change', function(e) {
+            if (!e.target.classList.contains('available-question-checkbox')) return;
 
-    document.getElementById('randomPickForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-        const payload = Object.fromEntries(formData.entries());
-
-        fetch(`/quizzes/${quizId}/questions/random`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify(payload),
-        })
-            .then(r => r.ok ? window.location.reload() : Promise.reject())
-            .catch(() => alert('Failed to add random questions. Please try again.'));
-    });
-
-    quizQuestionList.addEventListener('click', function (e) {
-
-        const btn = e.target.closest('.remove-question-btn');
-        if (!btn) return;
-
-        if (!confirm('Remove this question from the quiz?')) return;
-
-        const row = btn.closest('.quiz-question-row');
-        const questionId = row.dataset.questionId;
-
-        fetch(`/quizzes/${quizId}/questions/${questionId}`, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-        })
-            .then(r => r.ok ? window.location.reload() : Promise.reject())
-            .catch(() => alert('Failed to remove question. Please try again.'));
-    });
-
-    let pointOverrideDebounce;
-
-    quizQuestionList.addEventListener('input', function (e) {
-        if (!e.target.classList.contains('point-override-input')) return;
-
-        clearTimeout(pointOverrideDebounce);
-
-        const row = e.target.closest('.quiz-question-row');
-        const questionId = row.dataset.questionId;
-        const value = e.target.value;
-
-        pointOverrideDebounce = setTimeout(() => {
-            fetch(`/quizzes/${quizId}/questions/${questionId}/point-override`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                body: JSON.stringify({ point_override: value || null }),
-            });
-        }, 500);
-    });
-
-    new Sortable(quizQuestionList, {
-        handle: '.drag-handle',
-        animation: 150,
-        onEnd: function () {
-
-            const orderedIds = Array.from(quizQuestionList.querySelectorAll('.quiz-question-row'))
-                .map(row => row.dataset.questionId);
-
-            fetch(`/quizzes/${quizId}/questions/reorder`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                body: JSON.stringify({ question_ids: orderedIds }),
-            });
-        },
-    });
-
-    /* ===================== QUESTION MODAL (create / edit, standalone only) ===================== */
-
-    function initQuestionModal(modal) {
-
-        const typeSelect = modal.querySelector('.question-type-select');
-        const optionsSection = modal.querySelector('.options-section');
-        const answersSection = modal.querySelector('.answers-section');
-        const fileSection = modal.querySelector('.file-section');
-        const choiceHint = modal.querySelector('.choice-hint');
-        const optionsContainer = modal.querySelector('.options-container');
-        const answersContainer = modal.querySelector('.answers-container');
-        const addOptionBtn = modal.querySelector('.add-option-btn');
-        const addAnswerBtn = modal.querySelector('.add-answer-btn');
-
-        const seedOptions = JSON.parse(modal.dataset.seedOptions || '[]');
-        const seedAnswers = JSON.parse(modal.dataset.seedAnswers || '[]');
-        const seedFileConfig = JSON.parse(modal.dataset.seedFileConfig || '{}');
-
-        const required = {
-            typeSelect, optionsSection, answersSection, fileSection,
-            choiceHint, optionsContainer, answersContainer, addOptionBtn, addAnswerBtn,
-        };
-
-        for (const [name, el] of Object.entries(required)) {
-            if (!el) {
-                console.warn(`Question modal "${modal.id}" is missing .${name.replace(/([A-Z])/g, '-$1').toLowerCase()} — skipping init.`);
-                return;
+            const id = parseInt(e.target.value, 10);
+            if (e.target.checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
             }
-        }
 
-        let answerRowCounter = 0;
+            selectedCountEl.textContent = selectedIds.size;
+            addSelectedBtn.disabled = selectedIds.size === 0;
+        });
 
-        function setSectionState(section, visible) {
-            section.classList.toggle('d-none', !visible);
-            section.querySelectorAll('input, textarea, select').forEach(function (field) {
-                field.disabled = !visible;
-            });
-        }
+        loadAvailable();
 
-        function refreshSections() {
+        addSelectedBtn.addEventListener('click', function() {
 
-            setSectionState(optionsSection, false);
-            setSectionState(answersSection, false);
-            setSectionState(fileSection, false);
-            choiceHint.classList.add('d-none');
+            fetch(`/quizzes/${quizId}/questions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        question_ids: Array.from(selectedIds)
+                    }),
+                })
+                .then(r => r.ok ? window.location.reload() : Promise.reject())
+                .catch(() => alert('Failed to add questions. Please try again.'));
+        });
 
-            switch (typeSelect.value) {
-                case 'choice':
-                    setSectionState(optionsSection, true);
-                    choiceHint.classList.remove('d-none');
-                    break;
-                case 'multiple_select':
-                    setSectionState(optionsSection, true);
-                    break;
-                case 'short_answer':
-                    setSectionState(answersSection, true);
-                    break;
-                case 'file':
-                    setSectionState(fileSection, true);
-                    break;
-                case 'both':
-                    setSectionState(answersSection, true);
-                    setSectionState(fileSection, true);
-                    break;
-                case 'written':
-                default:
-                    break;
+        document.getElementById('randomPickForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const payload = Object.fromEntries(formData.entries());
+
+            fetch(`/quizzes/${quizId}/questions/random`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(payload),
+                })
+                .then(r => r.ok ? window.location.reload() : Promise.reject())
+                .catch(() => alert('Failed to add random questions. Please try again.'));
+        });
+
+        quizQuestionList.addEventListener('click', function(e) {
+
+            const btn = e.target.closest('.remove-question-btn');
+            if (!btn) return;
+
+            if (!confirm('Remove this question from the quiz?')) return;
+
+            const row = btn.closest('.quiz-question-row');
+            const questionId = row.dataset.questionId;
+
+            fetch(`/quizzes/${quizId}/questions/${questionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                })
+                .then(r => r.ok ? window.location.reload() : Promise.reject())
+                .catch(() => alert('Failed to remove question. Please try again.'));
+        });
+
+        let pointOverrideDebounce;
+
+        quizQuestionList.addEventListener('input', function(e) {
+            if (!e.target.classList.contains('point-override-input')) return;
+
+            clearTimeout(pointOverrideDebounce);
+
+            const row = e.target.closest('.quiz-question-row');
+            const questionId = row.dataset.questionId;
+            const value = e.target.value;
+
+            pointOverrideDebounce = setTimeout(() => {
+                fetch(`/quizzes/${quizId}/questions/${questionId}/point-override`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        point_override: value || null
+                    }),
+                });
+            }, 500);
+        });
+
+        new Sortable(quizQuestionList, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: function() {
+
+                const orderedIds = Array.from(quizQuestionList.querySelectorAll('.quiz-question-row'))
+                    .map(row => row.dataset.questionId);
+
+                fetch(`/quizzes/${quizId}/questions/reorder`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        question_ids: orderedIds
+                    }),
+                });
+            },
+        });
+
+        /* ===================== QUESTION MODAL (create / edit, standalone only) ===================== */
+
+        function initQuestionModal(modal) {
+
+            const typeSelect = modal.querySelector('.question-type-select');
+            const optionsSection = modal.querySelector('.options-section');
+            const answersSection = modal.querySelector('.answers-section');
+            const fileSection = modal.querySelector('.file-section');
+            const choiceHint = modal.querySelector('.choice-hint');
+            const optionsContainer = modal.querySelector('.options-container');
+            const answersContainer = modal.querySelector('.answers-container');
+            const addOptionBtn = modal.querySelector('.add-option-btn');
+            const addAnswerBtn = modal.querySelector('.add-answer-btn');
+
+            const seedOptions = JSON.parse(modal.dataset.seedOptions || '[]');
+            const seedAnswers = JSON.parse(modal.dataset.seedAnswers || '[]');
+            const seedFileConfig = JSON.parse(modal.dataset.seedFileConfig || '{}');
+
+            const required = {
+                typeSelect,
+                optionsSection,
+                answersSection,
+                fileSection,
+                choiceHint,
+                optionsContainer,
+                answersContainer,
+                addOptionBtn,
+                addAnswerBtn,
+            };
+
+            for (const [name, el] of Object.entries(required)) {
+                if (!el) {
+                    console.warn(`Question modal "${modal.id}" is missing .${name.replace(/([A-Z])/g, '-$1').toLowerCase()} — skipping init.`);
+                    return;
+                }
             }
-        }
 
-        typeSelect.addEventListener('change', refreshSections);
+            let answerRowCounter = 0;
 
-        function updateCorrectValues() {
-            optionsContainer.querySelectorAll('.option-row').forEach(function (row, index) {
-                row.querySelector('.correct-option').value = index;
-            });
-        }
+            function setSectionState(section, visible) {
+                section.classList.toggle('d-none', !visible);
+                section.querySelectorAll('input, textarea, select').forEach(function(field) {
+                    field.disabled = !visible;
+                });
+            }
 
-        function enforceSingleCorrect(changedCheckbox) {
-            if (typeSelect.value !== 'choice') return;
-            optionsContainer.querySelectorAll('.correct-option').forEach(function (cb) {
-                if (cb !== changedCheckbox) cb.checked = false;
-            });
-        }
+            function refreshSections() {
 
-        function createOption(text = '', isCorrect = false) {
+                setSectionState(optionsSection, false);
+                setSectionState(answersSection, false);
+                setSectionState(fileSection, false);
+                choiceHint.classList.add('d-none');
 
-            const option = document.createElement('div');
-            option.className = 'option-row card mb-3';
+                switch (typeSelect.value) {
+                    case 'choice':
+                        setSectionState(optionsSection, true);
+                        choiceHint.classList.remove('d-none');
+                        break;
+                    case 'multiple_select':
+                        setSectionState(optionsSection, true);
+                        break;
+                    case 'short_answer':
+                        setSectionState(answersSection, true);
+                        break;
+                    case 'file':
+                        setSectionState(fileSection, true);
+                        break;
+                    case 'both':
+                        setSectionState(answersSection, true);
+                        setSectionState(fileSection, true);
+                        break;
+                    case 'written':
+                    default:
+                        break;
+                }
+            }
 
-            option.innerHTML = `
+            typeSelect.addEventListener('change', refreshSections);
+
+            function updateCorrectValues() {
+                optionsContainer.querySelectorAll('.option-row').forEach(function(row, index) {
+                    row.querySelector('.correct-option').value = index;
+                });
+            }
+
+            function enforceSingleCorrect(changedCheckbox) {
+                if (typeSelect.value !== 'choice') return;
+                optionsContainer.querySelectorAll('.correct-option').forEach(function(cb) {
+                    if (cb !== changedCheckbox) cb.checked = false;
+                });
+            }
+
+            function createOption(text = '', isCorrect = false) {
+
+                const option = document.createElement('div');
+                option.className = 'option-row card mb-3';
+
+                option.innerHTML = `
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-8">
@@ -497,34 +528,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             `;
 
-            optionsContainer.appendChild(option);
-            updateCorrectValues();
-        }
-
-        addOptionBtn.addEventListener('click', () => createOption());
-
-        optionsContainer.addEventListener('click', function (e) {
-            if (e.target.closest('.remove-option')) {
-                if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
-                e.target.closest('.option-row').remove();
+                optionsContainer.appendChild(option);
                 updateCorrectValues();
             }
-        });
 
-        optionsContainer.addEventListener('change', function (e) {
-            if (e.target.classList.contains('correct-option')) {
-                enforceSingleCorrect(e.target);
-            }
-        });
+            addOptionBtn.addEventListener('click', () => createOption());
 
-        function createAnswer(answer = '', ignoreCase = true, ignoreSpace = true) {
+            optionsContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-option')) {
+                    if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
+                    e.target.closest('.option-row').remove();
+                    updateCorrectValues();
+                }
+            });
 
-            const rowIndex = answerRowCounter++;
+            optionsContainer.addEventListener('change', function(e) {
+                if (e.target.classList.contains('correct-option')) {
+                    enforceSingleCorrect(e.target);
+                }
+            });
 
-            const row = document.createElement('div');
-            row.className = 'accepted-answer-row card mb-3';
+            function createAnswer(answer = '', ignoreCase = true, ignoreSpace = true) {
 
-            row.innerHTML = `
+                const rowIndex = answerRowCounter++;
+
+                const row = document.createElement('div');
+                row.className = 'accepted-answer-row card mb-3';
+
+                row.innerHTML = `
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-6">
@@ -556,87 +587,87 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             `;
 
-            answersContainer.appendChild(row);
+                answersContainer.appendChild(row);
+            }
+
+            addAnswerBtn.addEventListener('click', () => createAnswer());
+
+            answersContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-answer')) {
+                    if (answersContainer.querySelectorAll('.accepted-answer-row').length <= 1) return;
+                    e.target.closest('.accepted-answer-row').remove();
+                }
+            });
+
+            const fileTypeCheckboxes = modal.querySelectorAll('.file-type-checkbox');
+            const fileAllowedCustom = modal.querySelector('.file-allowed-custom');
+            const fileAllowedJson = modal.querySelector('.file-allowed-json');
+
+            function syncFileAllowedJson() {
+
+                const checked = Array.from(fileTypeCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                const custom = fileAllowedCustom.value
+                    .split(',')
+                    .map(s => s.trim().toLowerCase().replace(/^\./, ''))
+                    .filter(Boolean);
+
+                const combined = [...new Set([...checked, ...custom])];
+
+                fileAllowedJson.value = JSON.stringify(combined);
+            }
+
+            fileTypeCheckboxes.forEach(cb => cb.addEventListener('change', syncFileAllowedJson));
+            fileAllowedCustom.addEventListener('input', syncFileAllowedJson);
+
+            function applySeedFileConfig() {
+
+                const allowed = seedFileConfig.allowed || [];
+                const knownExtensions = Array.from(fileTypeCheckboxes).map(cb => cb.value);
+
+                fileTypeCheckboxes.forEach(cb => {
+                    cb.checked = allowed.includes(cb.value);
+                });
+
+                const customExtensions = allowed.filter(ext => !knownExtensions.includes(ext));
+                fileAllowedCustom.value = customExtensions.join(', ');
+
+                syncFileAllowedJson();
+
+                const maxFileSizeInput = modal.querySelector('input[name="max_file_size"]');
+                const maxFilesInput = modal.querySelector('input[name="max_files"]');
+
+                if (seedFileConfig.max_file_size) maxFileSizeInput.value = seedFileConfig.max_file_size;
+                if (seedFileConfig.max_files) maxFilesInput.value = seedFileConfig.max_files;
+            }
+
+            if (seedOptions.length) {
+                seedOptions.forEach(o => createOption(o.text, !!o.is_correct));
+            } else {
+                createOption();
+                createOption();
+            }
+
+            if (seedAnswers.length) {
+                seedAnswers.forEach(a => createAnswer(a.answer, !!a.ignore_case, !!a.ignore_space));
+            } else {
+                createAnswer();
+            }
+
+            applySeedFileConfig();
+            refreshSections();
         }
 
-        addAnswerBtn.addEventListener('click', () => createAnswer());
-
-        answersContainer.addEventListener('click', function (e) {
-            if (e.target.closest('.remove-answer')) {
-                if (answersContainer.querySelectorAll('.accepted-answer-row').length <= 1) return;
-                e.target.closest('.accepted-answer-row').remove();
+        document.querySelectorAll('.question-modal').forEach(function(modal) {
+            try {
+                initQuestionModal(modal);
+            } catch (err) {
+                console.error(`Failed to initialize modal "${modal.id}":`, err);
             }
         });
 
-        const fileTypeCheckboxes = modal.querySelectorAll('.file-type-checkbox');
-        const fileAllowedCustom = modal.querySelector('.file-allowed-custom');
-        const fileAllowedJson = modal.querySelector('.file-allowed-json');
-
-        function syncFileAllowedJson() {
-
-            const checked = Array.from(fileTypeCheckboxes)
-                .filter(cb => cb.checked)
-                .map(cb => cb.value);
-
-            const custom = fileAllowedCustom.value
-                .split(',')
-                .map(s => s.trim().toLowerCase().replace(/^\./, ''))
-                .filter(Boolean);
-
-            const combined = [...new Set([...checked, ...custom])];
-
-            fileAllowedJson.value = JSON.stringify(combined);
-        }
-
-        fileTypeCheckboxes.forEach(cb => cb.addEventListener('change', syncFileAllowedJson));
-        fileAllowedCustom.addEventListener('input', syncFileAllowedJson);
-
-        function applySeedFileConfig() {
-
-            const allowed = seedFileConfig.allowed || [];
-            const knownExtensions = Array.from(fileTypeCheckboxes).map(cb => cb.value);
-
-            fileTypeCheckboxes.forEach(cb => {
-                cb.checked = allowed.includes(cb.value);
-            });
-
-            const customExtensions = allowed.filter(ext => !knownExtensions.includes(ext));
-            fileAllowedCustom.value = customExtensions.join(', ');
-
-            syncFileAllowedJson();
-
-            const maxFileSizeInput = modal.querySelector('input[name="max_file_size"]');
-            const maxFilesInput = modal.querySelector('input[name="max_files"]');
-
-            if (seedFileConfig.max_file_size) maxFileSizeInput.value = seedFileConfig.max_file_size;
-            if (seedFileConfig.max_files) maxFilesInput.value = seedFileConfig.max_files;
-        }
-
-        if (seedOptions.length) {
-            seedOptions.forEach(o => createOption(o.text, !!o.is_correct));
-        } else {
-            createOption();
-            createOption();
-        }
-
-        if (seedAnswers.length) {
-            seedAnswers.forEach(a => createAnswer(a.answer, !!a.ignore_case, !!a.ignore_space));
-        } else {
-            createAnswer();
-        }
-
-        applySeedFileConfig();
-        refreshSections();
-    }
-
-    document.querySelectorAll('.question-modal').forEach(function (modal) {
-        try {
-            initQuestionModal(modal);
-        } catch (err) {
-            console.error(`Failed to initialize modal "${modal.id}":`, err);
-        }
-    });
-
-}); // closes document.addEventListener('DOMContentLoaded', ...)
+    }); // closes document.addEventListener('DOMContentLoaded', ...)
 </script>
 @endpush
