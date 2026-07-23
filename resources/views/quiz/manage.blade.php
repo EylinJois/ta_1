@@ -2,7 +2,7 @@
 
 @section('title', 'Manage Questions - ' . $quiz->name)
 
-@section('page-title', 'Quiz Questions')
+@section('page-title', 'Manage Quiz Questions')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
@@ -156,9 +156,16 @@
 
                         <div class="flex-grow-1">
                             <div>{{ Str::limit($question->question, 80) }}</div>
+                            @if($question->type == 'both')
+                            <span class="badge bg-light text-dark">
+                                Written + File
+                            </span>
+                            @else
                             <span class="badge bg-light text-dark">
                                 {{ ucfirst(str_replace('_', ' ', $question->type)) }}
                             </span>
+                            @endif
+
                             @if(is_null($question->question_bank_id))
                             <span class="badge bg-warning text-dark">
                                 Quiz-only
@@ -208,7 +215,6 @@
                 <p class="text-muted text-center py-4" id="emptyQuizQuestions">
                     No questions added yet. Use the panel on the left to add some.
                 </p>
-                @include('quiz.edit-point')
                 @endforelse
             </div>
 
@@ -230,11 +236,7 @@
 
         /* ===================== QUIZ QUESTION MANAGEMENT (existing) ===================== */
 
-        const quizId = {
-            {
-                $quiz - > id
-            }
-        };
+        const quizId = {{$quiz -> id}};
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const availableList = document.getElementById('availableList');
         const selectedCountEl = document.getElementById('selectedCount');
@@ -309,7 +311,6 @@
         loadAvailable();
 
         addSelectedBtn.addEventListener('click', function() {
-
             fetch(`/quizzes/${quizId}/questions`, {
                     method: 'POST',
                     headers: {
@@ -343,7 +344,6 @@
         });
 
         quizQuestionList.addEventListener('click', function(e) {
-
             const btn = e.target.closest('.remove-question-btn');
             if (!btn) return;
 
@@ -476,7 +476,6 @@
                         setSectionState(fileSection, true);
                         break;
                     case 'both':
-                        setSectionState(answersSection, true);
                         setSectionState(fileSection, true);
                         break;
                     case 'written':

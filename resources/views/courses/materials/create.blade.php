@@ -28,8 +28,7 @@
                      HEADER
                 ========================= --}}
             <div class="courses-header mb-4">
-
-                <a href="{{ route('sections.show', $section) }}"
+                <a href="{{ route('sections.show',  ['section' => $section->id]) }}"
                     class="btn btn-secondary-custom">
                     <i class="bi bi-arrow-left"></i>
                 </a>

@@ -6,122 +6,9 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
+<link rel="stylesheet" href="{{ asset('css/quiz.css') }}">
 <style>
-    .attempt-layout {
-        display: flex;
-        gap: 24px;
-        align-items: flex-start;
-    }
-
-    .attempt-sidebar {
-        width: 260px;
-        flex-shrink: 0;
-        position: sticky;
-        top: 20px;
-    }
-
-    .attempt-main {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .timer-box {
-        background: #fff;
-        border-radius: 20px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, .05);
-        margin-bottom: 16px;
-    }
-
-    .timer-box.warning {
-        color: #D62828;
-    }
-
-    .timer-value {
-        font-size: 28px;
-        font-weight: 700;
-    }
-
-    .question-nav-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
-    }
-
-    .question-nav-btn {
-        width: 100%;
-        aspect-ratio: 1;
-        border-radius: 12px;
-        border: 1px solid #eee;
-        background: #fff;
-        font-weight: 600;
-        color: #666;
-        cursor: pointer;
-        transition: .2s;
-    }
-
-    .question-nav-btn.answered {
-        background: rgba(214, 40, 40, .1);
-        color: #D62828;
-        border-color: rgba(214, 40, 40, .2);
-    }
-
-    .question-nav-btn.current {
-        background: #D62828;
-        color: #fff;
-        border-color: #D62828;
-    }
-
-    .option-row-select {
-        border: 1px solid #eee;
-        border-radius: 16px;
-        padding: 14px 18px;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: .2s;
-    }
-
-    .option-row-select:hover {
-        background: #fff8f5;
-    }
-
-    .option-row-select.selected {
-        border-color: #D62828;
-        background: rgba(214, 40, 40, .06);
-    }
-
-    .attempt-question-panel {
-        display: none;
-    }
-
-    .attempt-question-panel.active {
-        display: block;
-    }
-
-    .autosave-indicator {
-        font-size: 13px;
-        color: #999;
-    }
-
-    .autosave-indicator.saving {
-        color: #F77F00;
-    }
-
-    .autosave-indicator.saved {
-        color: #2e7d32;
-    }
-
-    @media(max-width:900px) {
-        .attempt-layout {
-            flex-direction: column;
-        }
-
-        .attempt-sidebar {
-            width: 100%;
-            position: static;
-        }
-    }
+    
 </style>
 @endpush
 
@@ -341,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
     tinymce.init({
         selector: '.tinymce-editor',
         height: 250,
-        menubar: false,
+        menubar: true,
         plugins: 'lists link',
         toolbar: 'bold italic underline | bullist numlist | link',
         setup: function (editor) {

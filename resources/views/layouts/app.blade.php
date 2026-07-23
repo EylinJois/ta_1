@@ -21,6 +21,7 @@
 
     {{-- Custom CSS --}}
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/notes.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -81,10 +82,10 @@
                 </li>
 
                 <li>
-                    <a href="#">
+                    <a href="{{ route('notes.index') }}">
                         <i class="bi bi-journal-bookmark-fill"></i>
                         <span class="menu-text">
-                            Materials
+                            Notes
                         </span>
                     </a>
                 </li>
@@ -281,7 +282,7 @@
     </script>
 
     @stack('scripts')
-
+    @include('notes.partials.note-modal')
 </body>
 
 </html>

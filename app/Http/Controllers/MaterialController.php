@@ -175,10 +175,7 @@ class MaterialController extends Controller
             }
         });
 
-        return back()->with(
-            'success',
-            'Material created successfully.'
-        );
+        return redirect()->route('sections.show',  $request->section_id);
     }
 
     private function extractYoutubeId($url)

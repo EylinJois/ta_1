@@ -14,7 +14,9 @@ use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TTSController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\FolderController;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -49,7 +51,6 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
 
     Route::post('/materials/{material}/progress', [MaterialProgressController::class, 'update'])
         ->name('materials.progress.update');
-
 });
 
 /*
@@ -86,7 +87,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/materials/create/{section}', [MaterialController::class, 'create'])->name('materials.create');
     Route::get('/media/{asset}/download', [MaterialController::class, 'download'])->name('media.download');
-    Route::resource('materials', MaterialController::class);
+    Route::resource('materials', MaterialController::class)->except(['create']);
 
     /*
     |----------------------------------------------------------------------
@@ -140,6 +141,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/answer/file', [AttemptController::class, 'uploadAnswerFile'])->name('answer.file');
         Route::delete('/answer/file/{mediaAsset}', [AttemptController::class, 'deleteAnswerFile'])->name('answer.file.delete');
         Route::post('/submit', [AttemptController::class, 'submit'])->name('submit');
+        Route::get('/grade', [AttemptController::class, 'grade'])->name('grade');
+        Route::post('/grade', [AttemptController::class, 'saveGrade'])->name('grade.save');
     });
 
     /*
@@ -164,11 +167,11 @@ Route::middleware(['auth'])->group(function () {
     |----------------------------------------------------------------------
     */
 
-    
-Route::get('assignments/{assignment}/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
-Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
-Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
-Route::put('submissions/{submission}', [SubmissionController::class, 'gradeUpdate'])->name('submissions.grade.update');
+
+    Route::get('assignments/{assignment}/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+    Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
+    Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
+    Route::put('submissions/{submission}', [SubmissionController::class, 'gradeUpdate'])->name('submissions.grade.update');
     Route::prefix('assignments/{assignment}/submission')->name('submissions.')->group(function () {
         Route::post('/', [SubmissionController::class, 'store'])->name('store');
         Route::post('/file', [SubmissionController::class, 'uploadFile'])->name('file.store');
@@ -185,10 +188,14 @@ Route::put('submissions/{submission}', [SubmissionController::class, 'gradeUpdat
     Route::get('/tts', [TTSController::class, 'index'])->name('tts.index');
     Route::post('/tts/generate', [TTSController::class, 'generate'])->name('tts.generate');
 
-     /*
+    /*
     |----------------------------------------------------------------------
-    | NOTES
+    | NOTES & FOLDERS
     |----------------------------------------------------------------------
     */
     Route::resource('notes', NoteController::class);
+    Route::patch('/notes/{id}', [NoteController::class, 'pin'])->name('notes.pin');
+    Route::resource('folders', FolderController::class);
+    Route::get('/notes/form-data', [NoteController::class, 'formData'])->name('notes.form-data');
+    Route::get('/notes/{note}/edit-data', [NoteController::class, 'editData'])->name('notes.edit-data');
 });

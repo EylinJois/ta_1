@@ -408,7 +408,6 @@
                         setSectionState(fileSection, true);
                         break;
                     case 'both':
-                        setSectionState(answersSection, true);
                         setSectionState(fileSection, true);
                         break;
                     case 'written':

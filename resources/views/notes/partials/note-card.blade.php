@@ -24,9 +24,9 @@
                 </button>
             </form>
 
-            <a href="{{ route('notes.edit', $note) }}" class="icon-action-btn edit-btn">
+            <button type="button" class="icon-action-btn edit-btn" onclick="openNoteModal({ mode: 'edit', noteId: {{ $note->id }} })">
                 <i class="bi bi-pencil-fill"></i>
-            </a>
+            </button>
 
             <form action="{{ route('notes.destroy', $note) }}" method="POST"
                 onsubmit="return confirm('Delete this note?')">

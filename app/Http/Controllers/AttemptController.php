@@ -32,38 +32,38 @@ class AttemptController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Quiz $quiz)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $existingInProgress = Attempt::where('quiz_id', $quiz->id)
-        ->where('user_id', $user->id)
-        ->where('status', 'in_progress')
-        ->first();
+        $existingInProgress = Attempt::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'in_progress')
+            ->first();
 
-    if ($existingInProgress) {
-        // Resume rather than create a duplicate.
-        return redirect()->route('attempts.take', $existingInProgress);
+        if ($existingInProgress) {
+            // Resume rather than create a duplicate.
+            return redirect()->route('attempts.take', $existingInProgress);
+        }
+
+        $completedCount = Attempt::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['submitted', 'graded'])
+            ->count();
+
+        if ($quiz->max_attempt && $completedCount >= $quiz->max_attempt) {
+            return back()->with('error', 'You have used all your attempts for this quiz.');
+        }
+
+        $attempt = Attempt::create([
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+            'attempt_no' => $completedCount + 1,
+            'status' => 'in_progress',
+            'started_at' => now(),
+        ]);
+
+        return redirect()->route('attempts.take', $attempt);
     }
-
-    $completedCount = Attempt::where('quiz_id', $quiz->id)
-        ->where('user_id', $user->id)
-        ->whereIn('status', ['submitted', 'graded'])
-        ->count();
-
-    if ($quiz->max_attempt && $completedCount >= $quiz->max_attempt) {
-        return back()->with('error', 'You have used all your attempts for this quiz.');
-    }
-
-    $attempt = Attempt::create([
-        'quiz_id' => $quiz->id,
-        'user_id' => $user->id,
-        'attempt_no' => $completedCount + 1,
-        'status' => 'in_progress',
-        'started_at' => now(),
-    ]);
-
-    return redirect()->route('attempts.take', $attempt);
-}
 
     /**
      * Display the specified resource.
@@ -220,7 +220,7 @@ class AttemptController extends Controller
 
         $validated = $request->validate([
             'quiz_question_id' => 'required|integer|exists:quiz_questions,id',
-            'file' => 'required|file|max:102400',
+            'file' => 'file',
         ]);
 
         $quizQuestion = DB::table('quiz_questions')->find($validated['quiz_question_id']);
@@ -259,6 +259,8 @@ class AttemptController extends Controller
             'file_path' => $path,
             'original_name' => $request->file('file')->getClientOriginalName(),
             'uploaded_by' => auth()->id(),
+            'mime' => $request->file('file')->getMimeType(),
+            'size' => $request->file('file')->getSize(),
         ]);
 
         $answer->mediaAssets()->attach($mediaAsset->id);
@@ -300,8 +302,8 @@ class AttemptController extends Controller
             $needsManualGrading = false;
 
             $answers = AttemptAnswer::where('attempt_id', $attempt->id)
-    ->with(['quizQuestion.question.acceptedAnswers', 'quizQuestion.question.options', 'selectedOptions', 'mediaAssets'])
-    ->get();
+                ->with(['quizQuestion.question.acceptedAnswers', 'quizQuestion.question.options', 'selectedOptions', 'mediaAssets'])
+                ->get();
 
             foreach ($answers as $answer) {
 
@@ -368,4 +370,99 @@ class AttemptController extends Controller
     }
 
 
+    private function authorizeGrade(Attempt $attempt)
+    {
+        $course = $attempt->quiz->section->course;
+        abort_unless(
+            auth()->user()->isAdmin($course->id) || auth()->user()->isTeacher($course->id),
+            403
+        );
+    }
+
+    public function grade(Attempt $attempt)
+    {
+        $this->authorizeGrade($attempt);
+
+        abort_if($attempt->status === 'in_progress', 422, 'This attempt is still in progress and cannot be graded yet.');
+
+        $quiz = $attempt->quiz;
+
+        $quizQuestions = DB::table('quiz_questions')
+            ->where('quiz_id', $quiz->id)
+            ->orderBy('order_index')
+            ->get();
+
+        $questions = \App\Models\Question::with(['options', 'acceptedAnswers'])
+            ->whereIn('id', $quizQuestions->pluck('question_id'))
+            ->get()
+            ->keyBy('id');
+
+        $orderedQuestions = $quizQuestions->map(function ($qq) use ($questions) {
+            $question = $questions->get($qq->question_id);
+            if (!$question) return null;
+            $question->quiz_question_id = $qq->id;
+            $question->effective_point = $qq->point_override ?? $question->point;
+            return $question;
+        })->filter()->values();
+
+        $answers = AttemptAnswer::where('attempt_id', $attempt->id)
+            ->with(['selectedOptions', 'mediaAssets', 'selectedOption'])
+            ->get()
+            ->keyBy('quiz_question_id');
+
+        return view('quiz.attempt.grade', compact('attempt', 'quiz', 'orderedQuestions', 'answers'));
+    }
+
+    public function saveGrade(Request $request, Attempt $attempt)
+    {
+        $this->authorizeGrade($attempt);
+
+        // Build per-question max-point rules dynamically, since each question
+        // has its own point value (with quiz_questions.point_override taking
+        // precedence over questions.point).
+        $maxPoints = DB::table('quiz_questions')
+            ->join('questions', 'questions.id', '=', 'quiz_questions.question_id')
+            ->where('quiz_questions.quiz_id', $attempt->quiz_id)
+            ->select('quiz_questions.id as quiz_question_id', 'quiz_questions.point_override', 'questions.point')
+            ->get()
+            ->mapWithKeys(fn($quizq) => [$quizq->quiz_question_id => $quizq->point_override ?? $quizq->point]);
+
+        $rules = [
+            'scores' => 'required|array',
+            'feedback' => 'nullable|array',
+            'feedback.*' => 'nullable|string',
+        ];
+
+        foreach ($maxPoints as $quizQuestionId => $maxPoint) {
+            $rules["scores.{$quizQuestionId}"] = "nullable|numeric|min:0|max:{$maxPoint}";
+        }
+
+        $validated = $request->validate($rules);
+
+
+        DB::transaction(function () use ($validated, $attempt) {
+
+            foreach ($validated['scores'] as $quizQuestionId => $score) {
+
+                AttemptAnswer::updateOrCreate(
+                    ['attempt_id' => $attempt->id, 'quiz_question_id' => $quizQuestionId],
+                    [
+                        'score' => $score,
+                        'feedback' => $validated['feedback'][$quizQuestionId] ?? null,
+                    ]
+                );
+            }
+
+            $totalScore = AttemptAnswer::where('attempt_id', $attempt->id)->sum('score');
+
+            $attempt->update([
+                'score' => $totalScore,
+                'status' => 'graded',
+            ]);
+        });
+
+        return redirect()
+            ->route('quizzes.attempts.index', $attempt->quiz_id)
+            ->with('success', 'Attempt graded.');
+    }
 }

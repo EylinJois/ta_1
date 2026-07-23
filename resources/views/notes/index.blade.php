@@ -5,6 +5,7 @@
 @section('page-title', 'My Notes')
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('css/course.css') }}">
 <link rel="stylesheet" href="{{ asset('css/notes.css') }}">
 @endpush
 
@@ -44,13 +45,10 @@
 
             </button>
 
-            <a href="{{ route('notes.create', $currentFolder ? ['folder' => $currentFolder->id] : []) }}"
-                class="btn btn-theme">
-
+            <button type="button" class="btn btn-theme" onclick="openNoteModal({ mode: 'create'{{ $currentFolder ? ', folderId: ' . $currentFolder->id : '' }} })">
                 <i class="bi bi-file-earmark-plus"></i>
                 New Note
-
-            </a>
+            </button>
 
         </div>
 
@@ -208,3 +206,11 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('note-saved', function() {
+        window.location.reload();
+    });
+</script>
+@endpush

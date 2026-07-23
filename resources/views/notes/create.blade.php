@@ -49,7 +49,7 @@
                     <div class="mb-3">
 
                         <label class="form-label">
-                            Photos of Physical Notes
+                            Photos of Physical Notes (max. 10 MB)
                         </label>
 
                         <input type="file" name="photos[]" id="photoInput" class="form-control"

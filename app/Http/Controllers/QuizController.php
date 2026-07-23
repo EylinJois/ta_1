@@ -63,7 +63,7 @@ class QuizController extends Controller
             'shuffle_questions' => $request->shuffle_questions,
             'shuffle_options' => $request->shuffle_options
         ]);
-        return redirect()->route('sections.show', $request->section_id)->with('success', 'Quiz created successfully.');
+        return redirect()->route('quizzes.edit', $quiz->id);
     }
 
     /**
@@ -245,6 +245,11 @@ class QuizController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $quiz = Quiz::findOrFail($id);
+        $this->authorizeManage($quiz);
+
+        $quiz->delete();
+
+        return back()->with('success', 'Quiz deleted.');
     }
 }
