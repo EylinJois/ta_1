@@ -75,7 +75,7 @@
                 @switch($submission->status)
                 @case('draft') Draft @break
                 @case('submitted') Submitted @break
-                @case('late') Late @break
+                @case('late') Submitted Late @break
                 @case('graded') Graded @break
                 @endswitch
                 @else
@@ -157,14 +157,15 @@
 
                     <td class="text-end">
 
-                        <a href="{{ route('submissions.show', $sub) }}" class="btn btn-secondary-custom btn-sm">
+                        <!-- <a href="{{ route('submissions.show', $sub) }}" class="btn btn-secondary-custom btn-sm">
                             <i class="bi bi-eye"></i>
                             View
-                        </a>
+                        </a> -->
 
                         @if($sub->status !== 'draft')
-                        <a href="{{ route('submissions.edit', $sub) }}" class="icon-action-btn edit-btn">
+                        <a href="{{ route('submissions.edit', $sub) }}" class="btn edit-btn">
                             <i class="bi bi-pencil-fill"></i>
+                            Grade
                         </a>
                         @endif
 
@@ -227,6 +228,8 @@
         </h5>
         @if(!$canEdit)
         <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> Locked</span>
+        @else
+        <span class="qbank-badge">Last edited at {{ $submission->updated_at->diffForHumans() }}</span>
         @endif
     </div>
 
@@ -267,7 +270,7 @@
             </ul>
         </div>
         @endif
-
+        
         @if($canEdit)
         <div class="d-flex gap-2 justify-content-end">
             <button type="button" class="btn btn-secondary-custom" id="saveDraftBtn">
@@ -299,11 +302,7 @@
             return; // manager view has no submission form/JS to wire up
         }
 
-        const assignmentId = {
-            {
-                $assignment - > id
-            }
-        };
+        const assignmentId = {{$assignment->id }};
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const canEdit = @json($canEdit);
 

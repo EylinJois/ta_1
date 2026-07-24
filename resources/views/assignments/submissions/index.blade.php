@@ -80,9 +80,9 @@
 
                     <td class="text-end">
 
-                        <a href="{{ route('submissions.show', $submission) }}" class="btn btn-secondary btn-sm">
+                        <!-- <a href="{{ route('submissions.show', $submission) }}" class="btn btn-secondary btn-sm">
                             <i class="bi bi-eye"></i>
-                        </a>
+                        </a> -->
 
                         @if($submission->status !== 'draft')
                         <a href="{{ route('submissions.edit', $submission) }}" class="icon-action-btn edit-btn btn-sm">

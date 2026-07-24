@@ -139,6 +139,8 @@ class SubmissionController extends Controller
             'file_path' => $path,
             'original_name' => $request->file('file')->getClientOriginalName(),
             'uploaded_by' => $user->id,
+            'mime' => $request->file('file')->getMimeType(),
+            'size' => $request->file('file')->getSize()
         ]);
 
         $submission->mediaAssets()->attach($mediaAsset->id);
@@ -191,11 +193,12 @@ class SubmissionController extends Controller
 
     public function show(Submission $submission)
     {
-        $this->authorizeManage($submission->assignment->section);
+        // $this->authorizeManage($submission->assignment->section);
 
-        $submission->load(['user', 'mediaAssets', 'assignment', 'grader']);
+        // $submission->load(['user', 'mediaAssets', 'assignment', 'grader']);
+        // $assignment = $submission->assignment;
 
-        return view('assignments.submissions.show', compact('submission'));
+        // return view('assignments.show', compact('submission', 'assignment'));
     }
 
     public function edit(Submission $submission)
@@ -203,8 +206,9 @@ class SubmissionController extends Controller
         $this->authorizeManage($submission->assignment->section);
 
         $submission->load(['user', 'mediaAssets', 'assignment']);
+        $assignment = $submission->assignment;
 
-        return view('assignments.submissions.edit', compact('submission'));
+        return view('assignments.submissions.edit', compact('submission', 'assignment'));
     }
 
     public function gradeUpdate(Request $request, Submission $submission)
@@ -225,7 +229,7 @@ class SubmissionController extends Controller
         ]);
 
         return redirect()
-            ->route('assignments.submissions.index', $submission->assignment_id)
+            ->route('assignments.show', $submission->assignment_id)
             ->with('success', 'Submission graded.');
     }
 }

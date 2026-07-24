@@ -12,7 +12,7 @@
 @section('content')
 
 <div class="mb-4">
-    <a href="{{ route('submissions.show', $submission) }}" class="btn btn-secondary-custom">
+    <a href="{{ route('assignments.show', $assignment) }}" class="btn btn-secondary-custom">
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>
