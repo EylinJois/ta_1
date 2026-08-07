@@ -1,11 +1,11 @@
 @php
-    $photoFiles = $note->files->filter(fn($f) => $f->mediaAsset);
+    $photoFiles = $note->noteFiles->filter(fn($f) => $f->mediaAsset);
     $photoPreview = $photoFiles->take(3);
     $extraPhotoCount = max(0, $photoFiles->count() - $photoPreview->count());
 @endphp
 
 <div class="note-card"
-    onclick="if (!event.target.closest('.note-card-actions')) { window.location = '{{ route('notes.show', $note) }}'; }">
+    onclick="if (!event.target.closest('.note-card-actions')) { window.location = '{{ route('notes.edit', $note) }}'; }">
 
     <div class="note-card-top">
 
@@ -15,20 +15,15 @@
 
         <div class="note-card-actions">
 
-            <form action="{{ route('notes.pin', $note) }}" method="POST">
-                @csrf
-                @method('PATCH')
-                <button type="submit" class="icon-action-btn pin-btn {{ $note->pinned ? 'pinned' : '' }}"
-                    title="{{ $note->pinned ? 'Unpin' : 'Pin' }}">
-                    <i class="bi {{ $note->pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle' }}"></i>
-                </button>
-            </form>
-
-            <button type="button" class="icon-action-btn edit-btn" onclick="openNoteModal({ mode: 'edit', noteId: {{ $note->id }} })">
-                <i class="bi bi-pencil-fill"></i>
+            <button type="button"
+                class="icon-action-btn pin-btn {{ $note->pinned ? 'pinned' : '' }}"
+                data-note-id="{{ $note->id }}"
+                data-pinned="{{ $note->pinned ? '1' : '0' }}"
+                title="{{ $note->pinned ? 'Unpin' : 'Pin' }}">
+                <i class="bi {{ $note->pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle' }}"></i>
             </button>
 
-            <form action="{{ route('notes.destroy', $note) }}" method="POST"
+            <form action="{{ route('notes.destroy', $note->id) }}" method="POST"
                 onsubmit="return confirm('Delete this note?')">
                 @csrf
                 @method('DELETE')

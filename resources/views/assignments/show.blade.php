@@ -112,14 +112,14 @@
     @if($submissions->isNotEmpty())
 
     <div class="table-responsive">
-        <table class="table align-middle">
+        <table class="table table-hover align-middle text-center">
             <thead>
                 <tr>
                     <th>Student</th>
                     <th>Status</th>
                     <th>Score</th>
                     <th>Submitted</th>
-                    <th class="text-end">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -155,7 +155,7 @@
                         {{ $sub->submitted_at ? $sub->submitted_at->format('d M Y, H:i') : '—' }}
                     </td>
 
-                    <td class="text-end">
+                    <td>
 
                         <!-- <a href="{{ route('submissions.show', $sub) }}" class="btn btn-secondary-custom btn-sm">
                             <i class="bi bi-eye"></i>
@@ -229,7 +229,9 @@
         @if(!$canEdit)
         <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> Locked</span>
         @else
+        @if($submission)
         <span class="qbank-badge">Last edited at {{ $submission->updated_at->diffForHumans() }}</span>
+        @endif
         @endif
     </div>
 
@@ -302,7 +304,7 @@
             return; // manager view has no submission form/JS to wire up
         }
 
-        const assignmentId = {{$assignment->id }};
+        const assignmentId = {{$assignment->id}};
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const canEdit = @json($canEdit);
 
@@ -328,7 +330,7 @@
                 height: 300,
                 menubar: true,
                 plugins: 'lists link',
-                toolbar: 'bold italic underline | bullist numlist | link',
+                toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link',
                 readonly: !canEdit, // prevents editing from the very first render
                 setup: function(editor) {
                     editor.on('init', function() {

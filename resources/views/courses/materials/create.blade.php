@@ -631,7 +631,7 @@
                 height: 500,
                 menubar: true,
                 plugins: "lists link fullscreen",
-                toolbar: "undo redo | blocks | bold italic | code"
+                toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link'
             });
 
         }

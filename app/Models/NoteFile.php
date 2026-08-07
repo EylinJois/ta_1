@@ -16,13 +16,19 @@ class NoteFile extends Model
         'original_name'
     ];
 
+    protected $casts = [
+        'media_asset_id' => 'integer',
+        'note_id' => 'integer'
+    ];
+
     public function mediaAsset()
     {
-        return $this->belongsTo(MediaAsset::class);
+        return $this->belongsTo(MediaAsset::class, 'media_asset_id');
     }
+
 
     public function note()
     {
-        return $this->belongsTo(Note::class);
+        return $this->belongsTo(Note::class, 'note_id');
     }
 }

@@ -410,9 +410,43 @@ class AttemptController extends Controller
             ->get()
             ->keyBy('quiz_question_id');
 
-        return view('quiz.attempt.grade', compact('attempt', 'quiz', 'orderedQuestions', 'answers'));
+            $courseId = $quiz->section->course_id;
+        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers','courseId'));
     }
 
+    public function review(Attempt $attempt)
+    {
+        abort_if($attempt->status === 'in_progress', 422, 'This attempt is still in progress and cannot be graded yet.');
+
+        $quiz = $attempt->quiz;
+
+        $quizQuestions = DB::table('quiz_questions')
+            ->where('quiz_id', $quiz->id)
+            ->orderBy('order_index')
+            ->get();
+
+        $questions = \App\Models\Question::with(['options', 'acceptedAnswers'])
+            ->whereIn('id', $quizQuestions->pluck('question_id'))
+            ->get()
+            ->keyBy('id');
+
+        $orderedQuestions = $quizQuestions->map(function ($qq) use ($questions) {
+            $question = $questions->get($qq->question_id);
+            if (!$question) return null;
+            $question->quiz_question_id = $qq->id;
+            $question->effective_point = $qq->point_override ?? $question->point;
+            return $question;
+        })->filter()->values();
+
+        $answers = AttemptAnswer::where('attempt_id', $attempt->id)
+            ->with(['selectedOptions', 'mediaAssets', 'selectedOption'])
+            ->get()
+            ->keyBy('quiz_question_id');
+
+        $courseId = $quiz->section->course_id;
+
+        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers','courseId'));
+    }
     public function saveGrade(Request $request, Attempt $attempt)
     {
         $this->authorizeGrade($attempt);

@@ -142,6 +142,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/answer/file/{mediaAsset}', [AttemptController::class, 'deleteAnswerFile'])->name('answer.file.delete');
         Route::post('/submit', [AttemptController::class, 'submit'])->name('submit');
         Route::get('/grade', [AttemptController::class, 'grade'])->name('grade');
+        Route::get('/review', [AttemptController::class, 'review'])->name('review');
         Route::post('/grade', [AttemptController::class, 'saveGrade'])->name('grade.save');
     });
 
@@ -193,8 +194,9 @@ Route::middleware(['auth'])->group(function () {
     | NOTES & FOLDERS
     |----------------------------------------------------------------------
     */
-    Route::resource('notes', NoteController::class);
-    Route::patch('/notes/{id}', [NoteController::class, 'pin'])->name('notes.pin');
+    Route::resource('notes', NoteController::class)->except(['update']);
+    Route::put('/notes/{note}/update', [NoteController::class, 'update'])->name('notes.update');
+    Route::patch('/notes/{note}', [NoteController::class, 'pin'])->name('notes.pin');
     Route::resource('folders', FolderController::class);
     Route::get('/notes/form-data', [NoteController::class, 'formData'])->name('notes.form-data');
     Route::get('/notes/{note}/edit-data', [NoteController::class, 'editData'])->name('notes.edit-data');

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Note extends Model
 {
@@ -32,12 +33,9 @@ class Note extends Model
         );
     }
 
-    public function notefiles(): BelongsToMany
+    public function notefiles(): HasMany
     {
-        return $this->belongsToMany(
-            NoteFile::class,
-            'note_files'
-        );
+         return $this->hasMany(NoteFile::class, 'note_id');
     }
 
     public function folder(): BelongsTo

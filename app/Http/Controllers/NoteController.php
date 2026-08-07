@@ -84,7 +84,18 @@ class NoteController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $note = Note::findOrFail($id);
+        $folder = Folder::where('id', request('folder'))->first() ?? null;
+        $allFolders = Folder::where('user_id', auth()->id())->get();
+
+        $courseIds = Auth::user()->courses()->pluck('courses.id');
+        $sectionIds = Section::whereIn('course_id', $courseIds)
+            ->pluck('id');
+        $materials = Material::whereIn('section_id', $sectionIds)
+            ->where('visibility', 1)
+            ->get();
+
+        return view('notes.edit', compact('note', 'folder', 'allFolders', 'materials'));
     }
 
 
@@ -93,10 +104,36 @@ class NoteController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $note = Note::findOrFail($id);
+
+        abort_unless($note->user_id === auth()->id(), 403);
+
+        DB::transaction(function () use ($note) {
+            foreach ($note->noteFiles as $file) {
+                if ($file->mediaAsset) {
+                    Storage::disk($file->mediaAsset->storage_disk)->delete($file->mediaAsset->file_path);
+                    $file->mediaAsset->delete();
+                }
+                $file->delete();
+            }
+
+            $note->materials()->detach();
+            $note->delete();
+        });
+
+        return redirect()
+            ->route('notes.index', $note->folder_id ? ['folder' => $note->folder_id] : [])
+            ->with('success', 'Note deleted successfully.');
     }
 
-    public function pin(string $id) {}
+    public function pin(Note $note)
+    {
+        abort_unless($note->user_id === auth()->id(), 403);
+
+        $note->update(['pinned' => !$note->pinned]);
+
+        return response()->json(['status' => 'ok', 'pinned' => $note->pinned]);
+    }
 
     /**
      * Small dataset the modal fetches once (cached client-side) to populate
@@ -192,7 +229,7 @@ class NoteController extends Controller
         }
 
         return redirect()
-            ->route('notes.index', $note->folder_id ? ['folder' => $note->folder_id] : [])
+            ->route('notes.edit', ['note' => $note->id, 'folder' => $note->folder_id])
             ->with('success', 'Note created successfully.');
     }
 
@@ -230,7 +267,7 @@ class NoteController extends Controller
             ]);
 
             if (!empty($validated['remove_file_ids'])) {
-                $filesToRemove = $note->files()->whereIn('id', $validated['remove_file_ids'])->get();
+                $filesToRemove = $note->noteFiles()->whereIn('id', $validated['remove_file_ids'])->get();
 
                 foreach ($filesToRemove as $file) {
                     if ($file->mediaAsset) {

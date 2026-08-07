@@ -45,10 +45,10 @@
 
             </button>
 
-            <button type="button" class="btn btn-theme" onclick="openNoteModal({ mode: 'create'{{ $currentFolder ? ', folderId: ' . $currentFolder->id : '' }} })">
+            <a href="{{ route('notes.create', $currentFolder ? ['folder' => $currentFolder->id] : []) }}" class="btn btn-theme">
                 <i class="bi bi-file-earmark-plus"></i>
                 New Note
-            </button>
+            </a>
 
         </div>
 
@@ -204,6 +204,8 @@
         </div>
     </div>
 </div>
+
+@include('notes.partials.note-modal')
 
 @endsection
 

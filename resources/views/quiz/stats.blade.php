@@ -132,6 +132,7 @@
                     <th>Duration</th>
                     <th>Started</th>
                     <th>Submitted</th>
+                    <th class="text-end">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -162,11 +163,11 @@
                         @if(!is_null($attempt->score))
                         {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}
                         @if($quiz->pass_score)
-                            @if($attempt->score >= $quiz->pass_score)
-                            <span class="badge bg-success ms-1">Pass</span>
-                            @else
-                            <span class="badge bg-danger ms-1">Fail</span>
-                            @endif
+                        @if($attempt->score >= $quiz->pass_score)
+                        <span class="badge bg-success ms-1">Pass</span>
+                        @else
+                        <span class="badge bg-danger ms-1">Fail</span>
+                        @endif
                         @endif
                         @else
                         —
@@ -183,7 +184,11 @@
 
                     <td>{{ $attempt->started_at->format('d M Y, H:i') }}</td>
                     <td>{{ $attempt->submitted_at ? $attempt->submitted_at->format('d M Y, H:i') : '—' }}</td>
-
+                    <td>
+                        <a href="{{ route('attempts.grade', $attempt) }}" class="icon-action-btn edit-btn btn-sm">
+                            <i class="bi bi-pencil-fill"></i>
+                    </td>
+                    </a>
                 </tr>
                 @endforeach
             </tbody>

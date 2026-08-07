@@ -42,11 +42,33 @@ class SubmissionController extends Controller
 
         $isPastDue = $assignment->due_at && now()->gt($assignment->due_at);
 
-        // No submission exists yet, and the window is genuinely closed — block
-        // starting one at all, regardless of draft vs. submit action.
-        if (!$existingSubmission && $isPastDue && !$assignment->allow_late_submission) {
+        // Fully closed: past due AND the assignment doesn't allow edits after
+        // the fact at all. Distinct from allow_late_submission, which only
+        // governs whether a late *first* submission is accepted.
+        $isLocked = $isPastDue && !$assignment->edit_submission;
+
+        // Auto-finalize a lingering draft the moment the window closes, rather
+        // than leaving it stuck invisible forever. Stop here — nothing else
+        // in this request should act on it once it's just been finalized.
+        if ($existingSubmission && $existingSubmission->status === 'draft' && $isLocked) {
+
+            $existingSubmission->update([
+                'status' => 'late',
+                'submitted_at' => now(),
+            ]);
+
             return response()->json([
-                'message' => 'The due date has passed and this assignment can no longer be started.',
+                'message' => 'The due date has passed — your draft was automatically submitted and can no longer be edited.',
+            ], 422);
+        }
+
+        // No submission exists yet, and either the window is closed to late
+        // starts, or it's fully locked — block starting one at all.
+        if (!$existingSubmission && (($isPastDue && !$assignment->allow_late_submission) || $isLocked)) {
+            return response()->json([
+                'message' => $isLocked
+                    ? 'This assignment is closed and no longer accepts submissions.'
+                    : 'The due date has passed and this assignment can no longer be started.',
             ], 422);
         }
 

@@ -167,7 +167,7 @@
     </h5>
 
     <div class="table-responsive">
-        <table class="table align-middle">
+        <table class="table table-hover align-middle text-center">
             <thead>
                 <tr>
                     <th>#</th>
@@ -175,6 +175,7 @@
                     <th>Score</th>
                     <th>Started</th>
                     <th>Submitted</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -195,23 +196,30 @@
                         @endswitch
                     </td>
                     <td>
-                        @if(!is_null($attempt->score))
+                        @if(!is_null($attempt->score) && $attempt->status == 'graded')
                         {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}%
-                        @if($quiz->pass_score)
-                            @if($attempt->score >= $quiz->pass_score)
-                            <span class="badge bg-success ms-1">Passed</span>
-                            @else
-                            <span class="badge bg-danger ms-1">Not Passed</span>
+                            @if($quiz->pass_score)
+                                @if($attempt->score >= $quiz->pass_score)
+                                <span class="badge bg-success ms-1">Passed</span>
+                                @else
+                                <span class="badge bg-danger ms-1">Not Passed</span>
+                                @endif
                             @endif
-                        @endif
                         @else
                         —
                         @endif
                     </td>
                     <td>{{ $attempt->started_at->format('d M Y, H:i') }}</td>
                     <td>{{ $attempt->submitted_at ? $attempt->submitted_at->format('d M Y, H:i') : '—' }}</td>
+                    <td>
+                        <a href="{{ route('attempts.review', $attempt) }}"
+                            class="btn edit-btn">
+                            <i class="bi bi-eye-fill"></i>
+                            Review Attempt
+                        </a>
+                    </td>
                 </tr>
-                @endforeach
+                    @endforeach
             </tbody>
         </table>
     </div>
