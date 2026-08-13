@@ -31,18 +31,10 @@ class Activity extends Model
         'is_all_day' => 'boolean'
     ];
 
-    public function type(): BelongsTo
-    {
-        return $this->belongsTo(
-            ActivityType::class
-        );
-    }
-
-    public function participants(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            User::class,
-            'calendar_event_participants'
-        );
-    }
+    public function activityType() { return $this->belongsTo(ActivityType::class, 'type_id'); }
+    public function sourceType() { return $this->belongsTo(SourceType::class, 'source_type_id'); }
+    public function course() { return $this->belongsTo(Course::class); }
+    public function user() { return $this->belongsTo(User::class); }
+    public function creator() { return $this->belongsTo(User::class, 'created_by'); }
+    public function participants() { return $this->belongsToMany(User::class, 'calendar_event_participants', 'activity_id', 'user_id'); }
 }

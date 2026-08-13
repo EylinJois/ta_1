@@ -100,7 +100,7 @@
                 </li>
 
                 <li>
-                    <a href="#">
+                    <a href="{{ route('calendar.index') }}">
                         <i class="bi bi-calendar-event-fill"></i>
                         <span class="menu-text">
                             Calendar

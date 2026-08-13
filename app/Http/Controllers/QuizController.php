@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Quiz;
 use App\Models\QuestionBank;
 use App\Models\Attempt;
+use App\Models\Activity;
 use Auth;
 
 class QuizController extends Controller
@@ -62,6 +63,18 @@ class QuizController extends Controller
             'pass_score' => $request->pass_score,
             'shuffle_questions' => $request->shuffle_questions,
             'shuffle_options' => $request->shuffle_options
+        ]);
+
+        $activity = Activity::create([
+            'name' => $quiz->name,
+            'description' => $quiz->description,
+            'starts_at' => now(),
+            'ends_at' => now()->addSeconds($duration ?? 0),
+            'user_id' => auth()->id(),
+            'activity_type_id' => ActivityType::where('name', 'Exam')->first()->id,
+            'source_type' => 'quiz',
+            'source_id' => $quiz->id,
+            'course_id' => $quiz->section->course_id,
         ]);
         return redirect()->route('quizzes.edit', $quiz->id);
     }

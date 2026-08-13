@@ -15,6 +15,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TTSController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\FolderController;
+use App\Http\Controllers\CalendarController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -200,4 +201,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('folders', FolderController::class);
     Route::get('/notes/form-data', [NoteController::class, 'formData'])->name('notes.form-data');
     Route::get('/notes/{note}/edit-data', [NoteController::class, 'editData'])->name('notes.edit-data');
+
+    /*
+    |----------------------------------------------------------------------
+    | CALENDAR
+    |----------------------------------------------------------------------
+    */
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
+    Route::post('calendar/events', [CalendarController::class, 'store'])->name('calendar.events.store');
+    Route::get('calendar/events/{activity}', [CalendarController::class, 'show'])->name('calendar.events.show');
+    Route::put('calendar/events/{activity}', [CalendarController::class, 'update'])->name('calendar.events.update');
+    Route::delete('calendar/events/{activity}', [CalendarController::class, 'destroy'])->name('calendar.events.destroy');
+    Route::patch('calendar/events/{activity}/status', [CalendarController::class, 'updateStatus'])->name('calendar.events.status');
 });
