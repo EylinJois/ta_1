@@ -33,13 +33,6 @@ class Material extends Model
         );
     }
 
-    public function unlockRules(): HasMany
-    {
-        return $this->hasMany(
-            MaterialUnlockRule::class
-        );
-    }
-
     public function materialType(): BelongsTo
     {
         return $this->belongsTo(

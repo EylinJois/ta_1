@@ -77,7 +77,6 @@ class SectionController extends Controller
     $section = Section::with([
         'course',
         'materials.materialType',
-        'materials.unlockRules.unlockType',
         'quizzes',
         'assignments',
     ])->findOrFail($id);
@@ -85,7 +84,6 @@ class SectionController extends Controller
     $course = $section->course;
 
     $materialTypes = \App\Models\MaterialType::all();
-    $unlockRuleTypes = \App\Models\UnlockRuleType::all();
 
     $roles = [
         'student' => 'Student',
@@ -98,19 +96,15 @@ class SectionController extends Controller
 
     $materials = $section->materials;
 
-    $materialProgress = \App\Models\UserMaterialProgress::where('user_id', $user->id)
-        ->whereIn('material_id', $materials->pluck('id'))
-        ->get()
-        ->keyBy('material_id');
 
-    $visibleMaterials = $materials->filter(function ($material) use ($user, $isManager, $materialProgress) {
+    $visibleMaterials = $materials->filter(function ($material) use ($user, $isManager) {
         if ($isManager || auth()->id() == $material->created_by) {
             return true;
         }
         if (!$material->visibility) {
             return false;
         }
-        return $this->materialIsUnlocked($material, $user, $materialProgress);
+        return true;
     })->values();
 
     // Quizzes: no created_by column, so visibility is the only gate for
@@ -151,7 +145,6 @@ class SectionController extends Controller
         'section',
         'course',
         'materialTypes',
-        'unlockRuleTypes',
         'roles',
         'materials',
         'visibleMaterials',
@@ -160,82 +153,8 @@ class SectionController extends Controller
     ));
 }
 
-    /**
-     * Whether all of a material's unlock rules are satisfied for the given
-     * user. Rules are combined with AND — every rule attached to the
-     * material must pass for it to be visible.
-     */
-    private function materialIsUnlocked($material, $user, $materialProgress)
-    {
-        if ($material->unlockRules->isEmpty()) {
-            return true;
-        }
 
-        foreach ($material->unlockRules as $rule) {
-            if (!$this->unlockRulePasses($rule, $user, $materialProgress)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function unlockRulePasses($rule, $user, $materialProgress)
-    {
-        switch ($rule->unlockType->code) {
-
-            case 'completed_activity':
-                // target_id = the material that must be completed first.
-                $progress = $materialProgress->get($rule->target_id)
-                    ?? \App\Models\UserMaterialProgress::where('user_id', $user->id)
-                    ->where('material_id', $rule->target_id)
-                    ->first();
-
-                return $progress && !is_null($progress->completed_at);
-
-            case 'score':
-                // ASSUMPTION: no dedicated "score" column exists in the schema,
-                // so this uses progress_percent on the target material as a
-                // stand-in for score. Minimum threshold comes from
-                // value->min_score (JSON), falling back to val_str.
-                $progress = $materialProgress->get($rule->target_id)
-                    ?? \App\Models\UserMaterialProgress::where('user_id', $user->id)
-                    ->where('material_id', $rule->target_id)
-                    ->first();
-
-                if (!$progress) {
-                    return false;
-                }
-
-                $minScore = data_get($rule->value, 'min_score', $rule->val_str);
-
-                return $minScore !== null && $progress->progress_percent >= (int) $minScore;
-
-            case 'available_at':
-                // val_str (or value->available_at) holds a datetime string;
-                // material unlocks once now() has passed it.
-                $availableAt = $rule->val_str ?: data_get($rule->value, 'available_at');
-
-                if (!$availableAt) {
-                    return true;
-                }
-
-                return now()->greaterThanOrEqualTo(\Carbon\Carbon::parse($availableAt));
-
-            case 'role':
-                // val_str holds the required role code ('admin' | 'teacher' | 'student').
-                return match ($rule->val_str) {
-                    'admin' => $user->isAdmin(),
-                    'teacher' => $user->isTeacher() || $user->isAdmin(),
-                    'student' => true,
-                    default => true,
-                };
-
-            default:
-                // Unknown rule type — fail safe by not blocking visibility.
-                return true;
-        }
-    }
+    
     /**
      * Show the form for editing the specified resource.
      */

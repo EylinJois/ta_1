@@ -9,11 +9,9 @@ use App\Models\MaterialLink;
 use App\Models\MaterialPage;
 use App\Models\MaterialYoutube;
 use App\Models\MaterialAsset;
-use App\Models\MaterialUnlockRule;
 use App\Models\MediaAsset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Models\UnlockRuleType;
 use App\Models\Section;
 class MaterialController extends Controller
 {
@@ -31,7 +29,6 @@ class MaterialController extends Controller
     public function create(Section $section)
     {
         $materialTypes = MaterialType::all();
-        $unlockTypes = UnlockRuleType::all();
         $roles = [
             1 => 'Admin',
             2 => 'Teacher',
@@ -43,7 +40,6 @@ class MaterialController extends Controller
             'section' => $section,
             'course' => $section->course,
             'materialTypes' => $materialTypes,
-            'unlockRuleTypes' => $unlockTypes,
             'roles' => $roles,
             'materials' => $materials
         ]);
@@ -160,19 +156,6 @@ class MaterialController extends Controller
 
                     break;
             }
-
-            if ($request->filled('unlock_type_id')) {
-
-                MaterialUnlockRule::create([
-                    'material_id' => $material->id,
-                    'unlock_type_id' => $request->unlock_type_id,
-                    'target_id' => $request->target_id ? $request->target_id : null,
-                    'val_st' => $request->val_st ? $request->val_st : null,
-                    'value' => $request->unlock_value
-                        ? json_encode($request->unlock_value)
-                        : null
-                ]);
-            }
         });
 
         return redirect()->route('sections.show',  $request->section_id);
@@ -263,12 +246,8 @@ class MaterialController extends Controller
             'materialYoutube',
             'materialPage',
             'materialLink',
-
             // 'materialAssets.mediaAsset',
-            'unlockRules.unlockType'
-
         ]);
-        $canAccess = $this->canAccess($material);
 
         $section = $material->section;
         $course = $section->course;
@@ -291,34 +270,12 @@ class MaterialController extends Controller
                 'material',
                 'section',
                 'course',
-                'canAccess',
                 'previous',
                 'next'
             )
         );
     }
-    private function canAccess(Material $material)
-    {
-        $rules = $material->unlockRules;
-
-        if ($rules->isEmpty()) {
-            return true;
-        }
-
-        foreach ($rules as $rule) {
-            switch ($rule->unlockType->name) {
-                case 'role':
-                    if (auth()->user()->role_id == $rule->target_id) {
-                        return true;
-                    }
-                    break;
-
-                default:
-                    return true;
-            }
-        }
-        return false;
-    }
+    
 
     /**
      * Show the form for editing the specified resource.
@@ -331,12 +288,10 @@ class MaterialController extends Controller
             'materialPage',
             'materialYoutube',
             'materialAsset.mediaAsset',
-            'unlockRules.unlockType',
         ])->findOrFail($id);
 
         $section = Section::findOrFail($material->section_id);
         $materialTypes = MaterialType::all();
-        $unlockTypes = UnlockRuleType::all();
         $roles = [
             1 => 'Admin',
             2 => 'Teacher',
@@ -348,7 +303,6 @@ class MaterialController extends Controller
             'section' => $section,
             'course' => $section->course,
             'materialTypes' => $materialTypes,
-            'unlockRuleTypes' => $unlockTypes,
             'roles' => $roles,
             'materials' => $materials,
             'material' => $material
@@ -475,25 +429,6 @@ class MaterialController extends Controller
 
                     break;
             }
-
-            if ($request->filled('unlock_type_id')) {
-
-                MaterialUnlockRule::updateOrCreate(
-                    ['material_id' => $material->id],
-                    [
-                        'unlock_type_id' => $request->unlock_type_id,
-                        'target_id' => $request->target_id ? $request->target_id : null,
-                        'val_st' => $request->val_st ? $request->val_st : null,
-                        'value' => $request->unlock_value
-                            ? json_encode($request->unlock_value)
-                            : null
-                    ]
-                );
-            } else {
-
-                // Unlock rule was cleared back to "None".
-                $material->unlockRules()->delete();
-            }
         });
 
         return back()->with(
@@ -518,9 +453,6 @@ class MaterialController extends Controller
             $material->materialLink()->delete();
             $material->materialPage()->delete();
             $material->materialYoutube()->delete();
-
-            // Unlock rule(s)
-            $material->unlockRules()->delete();
 
             $material->delete();
         });

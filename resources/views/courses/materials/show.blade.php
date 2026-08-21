@@ -10,16 +10,6 @@
 
 @section('content')
 
-@if(!$canAccess)
-
-<div class="empty-state">
-    <i class="bi bi-lock-fill"></i>
-    <h3>Material Locked</h3>
-    <p>You don't currently have permission to access this material.</p>
-</div>
-
-@else
-
 <div class="mb-4">
     <a href="{{ route('sections.show',$section) }}" class="btn btn-secondary-custom">
         <i class="bi bi-arrow-left"></i>
@@ -212,12 +202,7 @@
             }
         });
 
-        window.materialProgress = {
-            setPercentGetter: (fn) => {
-                percentGetter = fn;
-            },
-            sync,
-        };
+        
 
         document.getElementById('markCompleteBtn')?.addEventListener('click', function() {
             sync({
@@ -236,53 +221,12 @@
 
     function onYouTubeIframeAPIReady() {
         ytPlayer = new YT.Player('ytPlayer', {});
-        window.materialProgress.setPercentGetter(function() {
-            if (!ytPlayer || typeof ytPlayer.getDuration !== 'function') return 0;
-            const duration = ytPlayer.getDuration();
-            if (!duration) return 0;
-            return Math.round((ytPlayer.getCurrentTime() / duration) * 100);
-        });
     }
 </script>
 @endif
 
-@if($material->materialType->name == 'Page')
-<script>
-    (function() {
-        window.materialProgress.setPercentGetter(function() {
-            const scrollable = document.body.scrollHeight - window.innerHeight;
-            if (scrollable <= 0) return 100;
-            return Math.min(100, Math.round((window.scrollY / scrollable) * 100));
-        });
-    })();
-</script>
-@endif
 
-@if($material->materialType->name == 'Link')
-<script>
-    (function() {
-        let opened = 0;
-        window.materialProgress.setPercentGetter(() => opened);
-        document.getElementById('visitLinkBtn')?.addEventListener('click', function() {
-            opened = 25;
-            window.materialProgress.sync();
-        });
-    })();
-</script>
-@endif
 
-@if($material->materialType->name == 'File')
-<script>
-    (function() {
-        let downloaded = 0;
-        window.materialProgress.setPercentGetter(() => downloaded);
-        document.getElementById('downloadFileBtn')?.addEventListener('click', function() {
-            downloaded = 50;
-            window.materialProgress.sync();
-        });
-    })();
-</script>
-@endif
 
 @if($material->materialType->name == 'PDF')
 <script type="module">
@@ -327,9 +271,6 @@
 
             document.getElementById("pageNum").textContent = num;
             document.getElementById("zoomLevel").textContent = Math.round(scale * 100) + "%";
-
-            // Report progress on every page turn, not just the 15s heartbeat.
-            window.materialProgress.sync();
         });
     }
 
@@ -368,10 +309,6 @@
         pdfDoc = pdf;
         document.getElementById("pageCount").textContent = pdf.numPages;
 
-        window.materialProgress.setPercentGetter(function() {
-            return Math.round((pageNum / pdfDoc.numPages) * 100);
-        });
-
         renderPage(pageNum);
     });
 
@@ -409,15 +346,7 @@
         const page = book.locations.locationFromCfi(current.start.cfi);
         document.getElementById("pageNum").textContent = page;
 
-        window.materialProgress.sync();
     }
-
-    window.materialProgress.setPercentGetter(function() {
-        const current = rendition.currentLocation();
-        if (!current || !book.locations || !book.locations.total) return 0;
-        const page = book.locations.locationFromCfi(current.start.cfi);
-        return Math.round((page / book.locations.total) * 100);
-    });
 
     rendition.on("relocated", updatePage);
 

@@ -4,7 +4,6 @@ use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\MaterialController;
-use App\Http\Controllers\MaterialProgressController;
 use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuizController;
@@ -49,9 +48,6 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
         Route::put('/{participantId}', [CourseController::class, 'updateParticipantRole'])->name('update');
         Route::delete('/{participantId}', [CourseController::class, 'removeParticipant'])->name('destroy');
     });
-
-    Route::post('/materials/{material}/progress', [MaterialProgressController::class, 'update'])
-        ->name('materials.progress.update');
 });
 
 /*
