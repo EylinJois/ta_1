@@ -107,8 +107,7 @@ class SectionController extends Controller
         return true;
     })->values();
 
-    // Quizzes: no created_by column, so visibility is the only gate for
-    // non-managers.
+    
     $visibleQuizzes = $section->quizzes
         ->filter(fn ($quiz) => $isManager || $quiz->visibility)
         ->map(function ($quiz) {
@@ -116,8 +115,6 @@ class SectionController extends Controller
             return $quiz;
         });
 
-    // Assignments: has created_by, so its creator can see their own even
-    // while hidden, same rule as materials.
     $visibleAssignments = $section->assignments
     ->filter(function ($a) use ($isManager, $user) {
         if ($isManager || auth()->id() == $a->created_by) {
@@ -141,6 +138,12 @@ class SectionController extends Controller
         ->sortByDesc('created_at')
         ->values();
 
+    $completedMaterialIds = $isManager
+        ? collect()
+        : \App\Models\MaterialCompletion::where('user_id', $user->id)
+            ->whereIn('material_id', $visibleMaterials->pluck('id'))
+            ->pluck('material_id');
+
     return view('courses.sections.show', compact(
         'section',
         'course',
@@ -149,7 +152,9 @@ class SectionController extends Controller
         'materials',
         'visibleMaterials',
         'visibleActivities',
-        'visibleQuizzes'
+        'visibleQuizzes',
+        'visibleAssignments',
+        'completedMaterialIds'
     ));
 }
 

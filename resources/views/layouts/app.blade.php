@@ -55,10 +55,10 @@
             <ul class="menu">
 
                 <li>
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ route('home') }}">
                         <i class="bi bi-grid-fill"></i>
                         <span class="menu-text">
-                            Dashboard
+                            Home
                         </span>
                     </a>
                 </li>
@@ -109,7 +109,7 @@
                 </li>
 
                 <li>
-                    <a href="#">
+                    <a href="{{ route('progress.index') }}">
                         <i class="bi bi-award-fill"></i>
                         <span class="menu-text">
                             Progress

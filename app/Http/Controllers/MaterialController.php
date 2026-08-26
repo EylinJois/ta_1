@@ -68,19 +68,12 @@ class MaterialController extends Controller
         DB::transaction(function () use ($request) {
 
             $material = Material::create([
-
                 'name' => $request->name,
-
                 'description' => $request->description,
-
                 'material_type_id' => $request->material_type_id,
-
                 'created_by' => auth()->id(),
-
                 'visibility' => $request->visibility,
-
                 'section_id' => $request->section_id
-
             ]);
 
             $type = MaterialType::find($request->material_type_id);
@@ -88,72 +81,48 @@ class MaterialController extends Controller
             switch ($type->name) {
 
                 case 'Link':
-
                     MaterialLink::create([
-
                         'material_id' => $material->id,
-
                         'url' => $request->link_url
-
                     ]);
-
                     break;
 
                 case 'Page':
-
                     MaterialPage::create([
-
                         'material_id' => $material->id,
-
                         'content' => $request->page_content
-
                     ]);
-
                     break;
 
                 case 'Youtube Video':
-
                     MaterialYoutube::create([
-
                         'material_id' => $material->id,
-
                         'url' => $request->youtube_url,
-
                         'video_id' => $this->extractYoutubeId($request->youtube_url),
-
                         'start_sec' => $request->start_sec,
-
                         'end_sec' => $request->end_sec
-
                     ]);
-
                     break;
 
                 case 'File':
-
                     $this->storeUploadedFile(
                         $request->file('material_file'),
                         $material
                     );
-
                     break;
 
                 case 'PDF':
-
                     $this->storeUploadedFile(
                         $request->file('pdf_file'),
                         $material
                     );
-
                     break;
 
                 case 'EPUB':
-
                     $this->storeUploadedFile(
                         $request->file('epub_file'),
                         $material
                     );
-
                     break;
             }
         });

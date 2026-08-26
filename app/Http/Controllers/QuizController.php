@@ -9,6 +9,7 @@ use App\Models\Quiz;
 use App\Models\QuestionBank;
 use App\Models\Attempt;
 use App\Models\Activity;
+use App\Models\ActivityType;
 use Auth;
 
 class QuizController extends Controller

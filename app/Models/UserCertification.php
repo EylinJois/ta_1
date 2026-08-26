@@ -25,4 +25,9 @@ class UserCertification extends Model
         'expired_at' => 'date',
         'verified_at' => 'datetime'
     ];
+
+    public function user() { return $this->belongsTo(User::class); }
+    public function certificationType() { return $this->belongsTo(CertificationType::class); }
+    public function verifier() { return $this->belongsTo(User::class, 'verified_by'); }
+    public function files() { return $this->hasMany(UserCertificationFile::class); }
 }

@@ -15,7 +15,11 @@ use App\Http\Controllers\TTSController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\CertificationController;
+use App\Http\Controllers\MaterialProgressController;
 use Illuminate\Support\Facades\Route;
+
 
 
 /*
@@ -48,6 +52,8 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
         Route::put('/{participantId}', [CourseController::class, 'updateParticipantRole'])->name('update');
         Route::delete('/{participantId}', [CourseController::class, 'removeParticipant'])->name('destroy');
     });
+    Route::post('/materials/{material}/progress', [MaterialProgressController::class, 'update'])
+        ->name('materials.progress.update');
 });
 
 /*
@@ -58,8 +64,7 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::view('/home', 'home')->name('home');
 
     Route::get('/profile', [UserController::class, 'profileEdit'])->name('profile.edit');
     Route::put('/profile/{id}', [UserController::class, 'profileUpdate'])->name('profile.update');
@@ -209,4 +214,23 @@ Route::middleware(['auth'])->group(function () {
     Route::put('calendar/events/{activity}', [CalendarController::class, 'update'])->name('calendar.events.update');
     Route::delete('calendar/events/{activity}', [CalendarController::class, 'destroy'])->name('calendar.events.destroy');
     Route::patch('calendar/events/{activity}/status', [CalendarController::class, 'updateStatus'])->name('calendar.events.status');
+
+    /*
+    |----------------------------------------------------------------------
+    | REPORT & CERTIFICATE
+    |----------------------------------------------------------------------
+    */
+    Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+    Route::get('courses/{course}/progress/{studentId}', [ProgressController::class, 'courseIndex'])->name('progress.course');
+    Route::post('courses/{course}/progress', [ProgressController::class, 'store'])->name('progress.store');
+
+    Route::get('certificates', [CertificationController::class, 'index'])->name('certificates.index');
+    Route::get('certificates/{userCertification}', [CertificationController::class, 'show'])->name('certificates.show');
+
+    Route::get('certificates/create', [CertificationController::class, 'create'])->name('certificates.create');
+    Route::post('certificates', [CertificationController::class, 'store'])->name('certificates.store');
+
+    Route::get('courses/{course}/certificates', [CertificationController::class, 'courseIndex'])->name('certificates.course.index');
+
+    Route::get('courses/{course}/progress/calculate/{student}', [ProgressController::class, 'calculate'])->name('progress.calculate');
 });

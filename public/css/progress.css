@@ -1,0 +1,92 @@
+.progress-course-card {
+        background: white;
+        border-radius: 24px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: .3s;
+        height: 100%;
+    }
+
+    .progress-course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+    }
+
+    .progress-course-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        background: rgba(214, 40, 40, 0.1);
+        color: #D62828;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-bottom: 20px;
+    }
+
+    .progress-course-icon i {
+        font-size: 28px;
+    }
+
+    .progress-course-card h5 {
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .progress-course-card p {
+        color: #777;
+        margin-bottom: 0;
+    }
+
+    .progress-history-card {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .progress-history-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+    }
+
+    .progress-history-header h5 {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .progress-table th {
+        font-weight: 600;
+        color: #555;
+        white-space: nowrap;
+    }
+
+    .progress-table td {
+        vertical-align: middle;
+    }
+
+    .progress-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 50px;
+        background: rgba(214, 40, 40, 0.1);
+        color: #D62828;
+        font-weight: 600;
+    }
+
+    @media(max-width: 768px) {
+
+        .progress-history-card {
+            padding: 20px;
+        }
+
+        .progress-history-header {
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+    }

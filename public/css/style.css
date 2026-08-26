@@ -90,10 +90,10 @@ body{
 }
 
 /* =========================
-   DASHBOARD CARD
+   home CARD
 ========================= */
 
-.dashboard-card{
+.home-card{
     background: white;
     border-radius: 20px;
     padding: 25px;
@@ -102,16 +102,16 @@ body{
     transition: .3s;
 }
 
-.dashboard-card:hover{
+.home-card:hover{
     transform: translateY(-5px);
 }
 
-.dashboard-card i{
+.home-card i{
     font-size: 40px;
     color: var(--primary-red);
 }
 
-.dashboard-card h2{
+.home-card h2{
     font-weight: 700;
 }
 
@@ -249,10 +249,10 @@ body{
 }
 
 /* =========================
-   DASHBOARD CARD
+   home CARD
 ========================= */
 
-.dashboard-card{
+.home-card{
     background: white;
     border-radius: 24px;
     padding: 25px;
@@ -264,7 +264,7 @@ body{
     height: 100%;
 }
 
-.dashboard-card:hover{
+.home-card:hover{
     transform: translateY(-5px);
 }
 

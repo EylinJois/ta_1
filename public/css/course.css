@@ -514,6 +514,22 @@ textarea.form-control{
 /* =========================
    MATERIAL DISPLAY CARD
 ========================= */
+.completed-pill{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    background: rgba(46,125,50,.12);
+    color: #2e7d32;
+
+    padding: 6px 14px;
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    align-self: flex-start;
+}
 
 .material-display-card{
     background: white;

@@ -17,7 +17,7 @@
         <h4 class="section-title mb-0">
             {{$course->name}} Participants
         </h4>
-@if(Auth::user()->isAdmin($course->id))
+        @if(Auth::user()->isAdmin($course->id))
         <div>
 
             <button class="btn btn-theme"
@@ -41,7 +41,7 @@
                     <th>User</th>
                     <th>Email</th>
                     <th>Role</th>
-                    @if(Auth::user()->isAdmin($course->id))
+                    @if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
                     <th class="text-center">Actions</th>
                     @endif
                 </tr>
@@ -101,8 +101,10 @@
                         </span>
 
                     </td>
-@if(Auth::user()->isAdmin($course->id))
                     <td class="text-center">
+
+                        {{-- Admin: Edit & Delete --}}
+                        @if(Auth::user()->isAdmin($course->id))
 
                         {{-- Edit Button --}}
                         <button
@@ -112,30 +114,52 @@
                             title="Edit Participant">
 
                             <i class="bi bi-pencil-square"></i>
-
                         </button>
 
                         {{-- Delete Button --}}
-                        <form action="{{ route('courses.participants.destroy', ['id' => $course->id, 'participantId' => $participant->id]) }}"
+                        <form
+                            action="{{ route('courses.participants.destroy', [
+                'id' => $course->id,
+                'participantId' => $participant->id
+            ]) }}"
                             method="POST"
                             class="d-inline">
 
                             @csrf
                             @method('DELETE')
 
-                            <button type="submit"
+                            <button
+                                type="submit"
                                 class="icon-action-btn delete-btn"
                                 title="Delete Participant"
                                 onclick="return confirm('Delete this participant?')">
 
                                 <i class="bi bi-trash-fill"></i>
-
                             </button>
-
                         </form>
 
+                        @endif
+
+                        {{-- Admin & Teacher: View Progress --}}
+                        @if(
+                        Auth::user()->isAdmin($course->id) ||
+                        Auth::user()->isTeacher($course->id)
+                        )
+
+                        <a
+                            href="{{ route('progress.course', [
+                'course' => $course->id,
+                'studentId' => $participant->id
+            ]) }}"
+                            class="icon-action-btn edit-btn"
+                            title="View Progress">
+
+                            <i class="bi bi-bar-chart-line"></i>
+                        </a>
+
+                        @endif
+
                     </td>
-@endif
                 </tr>
 
                 @endforeach
@@ -299,16 +323,16 @@
 {{-- EDIT SECTION MODAL --}}
 <div class="modal fade"
 
-     id="editParticipantModal{{ $participant->id }}"
-     tabindex="-1"
-     aria-hidden="true">
+    id="editParticipantModal{{ $participant->id }}"
+    tabindex="-1"
+    aria-hidden="true">
 
     <div class="modal-dialog modal-dialog-centered">
 
         <div class="modal-content custom-modal">
 
             <form action="{{ route('courses.participants.update',['id' => $course->id, 'participantId' => $participant->id]) }}"
-                  method="POST">
+                method="POST">
 
                 @csrf
                 @method('PUT')
@@ -329,8 +353,8 @@
                     </div>
 
                     <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal">
+                        class="btn-close"
+                        data-bs-dismiss="modal">
                     </button>
 
                 </div>
@@ -346,10 +370,10 @@
                         </label>
 
                         <input type="text"
-                               name="name"
-                               class="form-control"
-                               value="{{ old('name', $participant->name) }}"
-                               required>
+                            name="name"
+                            class="form-control"
+                            value="{{ old('name', $participant->name) }}"
+                            required>
 
                     </div>
 
@@ -361,8 +385,8 @@
                         </label>
 
                         <select name="role"
-                                class="form-select"
-                                required>
+                            class="form-select"
+                            required>
                             <option value="Admin" {{ $participant->pivot->role === 'admin' ? 'selected' : '' }}>
                                 Admin
                             </option>
@@ -383,15 +407,15 @@
                 <div class="modal-footer border-0">
 
                     <button type="button"
-                            class="btn btn-light"
-                            data-bs-dismiss="modal">
+                        class="btn btn-light"
+                        data-bs-dismiss="modal">
 
                         Cancel
 
                     </button>
 
                     <button type="submit"
-                            class="btn btn-theme">
+                        class="btn btn-theme">
 
                         <i class="bi bi-check-circle-fill"></i>
                         Update

@@ -3,11 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SubmissionFile extends Pivot
 {
-    use SoftDeletes;
 
     protected $table = 'submission_files';
     public $timestamps = false; // no updated_at column

@@ -45,6 +45,7 @@
             <h3 class="mt-3">External Website</h3>
             <p>Click below to open this learning resource.</p>
 
+            <a
             id="visitLinkBtn"
             href="{{ $material->materialLink->url }}"
             target="_blank"
@@ -140,35 +141,18 @@
 
 @push('scripts')
 
-{{-- SHARED PROGRESS TRACKING — reports to /materials/{id}/progress on a
-     15s heartbeat, on page leave, and on manual "Mark as Complete". Each
-     material type below registers a percentGetter() that computes its own
-     live progress; the shared code just polls it and reports the max. --}}
+
 <script>
     (function() {
-        const materialId = {
-            {
-                $material - > id
-            }
-        };
+        const materialId = {{ $material->id }};
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-        let secondsSinceLastSync = 0;
-        let highestPercent = 0;
-        let percentGetter = () => 0;
 
-        setInterval(() => secondsSinceLastSync++, 1000);
+        document.getElementById('markCompleteBtn')?.addEventListener('click', function() {
 
-        function sync(opts = {}) {
-            const live = opts.forceComplete ? 100 : (percentGetter() || 0);
-            highestPercent = Math.max(highestPercent, live);
-
-            const payload = {
-                progress_percent: highestPercent,
-                duration_delta: secondsSinceLastSync,
-            };
-            if (opts.forceComplete) payload.force_complete = true;
-
-            secondsSinceLastSync = 0;
+            const btn = this;
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
 
             fetch(`/materials/${materialId}/progress`, {
                 method: 'POST',
@@ -176,40 +160,20 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify(payload),
-            }).catch(() => {});
-        }
-
-        setInterval(() => {
-            if (document.hidden || secondsSinceLastSync === 0) return;
-            sync();
-        }, 15000);
-
-        window.addEventListener('beforeunload', () => {
-            if (secondsSinceLastSync > 0) {
-                highestPercent = Math.max(highestPercent, percentGetter() || 0);
-                navigator.sendBeacon(
-                    `/materials/${materialId}/progress`,
-                    new Blob(
-                        [JSON.stringify({
-                            progress_percent: highestPercent,
-                            duration_delta: secondsSinceLastSync
-                        })], {
-                            type: 'application/json'
-                        }
-                    )
-                );
-            }
-        });
-
-        
-
-        document.getElementById('markCompleteBtn')?.addEventListener('click', function() {
-            sync({
-                forceComplete: true
-            });
-            this.disabled = true;
-            this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completed';
+                body: JSON.stringify({
+                    progress_percent: 100,
+                    force_complete: true
+                }),
+            })
+                .then(function (r) {
+                    if (!r.ok) throw new Error();
+                    btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completed';
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    alert('Failed to mark as complete. Please try again.');
+                });
         });
     })();
 </script>
@@ -369,5 +333,4 @@
 @endif
 
 @endpush
-@endif
 @endsection

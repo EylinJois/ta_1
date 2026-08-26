@@ -58,11 +58,16 @@
 
                 <a href="{{ route('courses.participants.index', $course->id) }}"
                     class="btn btn-dark-custom">
-
                     <i class="bi bi-people-fill"></i>
                     Participants
-
                 </a>
+                @if(Auth::user()->isStudent($course->id))
+                <a href="{{ route('progress.course', [$course->id,Auth::user()->id]) }}"
+                    class="btn btn-dark-custom">
+                    <i class="bi bi-award-fill"></i>
+                    My Progress
+                </a>
+                @endif
 @if(Auth::user()->isAdmin($course->id))
                 <a href="{{ route('courses.edit', $course->id) }}"
                     class="btn btn-light">
