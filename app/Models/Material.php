@@ -12,7 +12,7 @@ class Material extends Model
     protected $fillable = [
         'name',
         'description',
-        'material_type_id',
+        'type',
         'created_by',
         'visibility',
         'section_id'
@@ -30,13 +30,6 @@ class Material extends Model
     {
         return $this->belongsTo(
             Section::class
-        );
-    }
-
-    public function materialType(): BelongsTo
-    {
-        return $this->belongsTo(
-            MaterialType::class
         );
     }
 

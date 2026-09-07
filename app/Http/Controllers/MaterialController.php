@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sentence;
 use Illuminate\Http\Request;
-use App\Models\MaterialType;
 use App\Models\Material;
 use App\Models\MaterialLink;
 use App\Models\MaterialPage;
@@ -13,6 +13,8 @@ use App\Models\MediaAsset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Section;
+use Overtrue\Pinyin\Pinyin;
+
 class MaterialController extends Controller
 {
     /**
@@ -28,18 +30,16 @@ class MaterialController extends Controller
      */
     public function create(Section $section)
     {
-        $materialTypes = MaterialType::all();
         $roles = [
             1 => 'Admin',
             2 => 'Teacher',
             3 => 'Student'
         ];
-        $materials = $section->materials()->with('materialType')->get();
+        $materials = $section->materials()->get();
 
         return view('courses.materials.create', [
             'section' => $section,
             'course' => $section->course,
-            'materialTypes' => $materialTypes,
             'roles' => $roles,
             'materials' => $materials
         ]);
@@ -53,7 +53,7 @@ class MaterialController extends Controller
         $request->validate([
             'name' => 'required|max:255',
             'description' => 'nullable',
-            'material_type_id' => 'required|exists:material_types,id',
+            'type' => 'required',
             'section_id' => 'required|exists:sections,id',
             'visibility' => 'required|boolean',
 
@@ -70,15 +70,15 @@ class MaterialController extends Controller
             $material = Material::create([
                 'name' => $request->name,
                 'description' => $request->description,
-                'material_type_id' => $request->material_type_id,
+                'type' => $request->type,
                 'created_by' => auth()->id(),
                 'visibility' => $request->visibility,
                 'section_id' => $request->section_id
             ]);
 
-            $type = MaterialType::find($request->material_type_id);
+            $type = $request->type;
 
-            switch ($type->name) {
+            switch ($type) {
 
                 case 'Link':
                     MaterialLink::create([
@@ -88,10 +88,29 @@ class MaterialController extends Controller
                     break;
 
                 case 'Page':
-                    MaterialPage::create([
-                        'material_id' => $material->id,
-                        'content' => $request->page_content
+                    $validated = $request->validate([
+                        'intro_text' => 'nullable|string',
+                        'sentences' => 'nullable|array',
+                        'sentences.*.hanzi' => 'required_with:sentences|string',
+                        'sentences.*.meaning' => 'required_with:sentences|string',
                     ]);
+
+                    $page = MaterialPage::updateOrCreate(
+                        ['material_id' => $material->id],
+                        ['content' => $validated['intro_text'] ?? null]
+                    );
+
+                    $page->sentences()->delete();
+
+                    foreach ($validated['sentences'] ?? [] as $index => $sentence) {
+                        Sentence::create([
+                            'material_page_id' => $page->material_id,
+                            'hanzi' => $sentence['hanzi'],
+                            'pinyin' => Pinyin::sentence($sentence['hanzi'])->join(' '),
+                            'meaning' => $sentence['meaning'],
+                            'order_idx' => $index,
+                        ]);
+                    }
                     break;
 
                 case 'Youtube Video':
@@ -211,11 +230,10 @@ class MaterialController extends Controller
     {
         $material->load([
             'section.course',
-            'materialType',
             'materialYoutube',
-            'materialPage',
+            'materialPage.sentences',
             'materialLink',
-            // 'materialAssets.mediaAsset',
+            'materialAsset.mediaAsset',
         ]);
 
         $section = $material->section;
@@ -244,7 +262,7 @@ class MaterialController extends Controller
             )
         );
     }
-    
+
 
     /**
      * Show the form for editing the specified resource.
@@ -252,7 +270,6 @@ class MaterialController extends Controller
     public function edit(string $id)
     {
         $material = Material::with([
-            'materialType',
             'materialLink',
             'materialPage',
             'materialYoutube',
@@ -260,31 +277,33 @@ class MaterialController extends Controller
         ])->findOrFail($id);
 
         $section = Section::findOrFail($material->section_id);
-        $materialTypes = MaterialType::all();
         $roles = [
             1 => 'Admin',
             2 => 'Teacher',
             3 => 'Student'
         ];
-        $materials = $section->materials()->with('materialType')->get();
+        $materials = $section->materials()->get();
 
         return view('courses.materials.edit', [
             'section' => $section,
             'course' => $section->course,
-            'materialTypes' => $materialTypes,
             'roles' => $roles,
             'materials' => $materials,
             'material' => $material
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * material_type_id is intentionally NOT accepted here - the type is
-     * locked after creation (enforced in the edit view), so we look up the
-     * material's existing type to know which content table to touch.
-     */
+
+    public function pinyinPreview(Request $request)
+    {
+        $validated = $request->validate(['hanzi' => 'required|string']);
+
+        return response()->json([
+            'pinyin' => Pinyin::sentence($validated['hanzi'])->join(' '),
+        ]);
+    }
+
+
     public function update(Request $request, string $id)
     {
         $material = Material::findOrFail($id);
@@ -316,13 +335,11 @@ class MaterialController extends Controller
                 'section_id' => $request->section_id
 
             ]);
+            $type = $material->type;
 
-            $type = MaterialType::find($material->material_type_id);
-
-            switch ($type->name) {
+            switch ($type) {
 
                 case 'Link':
-
                     MaterialLink::updateOrCreate(
                         ['material_id' => $material->id],
                         ['url' => $request->link_url]
@@ -331,12 +348,29 @@ class MaterialController extends Controller
                     break;
 
                 case 'Page':
+                    $validated = $request->validate([
+                        'intro_text' => 'nullable|string',
+                        'sentences' => 'nullable|array',
+                        'sentences.*.hanzi' => 'required_with:sentences|string',
+                        'sentences.*.meaning' => 'required_with:sentences|string',
+                    ]);
 
-                    MaterialPage::updateOrCreate(
+                    $page = MaterialPage::updateOrCreate(
                         ['material_id' => $material->id],
-                        ['content' => $request->page_content]
+                        ['content' => $validated['intro_text'] ?? null]
                     );
 
+                    $page->sentences()->delete();
+
+                    foreach ($validated['sentences'] ?? [] as $index => $sentence) {
+                        Sentence::create([
+                            'material_page_id' => $page->material_id,
+                            'hanzi' => $sentence['hanzi'],
+                            'pinyin' => Pinyin::sentence($sentence['hanzi'])->join(' '),
+                            'meaning' => $sentence['meaning'],
+                            'order_idx' => $index,
+                        ]);
+                    }
                     break;
 
                 case 'Youtube Video':

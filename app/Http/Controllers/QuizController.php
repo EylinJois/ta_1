@@ -9,7 +9,6 @@ use App\Models\Quiz;
 use App\Models\QuestionBank;
 use App\Models\Attempt;
 use App\Models\Activity;
-use App\Models\ActivityType;
 use Auth;
 
 class QuizController extends Controller
@@ -72,7 +71,7 @@ class QuizController extends Controller
             'starts_at' => now(),
             'ends_at' => now()->addSeconds($duration ?? 0),
             'user_id' => auth()->id(),
-            'activity_type_id' => ActivityType::where('name', 'Exam')->first()->id,
+            'type' => 'Quiz',
             'source_type' => 'quiz',
             'source_id' => $quiz->id,
             'course_id' => $quiz->section->course_id,

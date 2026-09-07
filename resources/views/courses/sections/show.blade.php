@@ -122,7 +122,7 @@
                 <div class="material-display-card h-100">
                     <div class="material-card-header">
                         <div class="material-display-icon">
-                            @switch($material->materialType->name)
+                            @switch($material->type)
                             @case('Youtube Video')
                             <i class="bi bi-youtube"></i>
                             @break
@@ -172,7 +172,7 @@
     </h5>
 
     <span class="material-type">
-        {{ $material->materialType->name }}
+        {{ $material->type }}
     </span>
 
     <p>

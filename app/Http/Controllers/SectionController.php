@@ -76,14 +76,12 @@ class SectionController extends Controller
 {
     $section = Section::with([
         'course',
-        'materials.materialType',
         'quizzes',
         'assignments',
     ])->findOrFail($id);
 
     $course = $section->course;
 
-    $materialTypes = \App\Models\MaterialType::all();
 
     $roles = [
         'student' => 'Student',
@@ -147,7 +145,6 @@ class SectionController extends Controller
     return view('courses.sections.show', compact(
         'section',
         'course',
-        'materialTypes',
         'roles',
         'materials',
         'visibleMaterials',

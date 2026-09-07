@@ -61,8 +61,25 @@
     const textarea = document.getElementById('inputText');
     const pinyinText = document.getElementById('pinyinResult');
     const audio = document.getElementById('player');
+    const generateBtn = document.getElementById('generate');
 
-    document.getElementById('generate').onclick = function() {
+    const originalBtnHtml = generateBtn.innerHTML;
+
+    function setLoading(isLoading) {
+        generateBtn.disabled = isLoading;
+        generateBtn.innerHTML = isLoading
+            ? '<span class="spinner-border spinner-border-sm me-1"></span> Generating...'
+            : originalBtnHtml;
+    }
+
+    generateBtn.onclick = function() {
+
+        const text = textarea.value.trim();
+        if (!text) {
+            return;
+        }
+
+        setLoading(true);
 
         fetch('/tts/generate', {
                 method: 'POST',
@@ -71,18 +88,27 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    text: textarea.value
+                    text: text
                 })
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error('Request failed');
+                return r.json();
+            })
             .then(data => {
-                pinyinText.innerHTML = data.pinyin;
-                if (data.type === 'stream') {
-                    audio.src = "data:audio/mpeg;base64," + data.audio;
-                } else {
-                    audio.src = data.audio;
-                }
+                pinyinText.value = data.pinyin;
+
+                audio.src = data.type === 'stream'
+                    ? "data:audio/mpeg;base64," + data.audio
+                    : data.audio;
+
                 audio.play();
+            })
+            .catch(() => {
+                alert('Could not generate audio. Please try again.');
+            })
+            .finally(() => {
+                setLoading(false);
             });
     }
 </script>

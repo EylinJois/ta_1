@@ -65,7 +65,7 @@
 
             @forelse($dayActivities as $activity)
             @php
-            $typeClass = match($activity->activityType->name) {
+            $typeClass = match($activity->type) {
             'Study Session' => 'type-study',
             'Quiz' => 'type-quiz',
             'Assignment' => 'type-assignment',
@@ -88,7 +88,7 @@
                     @endif
                 </div>
                 <div class="week-event-name">{{ $activity->name }}</div>
-                <div class="week-event-type">{{ $activity->activityType->name }}</div>
+                <div class="week-event-type">{{ $activity->type }}</div>
             </div>
             @empty
             <div class="week-empty-day">No events</div>
@@ -159,10 +159,12 @@
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label class="form-label">Type</label>
-                            <select name="type_id" class="form-select" required>
-                                @foreach($activityTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                @endforeach
+                            <select name="type" class="form-select" required>
+                                <option value="Study Session">Study Session</option>
+                                <option value="Quiz">Quiz</option>
+                                <option value="Reminder">Reminder</option>
+                                <option value="Assignment">Assignment</option>
+                                <option value="Reminder">Reminder</option>
                             </select>
                         </div>
                         <div class="col-6 mb-3">

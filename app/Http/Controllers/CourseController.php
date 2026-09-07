@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
-use App\Models\MaterialType;
 use Auth;
 
 class CourseController extends Controller
@@ -115,13 +114,11 @@ class CourseController extends Controller
             ->orderBy('order_idx', 'asc')
             ->get();
 
-        $materialTypes = MaterialType::all();
 
         return view('courses.show', compact(
             'course',
             'users',
-            'sections',
-            'materialTypes'
+            'sections'
         ));
     }
 

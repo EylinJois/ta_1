@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Progress & Certificates')
+@section('title', 'Progress')
 
-@section('page-title', 'Progress & Certificates')
+@section('page-title', 'Progress')
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/course.css') }}">
@@ -18,9 +18,6 @@
         <p class="text-muted mb-0">
             Select a course to view your progress.
         </p>
-    </div>
-    <div class="d-flex justify-content-end">
-        <a href="{{ route('certificates.index') }}" class="btn btn-theme">View Certificates</a>
     </div>
 </div>
 

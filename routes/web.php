@@ -16,7 +16,6 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ProgressController;
-use App\Http\Controllers\CertificationController;
 use App\Http\Controllers\MaterialProgressController;
 use Illuminate\Support\Facades\Route;
 
@@ -90,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/materials/create/{section}', [MaterialController::class, 'create'])->name('materials.create');
     Route::get('/media/{asset}/download', [MaterialController::class, 'download'])->name('media.download');
     Route::resource('materials', MaterialController::class)->except(['create']);
+    Route::post('materials/vocab/pinyin-preview', [MaterialController::class, 'pinyinPreview'])->name('materials.vocab.pinyin-preview');
 
     /*
     |----------------------------------------------------------------------
@@ -217,20 +217,11 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | REPORT & CERTIFICATE
+    | REPORT
     |----------------------------------------------------------------------
     */
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
     Route::get('courses/{course}/progress/{studentId}', [ProgressController::class, 'courseIndex'])->name('progress.course');
     Route::post('courses/{course}/progress', [ProgressController::class, 'store'])->name('progress.store');
-
-    Route::get('certificates', [CertificationController::class, 'index'])->name('certificates.index');
-    Route::get('certificates/{userCertification}', [CertificationController::class, 'show'])->name('certificates.show');
-
-    Route::get('certificates/create', [CertificationController::class, 'create'])->name('certificates.create');
-    Route::post('certificates', [CertificationController::class, 'store'])->name('certificates.store');
-
-    Route::get('courses/{course}/certificates', [CertificationController::class, 'courseIndex'])->name('certificates.course.index');
-
     Route::get('courses/{course}/progress/calculate/{student}', [ProgressController::class, 'calculate'])->name('progress.calculate');
 });

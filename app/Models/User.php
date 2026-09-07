@@ -69,10 +69,6 @@ class User extends Authenticatable
         return $this->hasMany(Activity::class);
     }
 
-    public function certifications(): HasMany
-    {
-        return $this->hasMany(UserCertification::class);
-    }
 
     public function folders(): HasMany  {
         return $this->hasMany(Folder::class);

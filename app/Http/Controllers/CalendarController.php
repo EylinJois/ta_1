@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
-use App\Models\ActivityType;
-use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -21,8 +19,7 @@ class CalendarController extends Controller
         $startOfWeek = $anchor->copy()->startOfWeek(Carbon::SUNDAY);
         $endOfWeek = $anchor->copy()->endOfWeek(Carbon::SATURDAY);
 
-        $activities = Activity::with(['activityType', 'sourceType', 'course'])
-            ->where(function ($q) use ($user) {
+        $activities = Activity::where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                     ->orWhereHas('participants', fn($p) => $p->where('user_id', $user->id));
             })
@@ -31,8 +28,6 @@ class CalendarController extends Controller
             ->get()
             ->groupBy(fn($a) => $a->starts_at->format('Y-m-d'));
 
-        $activityTypes = ActivityType::all();
-        $courses = Course::whereHas('users', fn($q) => $q->where('user_id', $user->id))->get();
 
         $days = collect();
         $cursor = $startOfWeek->copy();
@@ -46,8 +41,6 @@ class CalendarController extends Controller
             'activities',
             'startOfWeek',
             'endOfWeek',
-            'activityTypes',
-            'courses'
         ));
     }
 
@@ -59,9 +52,7 @@ class CalendarController extends Controller
             'event_date' => 'required|date',
             'starts_time' => 'required|date_format:H:i',
             'ends_time' => 'nullable|date_format:H:i|after:starts_time',
-            'type_id' => 'required|exists:activity_types,id',
-            'course_id' => 'nullable|exists:courses,id',
-            'meeting_link' => 'nullable|url',
+            'type' => 'required|exists:activity_types,id',
             'is_all_day' => 'required|boolean',
             'notify_minutes' => 'nullable|integer|min:0',
         ]);
@@ -75,18 +66,14 @@ class CalendarController extends Controller
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'status' => 'scheduled',
-            'user_id' => auth()->id(),
-            'created_by' => auth()->id(),
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
-            'type_id' => $validated['type_id'],
+            'type' => $validated['type'],
             // Manually created — no automated source.
-            'source_type_id' => null,
+            'source_type' => null,
             'source_id' => null,
-            'meeting_link' => $validated['meeting_link'] ?? null,
             'is_all_day' => $validated['is_all_day'],
             'notify_minutes' => $validated['notify_minutes'] ?? 15,
-            'course_id' => $validated['course_id'] ?? null,
         ]);
 
         return back()->with('success', 'Event added to your calendar.');
@@ -95,28 +82,23 @@ class CalendarController extends Controller
     public function show(Activity $activity)
     {
         abort_unless(
-            $activity->user_id === auth()->id() || $activity->participants()->where('user_id', auth()->id())->exists(),
+            $activity->participants()->where('user_id', auth()->id())->exists(),
             403
         );
 
-        return response()->json($activity->load(['activityType', 'sourceType', 'course']));
+        return response()->json($activity);
     }
 
 
     public function update(Request $request, Activity $activity)
     {
-        abort_unless($activity->user_id === auth()->id(), 403);
-        abort_if($activity->source_type_id, 422, 'System-generated events cannot be edited directly.');
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'event_date' => 'required|date',
             'starts_time' => 'required|date_format:H:i',
             'ends_time' => 'nullable|date_format:H:i|after:starts_time',
-            'type_id' => 'required|exists:activity_types,id',
-            'course_id' => 'nullable|exists:courses,id',
-            'meeting_link' => 'nullable|url',
+            'type' => 'required|string|max:255',
             'is_all_day' => 'required|boolean',
             'notify_minutes' => 'nullable|integer|min:0',
             'status' => 'required|in:scheduled,completed,cancelled,missed',
@@ -138,8 +120,6 @@ class CalendarController extends Controller
 
     public function updateStatus(Request $request, Activity $activity)
     {
-        abort_unless($activity->user_id === auth()->id(), 403);
-
         $validated = $request->validate([
             'status' => 'required|in:completed,cancelled,scheduled',
         ]);
@@ -151,9 +131,6 @@ class CalendarController extends Controller
 
     public function destroy(Activity $activity)
     {
-        abort_unless($activity->user_id === auth()->id(), 403);
-        abort_if($activity->source_type_id, 422, 'System-generated events cannot be deleted directly.');
-
         $activity->delete();
 
         return back()->with('success', 'Event removed.');
