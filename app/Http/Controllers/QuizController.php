@@ -26,6 +26,7 @@ class QuizController extends Controller
      */
     public function create(Section $section)
     {
+        $this->authorizeManageSection($section);
         $course = $section->course;
         return view('quiz.create', compact(
             'section',
@@ -38,7 +39,7 @@ class QuizController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'section_id' => 'required|exists:sections,id',
             'name' => 'required',
             'description' => 'nullable',
@@ -47,14 +48,18 @@ class QuizController extends Controller
             'max_attempt' => 'nullable|numeric',
             'pass_score' => 'nullable|numeric',
             'shuffle_questions' => 'nullable|boolean',
-            'shuffle_options' => 'nullable|boolean'
+            'shuffle_options' => 'nullable|boolean',
+            'opened_at' => 'nullable|date',
+            'due_at' => 'nullable|date|after:opened_at',
         ]);
+        $section = Section::findOrFail($validated['section_id']);
+        $this->authorizeManageSection($section);
         $duration = $request->duration
             ? $request->duration * 60
             : null;
 
         $quiz = Quiz::create([
-            'section_id' => $request->section_id,
+            'section_id' => $section->id,
             'name' => $request->name,
             'description' => $request->description,
             'duration' => $duration,
@@ -62,20 +67,30 @@ class QuizController extends Controller
             'max_attempt' => $request->max_attempt,
             'pass_score' => $request->pass_score,
             'shuffle_questions' => $request->shuffle_questions,
-            'shuffle_options' => $request->shuffle_options
+            'shuffle_options' => $request->shuffle_options,
+            'opened_at' => $request->opened_at,
+            'due_at' => $request->due_at,
         ]);
 
         $activity = Activity::create([
             'name' => $quiz->name,
             'description' => $quiz->description,
-            'starts_at' => now(),
-            'ends_at' => now()->addSeconds($duration ?? 0),
+            'starts_at' => $quiz->opened_at ?? now(),
+            'ends_at' => $quiz->due_at ?? null,
             'user_id' => auth()->id(),
             'type' => 'Quiz',
             'source_type' => 'quiz',
             'source_id' => $quiz->id,
             'course_id' => $quiz->section->course_id,
         ]);
+        $participants = $quiz->section->course->classes()
+            ->with('users')
+            ->get()
+            ->flatMap(fn ($class) => $class->users->filter(fn ($participant) => $participant->pivot->role === 'student'))
+            ->unique('id');
+        foreach ($participants as $participant) {
+            $activity->participants()->syncWithoutDetaching([$participant->id]);
+        }
         return redirect()->route('quizzes.edit', $quiz->id);
     }
 
@@ -89,13 +104,15 @@ class QuizController extends Controller
 
     private function authorizeManage(Quiz $quiz)
     {
-        $course = $this->courseFor($quiz);
+        $this->authorizeManageSection($quiz->section);
+    }
+
+    private function authorizeManageSection(Section $section)
+    {
+        $course = $section->course;
         $user = Auth::user();
 
-        abort_unless(
-            $user->isAdmin($course->id) || $user->isTeacher($course->id),
-            403
-        );
+        abort_unless($user->isManagerInCourse($course->id), 403);
     }
 
     public function attempts(Request $request, Quiz $quiz)
@@ -103,7 +120,7 @@ class QuizController extends Controller
         $course = $quiz->section->course;
 
         abort_unless(
-            auth()->user()->isAdmin($course->id) || auth()->user()->isTeacher($course->id),
+            auth()->user()->isManagerInCourse($course->id),
             403
         );
 
@@ -154,7 +171,7 @@ class QuizController extends Controller
     {
         $user = auth()->user();
         $course = $quiz->section->course;
-        $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
+        $isManager = $user->isManagerInCourse($course->id);
 
         // Hidden quizzes are only visible to managers, same rule as the
         // section listing.
@@ -175,6 +192,12 @@ class QuizController extends Controller
             ? max(0, $quiz->max_attempt - $completedCount)
             : null; // null = unlimited
 
+        $now = now();
+        $notYetOpen = $quiz->opened_at && $now->lt($quiz->opened_at);
+        $isClosed   = $quiz->due_at && $now->gt($quiz->due_at);
+        $isOpen     = !$notYetOpen && !$isClosed;
+
+
         $canAttempt = $isManager || is_null($inProgressAttempt)
             ? (is_null($quiz->max_attempt) || $attemptsRemaining > 0)
             : true; // an in-progress attempt always allows resuming regardless of the limit
@@ -189,6 +212,9 @@ class QuizController extends Controller
             'canAttempt',
             'bestScore',
             'isManager',
+            'isOpen',
+            'notYetOpen',
+            'isClosed',
         ));
     }
     /**
@@ -207,7 +233,7 @@ class QuizController extends Controller
         })
             ->where(function ($q) {
                 $q->where('created_by', auth()->id())
-                    ->orWhere('visibility', 1);
+                    ->orWhere('is_public', 1);
             })
             ->withCount('questions')
             ->get();
@@ -220,11 +246,9 @@ class QuizController extends Controller
      */
     public function update(Request $request, Quiz $quiz)
     {
-        // ASSUMPTION: adjust to your actual permission check if different
-        // from the pattern used elsewhere (isAdmin/isTeacher on the course).
         $course = $quiz->section->course;
         abort_unless(
-            auth()->user()->isAdmin($course->id) || auth()->user()->isTeacher($course->id),
+            auth()->user()->isManagerInCourse($course->id),
             403
         );
 
@@ -237,6 +261,8 @@ class QuizController extends Controller
             'pass_score' => 'nullable|numeric|min:0|max:100',
             'shuffle_questions' => 'required|boolean',
             'shuffle_options' => 'required|boolean',
+            'opened_at' => 'nullable|date',
+            'due_at' => 'nullable|date|after:opened_at',
         ]);
 
         $quiz->update([
@@ -248,6 +274,8 @@ class QuizController extends Controller
             'pass_score' => $validated['pass_score'] ?? null,
             'shuffle_questions' => $validated['shuffle_questions'],
             'shuffle_options' => $validated['shuffle_options'],
+            'opened_at' => $validated['opened_at'] ?? null,
+            'due_at' => $validated['due_at'] ?? null,
         ]);
 
         return back()->with('success', 'Quiz updated.');

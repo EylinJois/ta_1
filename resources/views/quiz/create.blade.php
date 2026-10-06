@@ -10,6 +10,13 @@
 
 @section('content')
 
+<div class="mb-4">
+    <a href="{{ route('sections.show',$section) }}"
+        class="btn btn-back">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+</div>
+
 <div class="quiz-header mb-4">
 
     <div>
@@ -45,15 +52,7 @@
     <div class="table-card">
 
         <h4 class="mb-4">
-
-    <a href="{{ route('sections.show',$section) }}"
-        class="btn btn-secondary-custom">
-
-        <i class="bi bi-arrow-left"></i>
-
-    </a>
             Quiz Information
-
         </h4>
 
         <div class="mb-4">
@@ -135,37 +134,23 @@
         </div>
 
         <div class="row">
-
             <div class="col-md-6 mb-4">
-
                 <label class="form-label">
-
                     Duration (minutes)
-
                 </label>
-
                 <input
                     type="number"
                     min="1"
                     class="form-control"
                     name="duration">
-
                 <small class="text-muted">
-
                     Leave empty for unlimited time.
-
                 </small>
-
             </div>
-
             <div class="col-md-6 mb-4">
-
                 <label class="form-label">
-
                     Passing Score (%)
-
                 </label>
-
                 <input
                     type="number"
                     class="form-control"
@@ -173,9 +158,34 @@
                     min="0"
                     max="100"
                     step="0.01">
-
             </div>
+        </div>
 
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <label class="form-label">
+                    Opened at
+                </label>
+                <input
+                    type="date"
+                    class="form-control"
+                    name="opened_at">
+                <small class="text-muted">
+                    Leave empty to open instantly after creation.
+                </small>
+            </div>
+            <div class="col-md-6 mb-4">
+                <label class="form-label">
+                    Due at
+                </label>
+                <input
+                    type="date"
+                    class="form-control"
+                    name="due_at">
+                <small class="text-muted">
+                    Leave empty for no due date. Must be after opened at.
+                </small>
+            </div>
         </div>
 
         <div class="row">

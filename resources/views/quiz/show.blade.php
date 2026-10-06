@@ -12,7 +12,7 @@
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
 
-    <a href="{{ route('sections.show', $quiz->section) }}" class="btn btn-secondary-custom">
+    <a href="{{ route('sections.show', $quiz->section) }}" class="btn btn-icon-plain">
         <i class="bi bi-arrow-left"></i>
     </a>
 
@@ -38,81 +38,86 @@
 
         <h2>{{ $quiz->name }}</h2>
 
-        <p class="mb-0">
+        <p class="mb-3">
             {{ $quiz->description }}
         </p>
 
+        <div class="assignment-meta">
+
+            <div class="assignment-meta-item">
+                <span>Duration {{ $quiz->duration ? '(hh:mm)' : '' }}</span>
+                <strong>
+                    @if($quiz->duration)
+                        {{ gmdate('H:i', $quiz->duration) }}
+                    @else
+                        <i class="bi bi-infinity"></i>
+                    @endif
+                </strong>
+            </div>
+
+            <div class="assignment-meta-item">
+                <span>{{ Str::plural('Attempt', $quiz->max_attempt ?? 2) }} Allowed</span>
+                <strong>
+                    @if($quiz->max_attempt)
+                        {{ $quiz->max_attempt }}
+                    @else
+                        <i class="bi bi-infinity"></i>
+                    @endif
+                </strong>
+            </div>
+
+            <div class="assignment-meta-item">
+                <span>Pass Score</span>
+                <strong>
+                    @if($quiz->pass_score)
+                        {{ rtrim(rtrim(number_format($quiz->pass_score, 2), '0'), '.') }}%
+                    @else
+                        —
+                    @endif
+                </strong>
+            </div>
+
+            <div class="assignment-meta-item">
+                <span>Your Best Score</span>
+                <strong>
+                    @if(!is_null($bestScore))
+                        {{ rtrim(rtrim(number_format($bestScore, 2), '0'), '.') }}%
+                    @else
+                        —
+                    @endif
+                </strong>
+            </div>
+
+        </div>
+
     </div>
 
 </div>
 
-<div class="row g-3 mb-4">
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <h3>
-                @if($quiz->duration)
-                {{ gmdate('H:i', $quiz->duration) }}
-                @else
-                <i class="bi bi-infinity"></i>
-                @endif
-            </h3>
-            <span>Duration {{ $quiz->duration ? '(hh:mm)' : '' }}</span>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <h3>
-                @if($quiz->max_attempt)
-                {{ $quiz->max_attempt }}
-                @else
-                <i class="bi bi-infinity"></i>
-                @endif
-            </h3>
-            <span>{{ Str::plural('Attempt', $quiz->max_attempt ?? 2) }} Allowed</span>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <h3>
-                @if($quiz->pass_score)
-                {{ rtrim(rtrim(number_format($quiz->pass_score, 2), '0'), '.') }}%
-                @else
-                —
-                @endif
-            </h3>
-            <span>Pass Score</span>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <h3>
-                @if(!is_null($bestScore))
-                {{ rtrim(rtrim(number_format($bestScore, 2), '0'), '.') }}%
-                @else
-                —
-                @endif
-            </h3>
-            <span>Your Best Score</span>
-        </div>
-    </div>
-
-</div>
 
 <div class="table-card mb-4">
-
     <div class="text-center py-4">
+        @if(!$isOpen)
+        <p class="text-muted mb-3">
+            <i class="bi bi-lock-fill"></i>
+            @if($notYetOpen)
+                This quiz is not available yet. It opens on
+                {{ $quiz->opened_at }}.
+            @else
+                This quiz is closed. The due date was
+                {{ $quiz->due_at }}.
+            @endif
+        </p>
+        <button type="button" class="btn btn-secondary-custom btn-lg px-5" disabled>
+            <i class="bi bi-slash-circle"></i>
+            Unable to Attempt
+        </button>
 
-        @if($inProgressAttempt)
-
+        @elseif($inProgressAttempt)
         <p class="text-muted mb-3">
             You have an attempt in progress, started
             {{ $inProgressAttempt->started_at->diffForHumans() }}.
         </p>
-
         <form action="{{ route('quizzes.attempts.store', $quiz) }}" method="POST" class="d-inline">
             @csrf
             <button type="submit" class="btn btn-theme btn-lg px-5">
@@ -122,7 +127,6 @@
         </form>
 
         @elseif($canAttempt)
-
         <p class="text-muted mb-3">
             @if(!is_null($attemptsRemaining))
             You have {{ $attemptsRemaining }} {{ Str::plural('attempt', $attemptsRemaining) }} remaining.
@@ -130,7 +134,6 @@
             You have unlimited attempts for this quiz.
             @endif
         </p>
-
         <form action="{{ route('quizzes.attempts.store', $quiz) }}" method="POST" class="d-inline"
             onsubmit="return confirm('Start this quiz now? Make sure you\'re ready before beginning.')">
             @csrf
@@ -141,20 +144,16 @@
         </form>
 
         @else
-
         <p class="text-muted mb-3">
             <i class="bi bi-lock-fill"></i>
             You have used all {{ $quiz->max_attempt }} of your allowed attempts.
         </p>
-
         <button type="button" class="btn btn-secondary-custom btn-lg px-5" disabled>
             No Attempts Remaining
         </button>
-
         @endif
 
     </div>
-
 </div>
 
 @if($attempts->isNotEmpty())

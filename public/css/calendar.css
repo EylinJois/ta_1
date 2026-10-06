@@ -256,13 +256,90 @@
 }
 
 /* =====================================
+   CALENDAR HEADER
+===================================== */
+
+.courses-header.calendar-header{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: .5rem;
+    text-align: left;
+}
+
+.calendar-nav,
+.calendar-actions{
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.calendar-title{
+    white-space: nowrap;
+}
+
+/* =====================================
    RESPONSIVE
 ===================================== */
 
-@media(max-width: 900px){
+@media (max-width: 900px){
 
-    .week-grid{
-        grid-template-columns: 1fr;
+    /* header: keep everything on one row */
+    .calendar-nav,
+    .calendar-actions{
+        gap: .25rem;
     }
 
+    .calendar-nav .btn{
+        padding: .25rem .5rem;
+    }
+
+    .calendar-actions .btn{
+        padding: .4rem .6rem;
+    }
+
+    .calendar-actions .btn-secondary-cal{
+        padding: 8px 10px;
+    }
+
+    .calendar-title{
+        font-size: 1.1rem;
+    }
+
+        /* mobile: month nav on the left, today button on the right; add via each day's + button */
+    .add-event-btn{
+        display: none;
+    }
+
+    .calendar-nav{
+        margin-right: auto;
+    }
+
+    /* week: two columns, days wrap into rows */
+    .week-grid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .week-day-column{
+        min-height: 0;
+    }
+
+    /* the 7th day would sit alone in the last row, so span both columns */
+    .week-day-column:last-child:nth-child(odd){
+        grid-column: 1 / -1;
+    }
+
+    .week-empty-day{
+        padding: 10px 8px;
+    }
+}
+
+/* touch screens have no hover, so always show the per-day add button */
+@media (hover: none){
+    .week-add-btn{
+        opacity: 1;
+    }
 }

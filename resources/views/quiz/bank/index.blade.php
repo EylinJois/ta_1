@@ -10,6 +10,7 @@
 
 @section('content')
 
+
 {{-- Header --}}
 <div class="courses-header mb-4">
 
@@ -126,6 +127,11 @@
                             @else
                             Independent Question Bank
                             @endif
+                        </span>
+
+                        <span class="qbank-badge">
+                            <i class="bi bi-globe2"></i>
+                            Use code: QB{{ $questionBank->id}}
                         </span>
                     </div>
 
@@ -267,7 +273,7 @@
                             Visibility
                         </label>
 
-                        <select name="visibility"
+                        <select name="is_public"
                                 class="form-select">
 
                             <option value="1" selected>

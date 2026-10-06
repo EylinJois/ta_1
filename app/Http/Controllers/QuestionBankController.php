@@ -21,10 +21,8 @@ class QuestionBankController extends Controller
         $questionBanks = QuestionBank::with(['creator', 'course'])
             ->withCount('questions')
             ->where(function ($q) use ($user) {
-                // Own banks are always visible to their creator regardless of
-                // the visibility flag; other users' banks only show if shared.
                 $q->where('created_by', $user->id)
-                    ->orWhere('visibility', 1);
+                    ->orWhere('is_public', 1);
             })
             ->when($filter === 'mine', function ($q) use ($user) {
                 $q->where('created_by', $user->id);
@@ -41,14 +39,11 @@ class QuestionBankController extends Controller
             ->orderBy('name')
             ->get();
 
-        $courses = Course::all();
+        $courses = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', auth()->id()))
+            ->with('classes.users')
+            ->get();
 
         return view('quiz.bank.index', compact('questionBanks', 'courses', 'filter', 'search'));
-    }
-
-    public function create()
-    {
-        return view('quiz.bank.create');
     }
 
     public function store(Request $request)
@@ -57,15 +52,16 @@ class QuestionBankController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'course_id' => 'nullable|exists:courses,id',
-            'visibility' => 'required|boolean',
+            'is_public' => 'required|boolean',
         ]);
         QuestionBank::create([
             'name' => $request->name,
             'description' => $request->description,
             'course_id' => $request->course_id,
             'created_by' => auth()->id(),
-            'visibility' => $request->visibility,
+            'is_public' => $request->is_public,
         ]);
+        
         return redirect()->route('questionbank.index')->with('success', 'Question Bank created successfully.');
     }
 
@@ -91,7 +87,9 @@ class QuestionBankController extends Controller
         $questionBank = QuestionBank::findOrFail($id);
         $questionBank->load('questions');
         $user = User::findOrFail(Auth::user()->id);
-        $courses = $user->courses()->with('users')->get();
+        $courses = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', $user->id))
+            ->with('classes.users')
+            ->get();
 
         return view('quiz.bank.show', compact('questionBank', 'courses'));
     }
@@ -102,7 +100,7 @@ class QuestionBankController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'course_id' => 'nullable|exists:courses,id',
-            'visibility' => 'required|boolean',
+            'is_public' => 'required|boolean',
         ]);
 
         $questionBank = QuestionBank::findOrFail($id);
@@ -111,7 +109,7 @@ class QuestionBankController extends Controller
             'name' => $request->name,
             'description' => $request->description,
             'course_id' => $request->course_id,
-            'visibility' => $request->visibility,
+            'is_public' => $request->is_public,
         ]);
 
         return redirect()->route('questionbank.index')->with('success', 'Question Bank updated successfully.');

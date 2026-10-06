@@ -347,8 +347,21 @@ textarea.form-control{
     border: none;
 }
 
+.btn-theme-yellow{
+    background: #ffc107;
+    color: white;
+    border-radius: 14px;
+    padding: 12px 24px;
+    border: none;
+}
+
 .btn-theme:hover{
     background: #bb1f1f;
+    color: white;
+}
+
+.btn-theme-yellow:hover{
+    background: #e0a800;
     color: white;
 }
 
@@ -696,9 +709,102 @@ textarea.form-control{
     height: auto;
 }
 
+.btn-icon-plain{
+    background: transparent;
+    color: #2B2D42;
+}
+
+.btn-icon-plain:hover{
+    background: transparent;
+    color: #2B2D42;
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
+/* =========================
+   PARTICIPANTS TABLE - MOBILE
+========================= */
+
+@media(max-width: 768px){
+
+    .table-card .table thead{
+        display: none;
+    }
+
+    .table-card .table,
+    .table-card .table tbody,
+    .table-card .table tr,
+    .table-card .table td{
+        display: block;
+        width: 100%;
+    }
+
+    .table-card .table tr{
+        margin-bottom: 15px;
+        border: 1px solid #eee;
+        border-radius: 18px;
+        padding: 12px 15px;
+    }
+
+    .table-card .table td{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        padding: 8px 0;
+    }
+
+    .table-card .table td[data-label]::before{
+        content: attr(data-label);
+        font-weight: 600;
+        color: #999;
+        font-size: 13px;
+        margin-right: 10px;
+    }
+
+    .table-card .table td.actions-cell{
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 12px;
+        border-top: 1px solid #f2f2f2;
+    }
+}
+
+@media(max-width: 576px){
+
+    .table-card > .d-flex.justify-content-between.mb-4{
+        flex-wrap: wrap;
+        row-gap: 12px;
+    }
+
+    .table-card > .d-flex.justify-content-between.mb-4 > .btn-icon-plain{
+        order: 1;
+    }
+
+    .table-card > .d-flex.justify-content-between.mb-4 h4{
+        order: 2;
+        flex: 1;
+        text-align: left;
+        font-size: 1.05rem;
+        margin: 0 0 0 10px;
+    }
+
+    .table-card > .d-flex.justify-content-between.mb-4 > div{
+        order: 3;
+        flex: 1 0 100%;
+    }
+
+    .table-card > .d-flex.justify-content-between.mb-4 > div .btn{
+        width: 100%;
+    }
+}
+
+@media(max-width: 991.98px){
+    .course-detail-banner .col-lg-4{
+        display: none;
+    }
+}
 
 @media(max-width: 768px){
 
@@ -712,23 +818,31 @@ textarea.form-control{
         padding: 30px;
     }
 
-    .section-item{
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-    }
-
-    .section-actions{
-        width: 100%;
-    }
-
-    .section-actions .btn{
-        flex: 1;
+        .section-item{
+        padding: 18px;
     }
 
     .section-top{
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 12px;
+        margin-bottom: 0;
+    }
+
+    .section-left{
+        flex: 1;
+        min-width: 0;
+    }
+
+    .section-left h5{
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .section-actions{
+        flex-shrink: 0;
     }
 
     .material-card{
@@ -786,4 +900,158 @@ textarea.form-control{
     font-size: 28px;
     color: #F77F00;
     margin-bottom: 10px;
+}
+
+.student-progress-header{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    row-gap: 15px;
+}
+
+.student-progress-avatar{
+    order: 1;
+}
+
+.student-progress-info{
+    order: 2;
+    flex: 1;
+    margin-left: 15px;
+}
+
+.student-progress-header .btn-theme{
+    order: 3;
+}
+
+@media(max-width: 768px){
+
+    .student-progress-header{
+        justify-content: space-between;
+    }
+
+    .student-progress-avatar{
+        order: 1;
+    }
+
+    .student-progress-header .btn-theme{
+        order: 2;
+        white-space: nowrap;
+    }
+
+    .student-progress-info{
+        order: 3;
+        flex: 1 0 100%;
+        margin-left: 0;
+    }
+}
+@media(max-width: 768px){
+
+    .top-nav-row{
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+
+    .top-nav-row #markCompleteBtn span,
+    .top-nav-row #markCompleteBtn{
+        white-space: nowrap;
+    }
+
+    .material-nav-row .nav-prev .btn,
+    .material-nav-row .nav-next .btn{
+        width: auto;
+        padding: 12px 18px;
+    }
+}
+
+@media(max-width: 768px){
+
+    .courses-header.section-materials-header{
+        flex-direction: row;
+        flex-wrap: wrap;
+        row-gap: 15px;
+    }
+
+    .section-materials-header .back-to-course-btn{
+        order: 1;
+    }
+
+    .section-materials-header .section-header-actions{
+        order: 2;
+        gap: 10px;
+    }
+
+    .section-materials-header h4{
+        order: 3;
+        flex: 1 0 100%;
+    }
+
+    .section-header-actions .btn-label{
+        display: none;
+    }
+
+    .section-header-actions .btn{
+        padding: 12px 14px;
+    }
+}
+
+/* =========================
+   SELECT2 THEME MATCH
+========================= */
+
+.select2-container--default .select2-selection--single{
+    height: 50px;
+    border-radius: 16px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    transition: .3s;
+}
+
+.select2-container--default.select2-container--open .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--single{
+    border-color: #D62828;
+    box-shadow: 0 0 0 0.2rem rgba(214,40,40,0.15);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered{
+    padding: 0;
+    line-height: normal;
+    color: #2B2D42;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder{
+    color: #999;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow{
+    height: 48px;
+    right: 12px;
+}
+
+.select2-dropdown{
+    border-radius: 16px;
+    border: 1px solid #ddd;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.select2-search--dropdown .select2-search__field{
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+}
+
+.select2-search--dropdown .select2-search__field:focus{
+    outline: none;
+    border-color: #D62828;
+}
+
+.select2-results__option{
+    padding: 10px 15px;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected]{
+    background-color: #D62828;
+    color: white;
 }

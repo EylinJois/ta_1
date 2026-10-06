@@ -13,11 +13,15 @@ class ProgressController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $courses = $user->courses()->with('users')->get();
+        $courses = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', $user->id))
+            ->with('classes.users')
+            ->get();
+        $classNames = $user->classes()->pluck('name', 'course_id')->toArray();
+        
         $reports = ProgressReport::where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
-        return view('progress.index-student', compact('courses', 'reports'));
+        return view('progress.index-student', compact('courses', 'classNames', 'reports'));
     }
 
     public function courseIndex(Course $course, $studentId)
@@ -25,12 +29,9 @@ class ProgressController extends Controller
         $user = auth()->user();
 
         $student = User::findOrFail($studentId);
-        $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
+        $isManager = $user->isManagerInCourse($course->id);
 
-        // abort_unless(
-        //     $isManager || $user->id === $student->id,
-        //     403
-        // );
+        abort_unless($isManager || $user->id === $student->id, 403);
 
         $reports = ProgressReport::where('course_id', $course->id)
             ->where('user_id', $studentId)
@@ -43,7 +44,7 @@ class ProgressController extends Controller
     public function calculate(Course $course, User $student, ProgressCalculationService $calculator)
     {
         $user = auth()->user();
-        abort_unless($user->isAdmin($course->id) || $user->isTeacher($course->id), 403);
+        abort_unless($user->isManagerInCourse($course->id), 403);
 
         return response()->json($calculator->calculate($student, $course));
     }
@@ -51,7 +52,7 @@ class ProgressController extends Controller
     public function store(Request $request, Course $course, ProgressCalculationService $calculator)
     {
         $user = auth()->user();
-        abort_unless($user->isAdmin($course->id) || $user->isTeacher($course->id), 403);
+        abort_unless($user->isManagerInCourse($course->id), 403);
 
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',

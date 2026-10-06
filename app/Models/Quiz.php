@@ -18,7 +18,9 @@ class Quiz extends Model
         'duration',
         'pass_score',
         'shuffle_questions',
-        'shuffle_options'
+        'shuffle_options',
+        'opened_at',
+        'due_at'
     ];
 
     public function section()

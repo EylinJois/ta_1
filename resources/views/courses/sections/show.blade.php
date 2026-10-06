@@ -78,37 +78,32 @@
 {{-- MATERIALS --}}
 <div class="table-card mb-4">
 
-    <div class="courses-header mb-4">
-        <a
-            href="{{ route('courses.show',$course) }}"
-            class="btn btn-secondary-custom">
+    <div class="courses-header mb-4 section-materials-header">
+        <a href="{{ route('courses.show',$course) }}"
+            class="btn back-to-course-btn">
             <i class="bi bi-arrow-left"></i>
         </a>
         <h4 class="section-title mb-0">
             {{ $section->name }}
         </h4>
-        @if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
-
-        <div class="d-flex gap-2">
+        @if(Auth::user()->isManagerInCourse($course->id))
+        <div class="d-flex gap-2 section-header-actions">
 
             <a href="{{ route('materials.create', $section) }}"
                 class="btn btn-theme">
-
                 <i class="bi bi-file-earmark-plus"></i>
-                Add Material
-
+                <span class="btn-label">Add Material</span>
             </a>
 
             <button type="button"
-                class="btn btn-warning text-white"
+                class="btn btn-theme-yellow"
                 data-bs-toggle="modal"
                 data-bs-target="#addActivityModal">
                 <i class="bi bi-patch-question-fill"></i>
-                Add Activity
+                <span class="btn-label">Add Activity</span>
             </button>
 
         </div>
-
         @endif
     </div>
 
@@ -118,7 +113,7 @@
 
         <div class="col-lg-4">
             <a href="{{ route('materials.show',$material) }}"
-            class="text-decoration-none text-dark">
+                class="text-decoration-none text-dark">
                 <div class="material-display-card h-100">
                     <div class="material-card-header">
                         <div class="material-display-icon">
@@ -143,69 +138,69 @@
                             @endswitch
                         </div>
 
-                        @if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
+                        @if(Auth::user()->isManagerInCourse($course->id))
                         <div class="material-card-actions">
                             <a class="icon-action-btn edit-btn"
-                            href="{{ route('materials.edit', $material) }}">
-                            <i class="bi bi-pencil-fill"></i>
+                                href="{{ route('materials.edit', $material) }}">
+                                <i class="bi bi-pencil-fill"></i>
                             </a>
-            <form action="{{ route('materials.destroy', $material) }}"
-                method="POST"
-                onsubmit="return confirm('Delete this material?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="icon-action-btn delete-btn">
-                    <i class="bi bi-trash-fill"></i>
-                </button>
-            </form>
+                            <form action="{{ route('materials.destroy', $material) }}"
+                                method="POST"
+                                onsubmit="return confirm('Delete this material?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="icon-action-btn delete-btn">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </form>
+                        </div>
+                        @elseif($completedMaterialIds->contains($material->id))
+                        <span class="completed-pill">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Completed
+                        </span>
+                        @endif
+                    </div>
+
+                    <h5>
+                        {{ $material->name }}
+                    </h5>
+
+                    <span class="material-type">
+                        {{ $material->type }}
+                    </span>
+
+                    <p>
+                        {{ Str::limit($material->description, 120) }}
+                    </p>
+
+                </div>
+            </a>
         </div>
-        @elseif($completedMaterialIds->contains($material->id))
-        <span class="completed-pill">
-            <i class="bi bi-check-circle-fill"></i>
-            Completed
-        </span>
-        @endif
-    </div>
 
-    <h5>
-        {{ $material->name }}
-    </h5>
+        @empty
 
-    <span class="material-type">
-        {{ $material->type }}
-    </span>
+        <div class="col-12">
 
-    <p>
-        {{ Str::limit($material->description, 120) }}
-    </p>
+            <div class="empty-state">
 
-</div>
-</a>
-</div>
+                <i class="bi bi-folder-x"></i>
 
-@empty
+                <h4>
+                    No Materials
+                </h4>
 
-<div class="col-12">
+                <p>
+                    This section doesn't contain any learning materials yet.
+                </p>
 
-    <div class="empty-state">
+            </div>
 
-        <i class="bi bi-folder-x"></i>
+        </div>
 
-        <h4>
-            No Materials
-        </h4>
-
-        <p>
-            This section doesn't contain any learning materials yet.
-        </p>
+        @endforelse
 
     </div>
-
-</div>
-
-@endforelse
-
-</div>
 
 </div>
 
@@ -242,7 +237,7 @@
                             @endif
                         </div>
 
-                        @if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
+                        @if(Auth::user()->isManagerInCourse($course->id))
                         <div class="material-card-actions">
 
                             <a

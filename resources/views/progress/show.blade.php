@@ -10,32 +10,32 @@
 
 @section('content')
 
+<div class="mb-4">
+    <a href="{{ route('courses.show', $course) }}" class="btn btn-icon-plain">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+</div>
+
 {{-- Student header --}}
 <div class="table-card mb-4">
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="student-progress-header">
+        @if(!empty($student->img))
+        <img src="{{ asset('storage/' . $student->img) }}"
+            width="52" height="52" class="rounded-circle student-progress-avatar">
+        @else
+        <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name ?? 'User') }}"
+            width="52" height="52" class="rounded-circle student-progress-avatar">
+        @endif
 
-        <div class="participant-user d-flex align-items-center gap-3">
-            @if(!empty($student->img))
-            <img src="{{ asset('storage/' . $student->img) }}"
-                width="52"
-                height="52"
-                class="rounded-circle">
-            @else
-            <img src="https://ui-avatars.com/api/?name={{ urlencode($student->name ?? 'User') }}"
-                width="52"
-                height="52"
-                class="rounded-circle">
-            @endif
-            <div>
-                <h4 class="section-title mb-0">{{ $student->name }}'s Progress</h4>
-                <div class="text-muted small">{{ $student->email }} · {{ $course->name }}</div>
-            </div>
+        <div class="student-progress-info">
+            <h4 class="section-title mb-0">{{ $student->name }}'s Progress</h4>
+            <div class="text-muted small">{{ $student->email }} · {{ $course->name }}</div>
         </div>
 
         @if($isManager)
         <button type="button" class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addProgressModal">
             <i class="bi bi-plus-circle"></i>
-            Add Progress Report
+            Add Report
         </button>
         @endif
 
@@ -44,6 +44,7 @@
 
 {{-- Progress history --}}
 <div class="table-card">
+
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="section-title mb-0">Progress History</h4>
@@ -100,14 +101,6 @@
             </tbody>
         </table>
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <a href="{{ route('courses.participants.index', $course->id) }}"
-                class="btn btn-secondary-custom">
-                <i class="bi bi-arrow-left"></i>
-                Back
-            </a>
-        </div>
-
     </div>
 
 </div>
@@ -124,7 +117,6 @@
                 <div class="modal-header border-0">
                     <div>
                         <h5 class="modal-title fw-bold">Add Progress Report</h5>
-                        <small class="text-muted">{{ $student->name }}</small>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -160,7 +152,7 @@
 
                     <button type="button" class="btn btn-secondary-custom btn-sm mb-4 calculate-btn" data-student-id="{{ $student->id }}">
                         <i class="bi bi-calculator"></i>
-                        Calculate From Course Data
+                        Calculate
                     </button>
 
                     <div class="mb-2">
@@ -186,40 +178,44 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const courseId = {{ $course->id }};
+        const courseId = {
+            {
+                $course -> id
+            }
+        };
 
-    document.querySelectorAll('.calculate-btn').forEach(function (btn) {
+        document.querySelectorAll('.calculate-btn').forEach(function(btn) {
 
-        btn.addEventListener('click', function () {
+            btn.addEventListener('click', function() {
 
-            const studentId = btn.dataset.studentId;
-            const modalBody = btn.closest('.modal-body');
-            const progressInput = modalBody.querySelector('.progress-input');
-            const scoreInput = modalBody.querySelector('.quiz-score-input');
+                const studentId = btn.dataset.studentId;
+                const modalBody = btn.closest('.modal-body');
+                const progressInput = modalBody.querySelector('.progress-input');
+                const scoreInput = modalBody.querySelector('.quiz-score-input');
 
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calculating...';
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calculating...';
 
-            fetch(`/courses/${courseId}/progress/calculate/${studentId}`)
-                .then(r => r.json())
-                .then(function (data) {
-                    progressInput.value = data.progress;
-                    scoreInput.value = data.avg_quiz_score ?? '';
-                })
-                .catch(function () {
-                    alert('Failed to calculate progress.');
-                })
-                .finally(function () {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-calculator"></i> Calculate From Course Data';
-                });
+                fetch(`/courses/${courseId}/progress/calculate/${studentId}`)
+                    .then(r => r.json())
+                    .then(function(data) {
+                        progressInput.value = data.progress;
+                        scoreInput.value = data.avg_quiz_score ?? '';
+                    })
+                    .catch(function() {
+                        alert('Failed to calculate progress.');
+                    })
+                    .finally(function() {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-calculator"></i> Calculate From Course Data';
+                    });
+            });
+
         });
 
     });
-
-});
 </script>
 @endpush
 

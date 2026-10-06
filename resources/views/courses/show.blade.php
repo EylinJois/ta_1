@@ -10,6 +10,10 @@
 
 @section('content')
 
+<a href="{{ route('courses.index') }}" class="btn btn-secondary-custom btn-icon-plain">
+    <i class="bi bi-arrow-left"></i>
+</a>
+
 {{-- Course Banner --}}
 <div class="course-detail-banner mb-4">
 
@@ -17,9 +21,11 @@
 
         <div class="col-lg-8">
 
+            @foreach($classes as $class)
             <span class="course-badge">
-                Mandarin Learning Course
+                {{ $class->name }}
             </span>
+            @endforeach
 
             <h2>
                 {{ $course->name }}
@@ -41,7 +47,7 @@
                 <div class="meta-item">
                     <i class="bi bi-people-fill"></i>
 
-                    {{ $course->users ? $course->users->count() : 0 }}
+                    {{ $class->users ? $class->users->count() : 0 }}
                     Participants
                 </div>
 
@@ -61,14 +67,14 @@
                     <i class="bi bi-people-fill"></i>
                     Participants
                 </a>
-                @if(Auth::user()->isStudent($course->id))
-                <a href="{{ route('progress.course', [$course->id,Auth::user()->id]) }}"
+                @if(Auth::user()->isStudent($class->id))
+                <a href="{{ route('progress.course', [$course->id, Auth::user()->id]) }}"
                     class="btn btn-dark-custom">
                     <i class="bi bi-award-fill"></i>
                     My Progress
                 </a>
                 @endif
-@if(Auth::user()->isAdmin($course->id))
+                @if(Auth::user()->isAdmin($class->id))
                 <a href="{{ route('courses.edit', $course->id) }}"
                     class="btn btn-light">
 
@@ -124,7 +130,7 @@
     <h4 class="section-title mb-0">
         Course Sections
     </h4>
-@if(Auth::user()->isAdmin($course->id))
+    @if(Auth::user()->isAdminInCourse($course->id))
     <button class="btn btn-theme add-section-btn"
         data-bs-toggle="modal"
         data-bs-target="#addSectionModal">
@@ -133,7 +139,7 @@
         Add Section
 
     </button>
-@endif
+    @endif
 </div>
 
 
@@ -142,7 +148,7 @@
 
 <div id="sectionsContainer">
     @foreach($course->sections as $section)
-    @if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id) || $section->visibility)
+    @if(Auth::user()->isManagerInCourse($course->id) || $section->visibility)
     {{--
         NOTE: this used to be an <a> wrapping the whole card, with the
         Edit button and Delete form nested inside it. Nesting interactive
@@ -166,73 +172,73 @@
         onclick="if (!event.target.closest('.section-actions, .drag-handle')) { window.location = '{{ route('sections.show', $section->id) }}'; }"
         onkeydown="if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.section-actions, .drag-handle')) { event.preventDefault(); window.location = '{{ route('sections.show', $section->id) }}'; }">
 
-            <div class="section-top">
+        <div class="section-top">
 
-                <div class="section-left">
-@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
-                    <div class="drag-handle">
-                        <i class="bi bi-grip-vertical"></i>
-                    </div>
-@endif
-                    <div class="section-icon">
-                        <i class="bi bi-journal-text"></i>
-                    </div>
-
-                    <div>
-
-                        <h5 class="mb-1">
-                            {{ $section->name ?? '-' }}
-                        </h5>
-@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
-                        @if(isset($section->visibility) && $section->visibility)
-                        <span class="badge bg-success">
-                            Visible
-                        </span>
-
-                        @else
-
-                        <span class="badge bg-secondary">
-                            Hidden
-                        </span>
-
-                        @endif
-@endif
-                    </div>
+            <div class="section-left">
+                @if(Auth::user()->isManagerInCourse($course->id))
+                <div class="drag-handle">
+                    <i class="bi bi-grip-vertical"></i>
                 </div>
-@if(Auth::user()->isAdmin($course->id) || Auth::user()->isTeacher($course->id))
-                <div class="section-actions">
+                @endif
+                <div class="section-icon">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+
+                <div>
+
+                    <h5 class="mb-1">
+                        {{ $section->name ?? '-' }}
+                    </h5>
+                    @if(Auth::user()->isManagerInCourse($course->id))
+                    @if(isset($section->visibility) && $section->visibility)
+                    <span class="badge bg-success">
+                        Visible
+                    </span>
+
+                    @else
+
+                    <span class="badge bg-secondary">
+                        Hidden
+                    </span>
+
+                    @endif
+                    @endif
+                </div>
+            </div>
+            @if(Auth::user()->isManagerInCourse($course->id))
+            <div class="section-actions">
 
 
-                    {{-- Edit Section --}}
-                    <button type="button"
-                        class="icon-action-btn edit-btn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editSectionModal{{ $section->id }}">
+                {{-- Edit Section --}}
+                <button type="button"
+                    class="icon-action-btn edit-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editSectionModal{{ $section->id }}">
 
-                        <i class="bi bi-pencil-fill"></i>
+                    <i class="bi bi-pencil-fill"></i>
+
+                </button>
+
+                {{-- Delete Section --}}
+                <form action="{{ route('sections.destroy', $section->id) }}"
+                    method="POST"
+                    onsubmit="return confirm('Delete this section?')">
+
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit"
+                        class="icon-action-btn delete-btn">
+
+                        <i class="bi bi-trash-fill"></i>
 
                     </button>
 
-                    {{-- Delete Section --}}
-                    <form action="{{ route('sections.destroy', $section->id) }}"
-                        method="POST"
-                        onsubmit="return confirm('Delete this section?')">
+                </form>
 
-                        @csrf
-                        @method('DELETE')
-
-                        <button type="submit"
-                            class="icon-action-btn delete-btn">
-
-                            <i class="bi bi-trash-fill"></i>
-
-                        </button>
-
-                    </form>
-
-                </div>
-@endif
             </div>
+            @endif
+        </div>
 
     </div>
 

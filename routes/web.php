@@ -15,6 +15,7 @@ use App\Http\Controllers\TTSController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\MaterialProgressController;
 use Illuminate\Support\Facades\Route;
@@ -63,13 +64,19 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::view('/home', 'home')->name('home');
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::get('/profile', [UserController::class, 'profileEdit'])->name('profile.edit');
     Route::put('/profile/{id}', [UserController::class, 'profileUpdate'])->name('profile.update');
 
     Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/create', [CourseController::class, 'create'])->name('courses.create');
+    Route::post('/courses/{id}/classes', [CourseController::class, 'storeClass'])
+    ->name('courses.classes.store');
+    Route::put('/courses/{id}/classes/{classId}', [CourseController::class, 'updateClass'])
+    ->name('courses.classes.update');
+    Route::delete('/courses/{id}/classes/{classId}', [CourseController::class, 'destroyClass'])
+    ->name('courses.classes.destroy');
 
     /*
     |----------------------------------------------------------------------
@@ -100,6 +107,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('questionbank', QuestionBankController::class)->names([
         'index' => 'questionbank.index',
         'show' => 'questionbank.show',
+        'store' => 'questionbank.store',
+        'update' => 'questionbank.update',
+        'destroy' => 'questionbank.destroy',
     ]);
 
     Route::post('/questionbank/{questionBank}/questions/reorder', [QuestionBankController::class, 'reorder'])

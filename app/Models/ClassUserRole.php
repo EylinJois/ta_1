@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CourseUserRole extends Pivot
+class ClassUserRole extends Pivot
 {
     use HasFactory;
 
-    protected $table = 'course_user_role';
+    protected $table = 'class_user_role';
 
     protected $fillable = [
         'user_id',
-        'course_id',
+        'class_id',
         'role',
     ];
 
@@ -35,29 +35,9 @@ class CourseUserRole extends Pivot
         return $this->belongsTo(User::class);
     }
 
-    public function course(): BelongsTo
+    public function class(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Clas::class, 'class_id');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helpers
-    |--------------------------------------------------------------------------
-    */
-
-    public function isTeacher(): bool
-    {
-        return $this->role === 'Teacher';
-    }
-
-    public function isStudent(): bool
-    {
-        return $this->role === 'Student';
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->role === 'Admin';
-    }
 }

@@ -9,6 +9,7 @@ use App\Models\Note;
 use App\Models\NoteFile;
 use App\Models\MediaAsset;
 use App\Models\Section;
+use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -59,7 +60,8 @@ class NoteController extends Controller
         $folder = Folder::where('id', request('folder'))->first() ?? null;
         $allFolders = Folder::where('user_id', auth()->id())->get();
 
-        $courseIds = Auth::user()->courses()->pluck('courses.id');
+        $courseIds = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', Auth::id()))
+            ->pluck('courses.id');
         $sectionIds = Section::whereIn('course_id', $courseIds)
             ->pluck('id');
         $materials = Material::whereIn('section_id', $sectionIds)
@@ -88,7 +90,8 @@ class NoteController extends Controller
         $folder = Folder::where('id', request('folder'))->first() ?? null;
         $allFolders = Folder::where('user_id', auth()->id())->get();
 
-        $courseIds = Auth::user()->courses()->pluck('courses.id');
+        $courseIds = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', Auth::id()))
+            ->pluck('courses.id');
         $sectionIds = Section::whereIn('course_id', $courseIds)
             ->pluck('id');
         $materials = Material::whereIn('section_id', $sectionIds)

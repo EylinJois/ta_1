@@ -30,17 +30,12 @@ class MaterialController extends Controller
      */
     public function create(Section $section)
     {
-        $roles = [
-            1 => 'Admin',
-            2 => 'Teacher',
-            3 => 'Student'
-        ];
+        $this->authorizeManage($section);
         $materials = $section->materials()->get();
 
         return view('courses.materials.create', [
             'section' => $section,
             'course' => $section->course,
-            'roles' => $roles,
             'materials' => $materials
         ]);
     }
@@ -50,7 +45,7 @@ class MaterialController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|max:255',
             'description' => 'nullable',
             'type' => 'required',
@@ -64,6 +59,9 @@ class MaterialController extends Controller
             'pdf_file' => 'nullable|mimes:pdf|max:51200',
             'epub_file' => 'nullable|mimes:epub|max:51200',
         ]);
+
+        $section = Section::findOrFail($validated['section_id']);
+        $this->authorizeManage($section);
 
         DB::transaction(function () use ($request) {
 
@@ -277,17 +275,12 @@ class MaterialController extends Controller
         ])->findOrFail($id);
 
         $section = Section::findOrFail($material->section_id);
-        $roles = [
-            1 => 'Admin',
-            2 => 'Teacher',
-            3 => 'Student'
-        ];
+        $this->authorizeManage($section);
         $materials = $section->materials()->get();
 
         return view('courses.materials.edit', [
             'section' => $section,
             'course' => $section->course,
-            'roles' => $roles,
             'materials' => $materials,
             'material' => $material
         ]);
@@ -307,8 +300,9 @@ class MaterialController extends Controller
     public function update(Request $request, string $id)
     {
         $material = Material::findOrFail($id);
+        $this->authorizeManage($material->section);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|max:255',
             'description' => 'nullable',
             'section_id' => 'required|exists:sections,id',
@@ -321,6 +315,8 @@ class MaterialController extends Controller
             'pdf_file' => 'nullable|mimes:pdf|max:51200',
             'epub_file' => 'nullable|mimes:epub|max:51200',
         ]);
+
+        $this->authorizeManage(Section::findOrFail($validated['section_id']));
 
         DB::transaction(function () use ($request, $material) {
 
@@ -446,6 +442,7 @@ class MaterialController extends Controller
     public function destroy(string $id)
     {
         $material = Material::findOrFail($id);
+        $this->authorizeManage($material->section);
 
         DB::transaction(function () use ($material) {
 
@@ -464,5 +461,10 @@ class MaterialController extends Controller
             'success',
             'Material deleted successfully.'
         );
+    }
+
+    private function authorizeManage(Section $section): void
+    {
+        abort_unless(auth()->user()->isManagerInCourse($section->course_id), 403);
     }
 }

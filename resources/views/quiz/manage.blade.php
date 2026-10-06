@@ -9,12 +9,11 @@
 @endpush
 
 @section('content')
-
 <div class="d-flex justify-content-between align-items-start mb-4">
 
     <div class="d-flex align-items-center gap-3">
 
-        <a href="{{ route('sections.show', $quiz->section) }}" class="btn btn-secondary-custom">
+        <a href="{{ route('sections.show', $quiz->section) }}" class="btn btn-back">
             <i class="bi bi-arrow-left"></i>
         </a>
 
@@ -26,7 +25,7 @@
     </div>
 
     <button type="button"
-        class="btn btn-warning text-white"
+        class="btn btn-secondary-custom"
         data-bs-toggle="modal"
         data-bs-target="#editQuizModal">
         <i class="bi bi-pencil-fill"></i>
@@ -40,73 +39,24 @@
     {{-- LEFT: pick questions --}}
     <div class="col-lg-6">
 
-        <div class="table-card mb-4">
-
-            <h5 class="mb-3">
-                <i class="bi bi-magic"></i>
-                Random Pick
-            </h5>
-
-            <form id="randomPickForm">
-                @csrf
-
-                <div class="mb-3">
-                    <label class="form-label">Question Bank</label>
-                    <select class="form-select" name="question_bank_id" required>
-                        <option value="" disabled selected>Choose a bank...</option>
-                        @foreach($questionBanks as $bank)
-                        <option value="{{ $bank->id }}">
-                            {{ $bank->name }} ({{ $bank->questions_count }} questions)
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">How many?</label>
-                        <input type="number" class="form-control" name="count" min="1" max="100" value="5" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Type (optional)</label>
-                        <select class="form-select" name="type">
-                            <option value="">Any type</option>
-                            <option value="choice">Multiple Choice</option>
-                            <option value="multiple_select">Multiple Select</option>
-                            <option value="written">Written</option>
-                            <option value="short_answer">Short Answer</option>
-                            <option value="file">File Upload</option>
-                            <option value="both">Written + File</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-theme w-100">
-                    <i class="bi bi-shuffle"></i>
-                    Add Random Questions
-                </button>
-            </form>
-
-        </div>
-
         <div class="table-card">
 
             <h5 class="mb-3">
                 <i class="bi bi-search"></i>
-                Pick Manually
+                Pick From Question Banks
             </h5>
 
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <select class="form-select" id="filterBank">
-                        <option value="">All banks</option>
-                        @foreach($questionBanks as $bank)
-                        <option value="{{ $bank->id }}">{{ $bank->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="searchQuestions" placeholder="Search questions...">
+            <div class="mb-3">
+                <label class="form-label">Question Bank</label>
+                <div class="qbank-code-search position-relative">
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="manualBankCodeSearch"
+                        placeholder="Search by code, e.g. QB1..."
+                        autocomplete="off">
+                    <input type="hidden" id="manualBankCodeSelectedId">
+                    <div id="manualBankCodeResults" class="qbank-code-results d-none"></div>
                 </div>
             </div>
 
@@ -234,65 +184,60 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        /* ===================== QUIZ QUESTION MANAGEMENT (existing) ===================== */
+        /* ===================== QUIZ QUESTION MANAGEMENT ===================== */
 
-        const quizId = {{$quiz -> id}};
+        const quizId = {{$quiz->id}};
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const availableList = document.getElementById('availableList');
         const selectedCountEl = document.getElementById('selectedCount');
         const addSelectedBtn = document.getElementById('addSelectedBtn');
         const quizQuestionList = document.getElementById('quizQuestionList');
-        const quizQuestionCount = document.getElementById('quizQuestionCount');
-        const filterBank = document.getElementById('filterBank');
-        const searchInput = document.getElementById('searchQuestions');
 
         let selectedIds = new Set();
-        let searchDebounce;
 
         function loadAvailable() {
 
-            const params = new URLSearchParams();
-            if (filterBank.value) params.set('question_bank_id', filterBank.value);
-            if (searchInput.value) params.set('search', searchInput.value);
+    const manualBankId = document.getElementById('manualBankCodeSelectedId')?.value;
 
-            fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
-                .then(r => r.json())
-                .then(questions => {
+    if (!manualBankId) {
+        availableList.innerHTML = '<p class="text-muted text-center py-3">Select a question bank above to see its questions.</p>';
+        return;
+    }
 
-                    if (questions.length === 0) {
-                        availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
-                        return;
-                    }
+    const params = new URLSearchParams();
+    params.set('question_bank_id', manualBankId);
 
-                    availableList.innerHTML = questions.map(q => `
-                    <div class="form-check border-bottom py-2">
-                        <input
-                            class="form-check-input available-question-checkbox"
-                            type="checkbox"
-                            value="${q.id}"
-                            id="q${q.id}"
-                            ${selectedIds.has(q.id) ? 'checked' : ''}>
-                        <label class="form-check-label d-block" for="q${q.id}">
-                            ${escapeHtml(q.question).slice(0, 100)}
-                            <span class="badge bg-light text-dark ms-1">${q.type.replace('_', ' ')}</span>
-                        </label>
-                    </div>
-                `).join('');
-                });
-        }
+    fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
+        .then(r => r.json())
+        .then(questions => {
+
+            if (questions.length === 0) {
+                availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
+                return;
+            }
+
+            availableList.innerHTML = questions.map(q => `
+                <div class="form-check border-bottom py-2">
+                    <input
+                        class="form-check-input available-question-checkbox"
+                        type="checkbox"
+                        value="${q.id}"
+                        id="q${q.id}"
+                        ${selectedIds.has(q.id) ? 'checked' : ''}>
+                    <label class="form-check-label d-block" for="q${q.id}">
+                        ${escapeHtml(q.question).slice(0, 100)}
+                        <span class="badge bg-light text-dark ms-1">${q.type.replace('_', ' ')}</span>
+                    </label>
+                </div>
+            `).join('');
+        });
+}
 
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
-
-        filterBank.addEventListener('change', loadAvailable);
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchDebounce);
-            searchDebounce = setTimeout(loadAvailable, 300);
-        });
 
         availableList.addEventListener('change', function(e) {
             if (!e.target.classList.contains('available-question-checkbox')) return;
@@ -325,29 +270,13 @@
                 .catch(() => alert('Failed to add questions. Please try again.'));
         });
 
-        document.getElementById('randomPickForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const payload = Object.fromEntries(formData.entries());
-
-            fetch(`/quizzes/${quizId}/questions/random`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify(payload),
-                })
-                .then(r => r.ok ? window.location.reload() : Promise.reject())
-                .catch(() => alert('Failed to add random questions. Please try again.'));
-        });
-
         quizQuestionList.addEventListener('click', function(e) {
             const btn = e.target.closest('.remove-question-btn');
-            if (!btn) return;
+            if (!btn || btn.disabled) return;
 
             if (!confirm('Remove this question from the quiz?')) return;
+
+            btn.disabled = true; // prevent a second click while the request is in flight
 
             const row = btn.closest('.quiz-question-row');
             const questionId = row.dataset.questionId;
@@ -359,7 +288,10 @@
                     },
                 })
                 .then(r => r.ok ? window.location.reload() : Promise.reject())
-                .catch(() => alert('Failed to remove question. Please try again.'));
+                .catch(() => {
+                    btn.disabled = false;
+                    alert('Failed to remove question. Please try again.');
+                });
         });
 
         let pointOverrideDebounce;
@@ -476,6 +408,7 @@
                         setSectionState(fileSection, true);
                         break;
                     case 'both':
+                        setSectionState(answersSection, true);
                         setSectionState(fileSection, true);
                         break;
                     case 'written':
@@ -667,6 +600,88 @@
             }
         });
 
-    }); // closes document.addEventListener('DOMContentLoaded', ...)
+        /* ===================== BANK CODE SEARCH (Pick Manually panel only) ===================== */
+
+        const questionBanksData = [
+            @foreach($questionBanks as $bank) {
+                id: {{$bank->id}},
+                code: 'QB{{ $bank->id }}',
+                name: @json($bank->name)
+            },
+            @endforeach
+        ];
+
+        function setupBankCodeSearch(searchInputId, selectedIdInputId, resultsId, onSelect) {
+
+            const searchInput = document.getElementById(searchInputId);
+            const selectedIdInput = document.getElementById(selectedIdInputId);
+            const resultsContainer = document.getElementById(resultsId);
+
+            if (!searchInput || !selectedIdInput || !resultsContainer) return;
+
+            function render(query) {
+
+                const normalizedQuery = query.trim().toLowerCase();
+
+                if (!normalizedQuery) {
+                    resultsContainer.classList.add('d-none');
+                    resultsContainer.innerHTML = '';
+                    return;
+                }
+
+                const matches = questionBanksData.filter(function(bank) {
+                    return bank.code.toLowerCase().includes(normalizedQuery) ||
+                        bank.name.toLowerCase().includes(normalizedQuery);
+                });
+
+                if (matches.length === 0) {
+                    resultsContainer.innerHTML = '<div class="qbank-code-no-match">No matching question bank.</div>';
+                    resultsContainer.classList.remove('d-none');
+                    return;
+                }
+
+                resultsContainer.innerHTML = matches.map(function(bank) {
+                    return `
+                    <div class="qbank-code-result-item" data-id="${bank.id}" data-code="${bank.code}" data-name="${bank.name.replace(/"/g, '&quot;')}">
+                        <span class="code">${bank.code}</span> (${bank.name})
+                    </div>
+                `;
+                }).join('');
+
+                resultsContainer.classList.remove('d-none');
+            }
+
+            searchInput.addEventListener('input', function() {
+                selectedIdInput.value = '';
+                render(this.value);
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim()) render(this.value);
+            });
+
+            resultsContainer.addEventListener('click', function(e) {
+                const item = e.target.closest('.qbank-code-result-item');
+                if (!item) return;
+
+                selectedIdInput.value = item.dataset.id;
+                searchInput.value = `${item.dataset.code} (${item.dataset.name})`;
+                resultsContainer.classList.add('d-none');
+
+                if (onSelect) onSelect(item.dataset.id);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest(`#${searchInputId}`) && !e.target.closest(`#${resultsId}`)) {
+                    resultsContainer.classList.add('d-none');
+                }
+            });
+        }
+
+        setupBankCodeSearch('manualBankCodeSearch', 'manualBankCodeSelectedId', 'manualBankCodeResults', function() {
+            loadAvailable();
+        });
+
+    });
 </script>
 @endpush

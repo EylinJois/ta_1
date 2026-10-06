@@ -74,7 +74,7 @@
 
                 <li>
                     <a href="{{ route('questionbank.index') }}">
-                        <i class="bi bi-people-fill"></i>
+                        <i class="bi bi-patch-question-fill"></i>
                         <span class="menu-text">
                             Question Bank
                         </span>
@@ -86,15 +86,6 @@
                         <i class="bi bi-journal-bookmark-fill"></i>
                         <span class="menu-text">
                             Notes
-                        </span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#">
-                        <i class="bi bi-pencil-square"></i>
-                        <span class="menu-text">
-                            Quiz & Assignment
                         </span>
                     </a>
                 </li>
@@ -153,7 +144,6 @@
 
                     <div class="profile-trigger">
 
-                        <i class="bi bi-bell-fill fs-5"></i>
                         @if(auth()->user()->img)
                         <img src="{{ asset('storage/' . auth()->user()->img) }}"
                             alt="Profile Image"

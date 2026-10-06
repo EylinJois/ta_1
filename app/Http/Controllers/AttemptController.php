@@ -374,7 +374,7 @@ class AttemptController extends Controller
     {
         $course = $attempt->quiz->section->course;
         abort_unless(
-            auth()->user()->isAdmin($course->id) || auth()->user()->isTeacher($course->id),
+            auth()->user()->isManagerInCourse($course->id),
             403
         );
     }
@@ -416,7 +416,10 @@ class AttemptController extends Controller
 
     public function review(Attempt $attempt)
     {
-        abort_if($attempt->status === 'in_progress', 422, 'This attempt is still in progress and cannot be graded yet.');
+        if($attempt->status === 'in_progress'){
+            return redirect()->route('attempts.index', $attempt)
+                ->with('error', 'This attempt is still in progress and cannot be reviewed yet.');
+        }
 
         $quiz = $attempt->quiz;
 

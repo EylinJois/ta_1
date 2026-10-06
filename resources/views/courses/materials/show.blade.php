@@ -2,7 +2,7 @@
 
 @section('title', $material->name)
 
-@section('page-title', 'Material')
+@section('page-title', '' . $material->name)
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/course.css') }}">
@@ -10,11 +10,14 @@
 
 @section('content')
 
-<div class="mb-4">
-    <a href="{{ route('sections.show',$section) }}" class="btn btn-secondary-custom">
+<div class="mb-4 d-flex justify-content-between align-items-center top-nav-row">
+    <a href="{{ route('sections.show',$section) }}" class="btn btn-secondary-custom btn-icon-plain">
         <i class="bi bi-arrow-left"></i>
-        Back to Section
     </a>
+
+    <button id="markCompleteBtn" class="btn btn-outline-success">
+        <i class="bi bi-check-circle"></i> Mark as Complete
+    </button>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -95,9 +98,9 @@
 
         <div class="text-center py-5">
             <i class="bi bi-file-earmark-arrow-down display-1 text-danger"></i>
-            <h3>Download Material</h3>
+            <h3>{{ $material->name }}</h3>
             <a id="downloadFileBtn" href="{{ route('media.download', $asset->mediaAsset) }}" class="btn btn-theme">
-                Download File
+                Download    
             </a>
         </div>
 
@@ -146,28 +149,24 @@
     </div>
 </div>
 
-    <div class="d-flex justify-content-between align-items-center mt-5">
+<div class="d-flex justify-content-between align-items-center mt-5 material-nav-row">
 
-        <div>
-            @if($previous)
-            <a href="{{ route('materials.show',$previous) }}" class="btn btn-secondary-custom">
-                ← Previous
-            </a>
-            @endif
-        </div>
-
-        <button id="markCompleteBtn" class="btn btn-outline-success">
-            <i class="bi bi-check-circle"></i> Mark as Complete
-        </button>
-
-        <div>
-            @if($next)
-            <a href="{{ route('materials.show',$next) }}" class="btn btn-theme">
-                Next →
-            </a>
-            @endif
-        </div>
+    <div class="nav-prev">
+        @if($previous)
+        <a href="{{ route('materials.show',$previous) }}" class="btn btn-secondary-custom">
+            ← Previous
+        </a>
+        @endif
     </div>
+
+    <div class="nav-next">
+        @if($next)
+        <a href="{{ route('materials.show',$next) }}" class="btn btn-theme">
+            Next →
+        </a>
+        @endif
+    </div>
+</div>
 
     @push('scripts')
     <script>

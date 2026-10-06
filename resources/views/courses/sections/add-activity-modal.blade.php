@@ -1,4 +1,3 @@
-
 {{-- =========================
      ADD ACTIVITY MODAL
 ========================= --}}
@@ -29,10 +28,10 @@
 
                 <div class="row g-3">
 
-                    <div class="col-6">
+                    <div class="col-6 d-flex">
 
                         <a href="{{ route('quizzes.create', $section) }}"
-                            class="activity-choice-card d-block text-decoration-none text-dark">
+                            class="activity-choice-card d-block text-decoration-none text-dark w-100">
 
                             <div class="activity-choice-icon">
                                 <i class="bi bi-patch-question-fill"></i>
@@ -48,10 +47,10 @@
 
                     </div>
 
-                    <div class="col-6">
+                    <div class="col-6 d-flex">
 
                         <a href="{{ route('assignments.create', $section) }}"
-                            class="activity-choice-card d-block text-decoration-none text-dark">
+                            class="activity-choice-card d-block text-decoration-none text-dark w-100">
 
                             <div class="activity-choice-icon">
                                 <i class="bi bi-file-earmark-text-fill"></i>

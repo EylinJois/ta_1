@@ -61,19 +61,6 @@
 
     <div class="note-card-footer">
 
-        @if($note->materials->count() > 0)
-        <div class="note-card-materials">
-            @foreach($note->materials->take(2) as $material)
-            <span class="badge bg-light text-dark">
-                <i class="bi bi-link-45deg"></i> {{ $material->name }}
-            </span>
-            @endforeach
-            @if($note->materials->count() > 2)
-            <span class="badge bg-light text-dark">+{{ $note->materials->count() - 2 }}</span>
-            @endif
-        </div>
-        @endif
-
         <span class="note-card-date">
             {{ $note->updated_at->diffForHumans() }}
         </span>

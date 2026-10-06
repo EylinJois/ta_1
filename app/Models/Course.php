@@ -38,33 +38,8 @@ class Course extends Model
         return $this->hasMany(ProgressReport::class);
     }
 
-    public function users(): BelongsToMany
+    public function classes(): HasMany
     {
-        return $this->belongsToMany(
-            User::class,
-            'course_user_role',
-            'course_id',
-            'user_id'
-        )
-            ->withPivot('role')
-            ->withTimestamps();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Helpers
-    |--------------------------------------------------------------------------
-    */
-
-    public function teachers()
-    {
-        return $this->users()
-            ->wherePivot('role', 'Teacher');
-    }
-
-    public function students()
-    {
-        return $this->users()
-            ->wherePivot('role', 'Student');
+        return $this->hasMany(Clas::class);
     }
 }

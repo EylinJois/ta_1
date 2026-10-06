@@ -12,32 +12,38 @@
 
 @section('content')
 
-<div class="courses-header mb-4">
+<div class="courses-header calendar-header mb-4">
 
-    <div class="d-flex align-items-center gap-3">
+    <div class="calendar-nav">
         <a href="{{ route('calendar.index', ['date' => $startOfWeek->copy()->subWeek()->format('Y-m-d')]) }}"
-            class="btn">
+            class="btn" aria-label="Previous week">
             <i class="bi bi-chevron-left"></i>
         </a>
-        <h3 class="mb-0">
-            {{ $startOfWeek->format('F Y') }}
+
+        <h3 class="calendar-title mb-0">
+            <span class="d-none d-sm-inline">{{ $startOfWeek->format('F Y') }}</span>
+            <span class="d-sm-none">{{ $startOfWeek->format('M Y') }}</span>
         </h3>
+
         <a href="{{ route('calendar.index', ['date' => $startOfWeek->copy()->addWeek()->format('Y-m-d')]) }}"
-            class="btn">
+            class="btn" aria-label="Next week">
             <i class="bi bi-chevron-right"></i>
         </a>
     </div>
 
-    <div class="d-flex align-items-center gap-3">
-        <a href="{{ route('calendar.index') }}" class="btn btn-secondary-cal" title="Go to current week">
+    <div class="calendar-actions">
+        <a href="{{ route('calendar.index') }}" class="btn btn-secondary-cal"
+            title="Go to current week" aria-label="Go to current week">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
                 <path d="M0 0h24v24H0z" fill="none" />
                 <path fill="currentColor" d="M17 3.34a10 10 0 1 1-14.995 8.984L2 12l.005-.324A10 10 0 0 1 17 3.34M12 6a1 1 0 0 0-.993.883L11 7v5l.009.131a1 1 0 0 0 .197.477l.087.1l3 3l.094.082a1 1 0 0 0 1.226 0l.094-.083l.083-.094a1 1 0 0 0 0-1.226l-.083-.094L13 11.585V7l-.007-.117A1 1 0 0 0 12 6" />
             </svg>
         </a>
-        <button type="button" class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#createEventModal">
+
+        <button type="button" class="btn btn-theme add-event-btn" data-bs-toggle="modal" data-bs-target="#createEventModal"
+            title="Add event" aria-label="Add event">
             <i class="bi bi-plus-circle"></i>
-            Add Event
+            <span class="ms-1">Add Event</span>
         </button>
     </div>
 
@@ -136,7 +142,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="3"></textarea>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
                     </div>
 
                     <div class="row">
@@ -159,43 +165,22 @@
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label class="form-label">Type</label>
-                            <select name="type" class="form-select" required>
+                            <select name="type" id="eventTypeSelect" class="form-select" required>
                                 <option value="Study Session">Study Session</option>
-                                <option value="Quiz">Quiz</option>
-                                <option value="Reminder">Reminder</option>
-                                <option value="Assignment">Assignment</option>
-                                <option value="Reminder">Reminder</option>
-                            </select>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Course <small class="text-muted">(optional)</small></label>
-                            <select name="course_id" class="form-select">
-                                <option value="">None</option>
-                                @foreach($courses as $course)
-                                <option value="{{ $course->id }}">{{ $course->name }}</option>
-                                @endforeach
+                                <option value="Meeting">Meeting</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 d-none" id="meetingLinkGroup">
                         <label class="form-label">Meeting Link <small class="text-muted">(optional)</small></label>
-                        <input type="url" name="meeting_link" class="form-control" placeholder="https://...">
-                    </div>
-
-                    <div class="mb-1">
-                        <label class="form-label">Remind me before</label>
-                        <select name="notify_minutes" class="form-select">
-                            <option value="0">At the time of the event</option>
-                            <option value="15" selected>15 minutes before</option>
-                            <option value="30">30 minutes before</option>
-                            <option value="60">1 hour before</option>
-                            <option value="1440">1 day before</option>
-                        </select>
+                        <input type="url" name="meeting_link" id="meetingLinkInput" class="form-control"
+                            placeholder="https://..." disabled>
                     </div>
 
                 </div>
-                <div class="modal-footer border-0">
+                <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-theme">
                         <i class="bi bi-check-circle"></i>
@@ -211,11 +196,11 @@
 <div class="modal fade" id="eventDetailModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal">
-            <div class="modal-header border-0">
-                <h5 class="modal-title" id="eventDetailTitle">Event</h5>
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="eventDetailTitle">Event</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="eventDetailBody">
+            <div class="modal-body pt-3" id="eventDetailBody">
                 <div class="text-center py-4">
                     <div class="spinner-border text-danger"></div>
                 </div>
@@ -226,19 +211,78 @@
 
 @push('scripts')
 <script>
+    const hasFormErrors = @json($errors->any());
+
     document.addEventListener('DOMContentLoaded', function() {
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-       
-        window.openCreateModal = function (dateStr) {
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        } [c]));
+
+        // Only http(s) links are allowed; adds https:// when the scheme is missing
+        function safeUrl(raw) {
+            if (!raw) return null;
+            const trimmed = String(raw).trim();
+            const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : 'https://' + trimmed;
+            try {
+                const url = new URL(withScheme);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function updateEventStatus(id, status) {
+            fetch(`/calendar/events/${id}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status
+                    }),
+                })
+                .then(function(r) {
+                    if (!r.ok) throw new Error();
+                    window.location.reload();
+                })
+                .catch(function() {
+                    alert('Failed to update event status. Please try again.');
+                });
+        }
+
+        // ---- Create modal ----
+        const createModalEl = document.getElementById('createEventModal');
+        const typeSelect = document.getElementById('eventTypeSelect');
+        const meetingGroup = document.getElementById('meetingLinkGroup');
+        const meetingInput = document.getElementById('meetingLinkInput');
+
+        function toggleMeetingLink() {
+            const isMeeting = typeSelect.value === 'Meeting';
+            meetingGroup.classList.toggle('d-none', !isMeeting);
+            meetingInput.disabled = !isMeeting; 
+            if (!isMeeting) meetingInput.value = '';
+        }
+
+        typeSelect.addEventListener('change', toggleMeetingLink);
+        toggleMeetingLink(); 
+
+        window.openCreateModal = function(dateStr) {
             document.getElementById('createEventDate').value = dateStr;
             document.getElementById('createStartsTime').value = '08:00';
             document.getElementById('createEndsTime').value = '';
-            new bootstrap.Modal(document.getElementById('createEventModal')).show();
+            bootstrap.Modal.getOrCreateInstance(createModalEl).show();
         };
 
-        document.getElementById('createEventModal').addEventListener('shown.bs.modal', function () {
+        createModalEl.addEventListener('shown.bs.modal', function() {
             const dateField = document.getElementById('createEventDate');
             const startsTimeField = document.getElementById('createStartsTime');
 
@@ -250,6 +294,111 @@
             }
         });
 
+        // ---- Detail modal ----
+        function renderEventDetail(activity, body, title) {
+
+            title.textContent = activity.name;
+
+            const isSystemGenerated = !!activity.source_type_id;
+            const startDate = new Date(activity.starts_at);
+            const endDate = activity.ends_at ? new Date(activity.ends_at) : null;
+
+            const dateLabel = startDate.toLocaleDateString(undefined, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            const timeOpts = {
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const timeLabel = activity.is_all_day ?
+                'All day' :
+                startDate.toLocaleTimeString(undefined, timeOpts) +
+                (endDate ? ' – ' + endDate.toLocaleTimeString(undefined, timeOpts) : '');
+
+            const statusBadgeClass = {
+                scheduled: 'bg-info text-dark',
+                completed: 'bg-success',
+                cancelled: 'bg-secondary',
+                missed: 'bg-danger',
+            } [activity.status] || 'bg-secondary';
+
+            const canChangeStatus = activity.status === 'scheduled';
+            const meetingUrl = safeUrl(activity.meeting_link);
+            const meetingHost = meetingUrl ? new URL(meetingUrl).hostname.replace(/^www\./, '') : null;
+
+            const infoRow = (icon, content) => `
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <i class="bi ${icon} fs-5 text-muted flex-shrink-0" style="width: 1.5rem;"></i>
+                    <div class="flex-grow-1" style="min-width: 0;">${content}</div>
+                </div>`;
+
+            body.innerHTML = `
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    ${activity.type ? `<span class="badge rounded-pill bg-dark">${escapeHtml(activity.type)}</span>` : ''}
+                    <span class="badge rounded-pill text-capitalize ${statusBadgeClass}">${escapeHtml(activity.status)}</span>
+                </div>
+
+                ${infoRow('bi-calendar-event', `
+                    <div class="fw-semibold">${escapeHtml(dateLabel)}</div>
+                    <div class="text-muted">${escapeHtml(timeLabel)}</div>
+                `)}
+
+                ${meetingUrl ? infoRow('bi-camera-video', `
+                    <div class="d-flex align-items-center justify-content-between gap-3">
+                        <div class="text-truncate" style="min-width: 0;" title="${escapeHtml(meetingUrl)}">
+                            <div class="fw-semibold">Online meeting</div>
+                            <div class="text-muted small text-truncate">${escapeHtml(meetingHost)}</div>
+                        </div>
+                        <a href="${escapeHtml(meetingUrl)}" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-theme btn-sm flex-shrink-0">
+                            Join
+                        </a>
+                    </div>
+                `) : ''}
+
+                ${activity.description ? infoRow('bi-text-paragraph', `
+                    <div class="bg-light rounded-3 p-3" style="white-space: pre-line;">${escapeHtml(activity.description)}</div>
+                `) : ''}
+
+                ${isSystemGenerated ? `
+                    <div class="alert alert-light border small mb-3">
+                        This event is automatically managed and its schedule cannot be edited directly,
+                        but you can still mark it complete or cancelled.
+                    </div>
+                ` : ''}
+
+                ${canChangeStatus ? `
+                    <div class="d-flex gap-2 pt-3 border-top">
+                        <button type="button" class="btn btn-success flex-fill" id="completeEventBtn">
+                            <i class="bi bi-check-circle"></i> Mark Complete
+                        </button>
+                        <button type="button" class="btn btn-secondary-custom flex-fill" id="cancelEventBtn">
+                            <i class="bi bi-x-circle"></i> Cancel Event
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+
+            const completeBtn = document.getElementById('completeEventBtn');
+            if (completeBtn) {
+                completeBtn.addEventListener('click', function() {
+                    updateEventStatus(activity.id, 'completed');
+                });
+            }
+
+            const cancelBtn = document.getElementById('cancelEventBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    if (confirm('Cancel this event?')) {
+                        updateEventStatus(activity.id, 'cancelled');
+                    }
+                });
+            }
+        }
+
         window.openEventDetail = function(activityId) {
 
             const modalEl = document.getElementById('eventDetailModal');
@@ -259,92 +408,29 @@
             body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>';
             title.textContent = 'Event';
 
-            new bootstrap.Modal(modalEl).show();
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
             fetch(`/calendar/events/${activityId}`, {
-                    headers: { 'Accept': 'application/json' },
+                    headers: {
+                        'Accept': 'application/json'
+                    },
                 })
-                .then(r => r.json())
+                .then(function(r) {
+                    if (!r.ok) throw new Error();
+                    return r.json();
+                })
                 .then(function(activity) {
-
-                    title.textContent = activity.name;
-
-                    const isSystemGenerated = !!activity.source_type_id;
-                    const start = new Date(activity.starts_at).toLocaleString();
-                    const end = activity.ends_at ? new Date(activity.ends_at).toLocaleString() : null;
-
-                    const statusBadgeClass = {
-                        scheduled: 'bg-light text-dark',
-                        completed: 'bg-success',
-                        cancelled: 'bg-secondary',
-                        missed: 'bg-danger',
-                    }[activity.status] || 'bg-light text-dark';
-
-                    const canChangeStatus = activity.status === 'scheduled';
-
-                    body.innerHTML = `
-                        ${activity.description ? `<p>${activity.description}</p>` : ''}
-                        <p class="mb-1"><strong>Starts:</strong> ${start}</p>
-                        ${end ? `<p class="mb-1"><strong>Ends:</strong> ${end}</p>` : ''}
-                        ${activity.course ? `<p class="mb-1"><strong>Course:</strong> ${activity.course.name}</p>` : ''}
-                        ${activity.meeting_link ? `<p class="mb-1"><a href="${activity.meeting_link}" target="_blank">Join meeting</a></p>` : ''}
-                        <span class="badge ${statusBadgeClass}">${activity.status}</span>
-                        ${isSystemGenerated ? '<p class="text-muted small mt-3">This event is automatically managed and its schedule cannot be edited directly, but you can still mark it complete or cancelled.</p>' : ''}
-                        ${canChangeStatus ? `
-                            <div class="d-flex gap-2 mt-3">
-                                <button type="button" class="btn btn-success btn-sm" id="completeEventBtn">
-                                    <i class="bi bi-check-circle"></i> Mark Complete
-                                </button>
-                                <button type="button" class="btn btn-secondary-custom btn-sm" id="cancelEventBtn">
-                                    <i class="bi bi-x-circle"></i> Cancel Event
-                                </button>
-                            </div>
-                        ` : ''}
-                    `;
-
-                    const completeBtn = document.getElementById('completeEventBtn');
-                    if (completeBtn) {
-                        completeBtn.addEventListener('click', function() {
-                            updateEventStatus(activity.id, 'completed');
-                        });
-                    }
-
-                    const cancelBtn = document.getElementById('cancelEventBtn');
-                    if (cancelBtn) {
-                        cancelBtn.addEventListener('click', function() {
-                            if (confirm('Cancel this event?')) {
-                                updateEventStatus(activity.id, 'cancelled');
-                            }
-                        });
-                    }
-
-                    function updateEventStatus(id, status) {
-                        fetch(`/calendar/events/${id}/status`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken,
-                                    'Accept': 'application/json',
-                                },
-                                body: JSON.stringify({ status }),
-                            })
-                            .then(function(r) {
-                                if (!r.ok) throw new Error();
-                                window.location.reload();
-                            })
-                            .catch(function() {
-                                alert('Failed to update event status. Please try again.');
-                            });
-                    }
+                    renderEventDetail(activity, body, title);
                 })
                 .catch(function() {
                     body.innerHTML = '<p class="text-danger">Failed to load event details.</p>';
                 });
         };
 
-        @if($errors->any())
-        new bootstrap.Modal(document.getElementById('createEventModal')).show();
-        @endif
+        // Reopen the create modal when the form came back with validation errors
+        if (hasFormErrors) {
+            bootstrap.Modal.getOrCreateInstance(createModalEl).show();
+        }
 
     });
 </script>

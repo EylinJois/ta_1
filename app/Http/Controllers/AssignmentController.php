@@ -27,7 +27,7 @@ class AssignmentController extends Controller
     {
         $user = auth()->user();
         $course = $assignment->section->course;
-        $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
+        $isManager = $user->isManagerInCourse($course->id);
 
         $isVisible = $isManager || $user->id === $assignment->created_by || $assignment->visibility;
         abort_unless($isVisible, 404);
@@ -112,7 +112,7 @@ class AssignmentController extends Controller
         abort_if(is_null($course), 500, 'Section is not linked to a valid course.');
 
         abort_unless(
-            auth()->user()->isAdmin($course->id) || auth()->user()->isTeacher($course->id),
+            auth()->user()->isManagerInCourse($course->id),
             403
         );
     }
@@ -194,6 +194,7 @@ class AssignmentController extends Controller
     public function destroy(string $id)
     {
         $assignment = Assignment::findOrFail($id);
+        $this->authorizeManage($assignment->section);
 
         DB::transaction(function () use ($assignment) {
 

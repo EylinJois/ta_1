@@ -20,7 +20,7 @@ class Activity extends Model
         'source_type',
         'source_id',
         'is_all_day',
-        'notify_minutes',
+        'meeting_link',
     ];
 
     protected $casts = [
@@ -29,5 +29,31 @@ class Activity extends Model
         'is_all_day' => 'boolean'
     ];
 
-    public function participants() { return $this->belongsToMany(User::class, 'calendar_event_participants', 'activity_id', 'user_id'); }
+    public const TYPE_ICONS = [
+        'Meeting'       => 'bi-camera-video-fill',
+        'Reminder'      => 'bi-bell-fill',
+        'Quiz'          => 'bi-patch-question-fill',
+        'Assignment'    => 'bi-file-earmark-text-fill',
+        'Study Session' => 'bi-book-fill',
+    ];
+
+    public const DEFAULT_ICON = 'bi-calendar-event-fill';
+
+    public function participants()
+    {
+        return $this->belongsToMany(User::class, 'calendar_event_participants', 'activity_id', 'user_id');
+    }
+    public function source()
+    {
+        if ($this->source_type == 'assignment') {
+            return $this->belongsTo(Assignment::class, 'source_id');
+        } else {
+            return $this->belongsTo(Quiz::class, 'source_id');
+        }
+    }
+
+    public function getIconAttribute(): string
+    {
+        return self::TYPE_ICONS[$this->type] ?? self::DEFAULT_ICON;
+    }
 }

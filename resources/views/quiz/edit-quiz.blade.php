@@ -83,6 +83,32 @@
                     </div>
 
                     <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">
+                                Opened at
+                            </label>
+                            <input
+                                type="date"
+                                class="form-control"
+                                name="opened_at">
+                            <small class="text-muted">
+                                Leave empty to open instantly after creation.
+                            </small>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">
+                                Due at
+                            </label>
+                            <input
+                                type="date"
+                                class="form-control"
+                                name="due_at">
+                            <small class="text-muted">
+                                Leave empty for no due date. Must be after opened at.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
 
                         <div class="col-md-6 mb-3">
                             <div class="form-check form-switch">

@@ -10,65 +10,70 @@
 
 @section('content')
 
+<div class="mb-4">
+    <a href="{{ route('questionbank.index') }}" class="btn btn-back">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+</div>
+
 {{-- Banner --}}
-<div class="question-bank-banner mb-4">
+<div class="row align-items-center question-bank-banner mb-4">
 
-    <div>
+    <div class="col-lg-8">
 
-        <span class="badge bg-light text-dark mb-3">
-            Question Bank
-        </span>
+        <div>
 
-        <h2>{{ $questionBank->name }}</h2>
+            <span class="course-badge">
+                Question Bank
+            </span>
 
-        <p class="mb-0">
-            {{ $questionBank->description }}
-        </p>
+            <h2>{{ $questionBank->name }}</h2>
 
-    </div>
+            <p class="mb-0">
+                {{ $questionBank->description }}
+            </p>
+            <div class="course-meta">
+                <div class="meta-item">
+                    <i class="bi bi-clipboard-check-fill"></i>
+                    Use code: QB{{ $questionBank->id}}
+                </div>
+            </div>
 
-    <div class="d-flex gap-2">
+        </div>
 
-        <button class="btn btn-light"
-            data-bs-toggle="modal"
-            data-bs-target="#createQuestionModal">
+        <div class="d-flex flex-wrap gap-3 mt-4 align-items-center">
 
-            <i class="bi bi-plus-circle"></i>
-            Add Question
+            @if(auth()->id() == $questionBank->created_by)
 
-        </button>
+            <button class="btn btn-light"
+                data-bs-toggle="modal"
+                data-bs-target="#editQuestionBankModal">
 
-        @if(auth()->id() == $questionBank->created_by)
-
-        <button class="btn btn-warning text-white"
-            data-bs-toggle="modal"
-            data-bs-target="#editQuestionBankModal">
-
-            <i class="bi bi-pencil-fill"></i>
-            Edit
-
-        </button>
-
-        <form action="{{ route('questionbank.destroy', $questionBank) }}"
-            method="POST"
-            onsubmit="return confirm('Delete this Question Bank? All questions inside it will also be deleted.')">
-
-            @csrf
-            @method('DELETE')
-
-            <button class="btn btn-danger">
-
-                <i class="bi bi-trash-fill"></i>
-                Delete
+                <i class="bi bi-pencil-fill"></i>
+                Edit
 
             </button>
 
-        </form>
+            <form action="{{ route('questionbank.destroy', $questionBank) }}"
+                method="POST"
+                onsubmit="return confirm('Delete this Question Bank? All questions inside it will also be deleted.')">
 
-        @endif
+                @csrf
+                @method('DELETE')
+
+                <button class="btn btn-dark-custom">
+
+                    <i class="bi bi-trash-fill"></i>
+                    Delete
+                </button>
+
+            </form>
+
+            @endif
+
+        </div>
 
     </div>
-
 </div>
 
 {{-- Statistics --}}
@@ -128,6 +133,22 @@
 
 </div>
 @endif
+
+{{-- Sections Header --}}
+<div class="courses-header mb-4">
+
+    <h4 class="section-title mb-0">
+        Question List
+    </h4>
+    <button class="btn btn-theme add-section-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#createQuestionModal">
+
+        <i class="bi bi-plus-circle"></i>
+        Add Question
+
+    </button>
+</div>
 
 {{-- Questions --}}
 <div class="question-list" id="questionList">
@@ -536,52 +557,52 @@
 
             /* ========== FILE UPLOAD CONFIG ========== */
 
-const fileTypeCheckboxes = modal.querySelectorAll('.file-type-checkbox');
-const fileAllowedCustom = modal.querySelector('.file-allowed-custom');
-const fileAllowedJson = modal.querySelector('.file-allowed-json');
+            const fileTypeCheckboxes = modal.querySelectorAll('.file-type-checkbox');
+            const fileAllowedCustom = modal.querySelector('.file-allowed-custom');
+            const fileAllowedJson = modal.querySelector('.file-allowed-json');
 
-function syncFileAllowedJson() {
+            function syncFileAllowedJson() {
 
-    const checked = Array.from(fileTypeCheckboxes)
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
+                const checked = Array.from(fileTypeCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
 
-    const custom = fileAllowedCustom.value
-        .split(',')
-        .map(s => s.trim().toLowerCase().replace(/^\./, ''))
-        .filter(Boolean);
+                const custom = fileAllowedCustom.value
+                    .split(',')
+                    .map(s => s.trim().toLowerCase().replace(/^\./, ''))
+                    .filter(Boolean);
 
-    // De-duplicate in case someone types an extension that's also a checkbox.
-    const combined = [...new Set([...checked, ...custom])];
+                // De-duplicate in case someone types an extension that's also a checkbox.
+                const combined = [...new Set([...checked, ...custom])];
 
-    fileAllowedJson.value = JSON.stringify(combined);
-}
+                fileAllowedJson.value = JSON.stringify(combined);
+            }
 
-fileTypeCheckboxes.forEach(cb => cb.addEventListener('change', syncFileAllowedJson));
-fileAllowedCustom.addEventListener('input', syncFileAllowedJson);
+            fileTypeCheckboxes.forEach(cb => cb.addEventListener('change', syncFileAllowedJson));
+            fileAllowedCustom.addEventListener('input', syncFileAllowedJson);
 
-function applySeedFileConfig() {
+            function applySeedFileConfig() {
 
-    const allowed = seedFileConfig.allowed || [];
-    const knownExtensions = Array.from(fileTypeCheckboxes).map(cb => cb.value);
+                const allowed = seedFileConfig.allowed || [];
+                const knownExtensions = Array.from(fileTypeCheckboxes).map(cb => cb.value);
 
-    fileTypeCheckboxes.forEach(cb => {
-        cb.checked = allowed.includes(cb.value);
-    });
+                fileTypeCheckboxes.forEach(cb => {
+                    cb.checked = allowed.includes(cb.value);
+                });
 
-    const customExtensions = allowed.filter(ext => !knownExtensions.includes(ext));
-    fileAllowedCustom.value = customExtensions.join(', ');
+                const customExtensions = allowed.filter(ext => !knownExtensions.includes(ext));
+                fileAllowedCustom.value = customExtensions.join(', ');
 
-    syncFileAllowedJson();
+                syncFileAllowedJson();
 
-    const maxFileSizeInput = modal.querySelector('input[name="max_file_size"]');
-    const maxFilesInput = modal.querySelector('input[name="max_files"]');
+                const maxFileSizeInput = modal.querySelector('input[name="max_file_size"]');
+                const maxFilesInput = modal.querySelector('input[name="max_files"]');
 
-    if (seedFileConfig.max_file_size) maxFileSizeInput.value = seedFileConfig.max_file_size;
-    if (seedFileConfig.max_files) maxFilesInput.value = seedFileConfig.max_files;
-}
+                if (seedFileConfig.max_file_size) maxFileSizeInput.value = seedFileConfig.max_file_size;
+                if (seedFileConfig.max_files) maxFilesInput.value = seedFileConfig.max_files;
+            }
 
-applySeedFileConfig();
+            applySeedFileConfig();
 
             /* ========== SEED, THEN APPLY VISIBILITY (in that order, once) ========== */
 

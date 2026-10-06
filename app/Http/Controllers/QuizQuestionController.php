@@ -19,10 +19,7 @@ class QuizQuestionController extends Controller
         $course = $this->courseFor($quiz);
         $user = Auth::user();
 
-        abort_unless(
-            $user->isAdmin($course->id) || $user->isTeacher($course->id),
-            403
-        );
+        abort_unless($user->isManagerInCourse($course->id), 403);
     }
 
     // ASSUMPTION: adjust this if Quiz reaches Course a different way.
@@ -132,8 +129,6 @@ class QuizQuestionController extends Controller
 
             $fileConfig = $this->extractFileConfig($request, $validated['type']);
 
-            // question_bank_id is null — this question belongs only to this
-            // quiz, not to any reusable bank.
             $question = Question::create([
                 'question_bank_id' => null,
                 'question' => $validated['question'],
@@ -187,13 +182,13 @@ class QuizQuestionController extends Controller
         return view('quiz.questions.manage', compact('quiz', 'questionBanks'));
     }
 
-    /**
-     * JSON search endpoint powering the "pick manually" panel — returns
-     * questions not already on this quiz, filtered by bank/type/search text.
-     */
     public function available(Request $request, Quiz $quiz)
     {
         $this->authorizeManage($quiz);
+        
+        if (!$request->filled('question_bank_id')) {
+            return response()->json([]);
+        }
 
         $attachedIds = $quiz->questions()->pluck('questions.id');
 
@@ -201,11 +196,9 @@ class QuizQuestionController extends Controller
             ->whereNotIn('id', $attachedIds)
             ->whereHas('questionBank', function ($q) {
                 $q->where('created_by', auth()->id())
-                    ->orWhere('visibility', 1);
+                    ->orWhere('is_public', 1);
             })
-            ->when($request->filled('question_bank_id'), function ($q) use ($request) {
-                $q->where('question_bank_id', $request->question_bank_id);
-            })
+            ->where('question_bank_id', $request->question_bank_id)
             ->when($request->filled('type'), function ($q) use ($request) {
                 $q->where('type', $request->type);
             })
@@ -290,21 +283,20 @@ class QuizQuestionController extends Controller
     {
         $this->authorizeManage($quiz);
 
-        DB::transaction(function () use ($quiz, $question) {
+        $quizQuestion = QuizQuestion::where('quiz_id', $quiz->id)
+            ->where('question_id', $question->id)
+            ->firstOrFail();
 
-            $quiz->questions()->detach($question->id);
+        $quizQuestion->delete();
 
-            // Re-sequence remaining order_index values so there's no gap
-            // left where the removed question used to sit.
-            $remaining = $quiz->questions()->orderBy('quiz_questions.order_index')->get();
+        $remaining = $quiz->questions()->orderBy('quiz_questions.order_index')->get();
 
-            foreach ($remaining as $index => $q) {
-                DB::table('quiz_questions')
-                    ->where('quiz_id', $quiz->id)
-                    ->where('question_id', $q->id)
-                    ->update(['order_index' => $index + 1]);
-            }
-        });
+        foreach ($remaining as $index => $q) {
+            DB::table('quiz_questions')
+                ->where('quiz_id', $quiz->id)
+                ->where('question_id', $q->id)
+                ->update(['order_index' => $index + 1]);
+        }
 
         return back()->with('success', 'Question removed from quiz.');
     }

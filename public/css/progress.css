@@ -90,3 +90,20 @@
         }
 
     }
+
+    @media(max-width: 768px){
+
+    .student-progress-header{
+        flex-wrap: wrap;
+        row-gap: 15px;
+    }
+
+    .student-progress-header .participant-user{
+        flex: 1 0 100%;
+    }
+
+    .student-progress-header > .btn-theme{
+        flex: 1 0 100%;
+        white-space: nowrap;
+    }
+}

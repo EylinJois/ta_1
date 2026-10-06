@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Models\CourseUserRole;
 
 class EnsureCourseEnrollment
 {
@@ -31,12 +30,12 @@ class EnsureCourseEnrollment
             return $next($request);
         }
 
-        $enrolled = CourseUserRole::where('user_id', $user->id)
-            ->where('course_id', $courseId)
+        $enrolled = $user->classes()
+            ->where('classes.course_id', $courseId)
             ->exists();
 
         if (!$enrolled) {
-            abort(403, 'You are not enrolled in this course.');
+            abort(403, 'You are not enrolled in this class.');
         }
 
         return $next($request);

@@ -20,8 +20,7 @@ class CalendarController extends Controller
         $endOfWeek = $anchor->copy()->endOfWeek(Carbon::SATURDAY);
 
         $activities = Activity::where(function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                    ->orWhereHas('participants', fn($p) => $p->where('user_id', $user->id));
+                $q->whereHas('participants', fn($p) => $p->where('user_id', $user->id));
             })
             ->whereBetween('starts_at', [$startOfWeek, $endOfWeek])
             ->orderBy('starts_at')
@@ -52,9 +51,9 @@ class CalendarController extends Controller
             'event_date' => 'required|date',
             'starts_time' => 'required|date_format:H:i',
             'ends_time' => 'nullable|date_format:H:i|after:starts_time',
-            'type' => 'required|exists:activity_types,id',
+            'type' => 'required|string|max:255',
             'is_all_day' => 'required|boolean',
-            'notify_minutes' => 'nullable|integer|min:0',
+            'meeting_link' => 'nullable|url|max:2048',
         ]);
 
         $startsAt = Carbon::parse($validated['event_date'] . ' ' . $validated['starts_time']);
@@ -69,14 +68,25 @@ class CalendarController extends Controller
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
             'type' => $validated['type'],
-            // Manually created — no automated source.
             'source_type' => null,
             'source_id' => null,
             'is_all_day' => $validated['is_all_day'],
-            'notify_minutes' => $validated['notify_minutes'] ?? 15,
+            'meeting_link' => $validated['meeting_link'] ?? null,
         ]);
 
+        $activity->participants()->attach(auth()->id());
         return back()->with('success', 'Event added to your calendar.');
+    }
+
+    public function addParticipants(Request $request, Activity $activity)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $activity->participants()->syncWithoutDetaching($validated['user_id']);
+
+        return back()->with('success', 'Participant added to the event.');
     }
 
     public function show(Activity $activity)
@@ -100,7 +110,7 @@ class CalendarController extends Controller
             'ends_time' => 'nullable|date_format:H:i|after:starts_time',
             'type' => 'required|string|max:255',
             'is_all_day' => 'required|boolean',
-            'notify_minutes' => 'nullable|integer|min:0',
+            'meeting_link' => 'nullable|url|max:2048',
             'status' => 'required|in:scheduled,completed,cancelled,missed',
         ]);
 

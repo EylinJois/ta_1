@@ -183,7 +183,7 @@
 
     </div>
 
-    @if(auth()->user()->isAdmin($courseId) || auth()->user()->isTeacher($courseId))
+    @if(auth()->user()->isManagerInCourse($courseId))
     <div class="d-flex justify-content-end">
         <button type="submit" class="btn btn-theme btn-lg px-5">
             <i class="bi bi-check-circle"></i> Save Grade

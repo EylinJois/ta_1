@@ -28,13 +28,15 @@ class SectionController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required',
             'visibility' => 'required',
-            'course_id' => 'required',
+            'course_id' => 'required|exists:courses,id',
         ]);
 
-        $lastOrderIdx = Section::where('course_id', $request->course_id)
+        abort_unless(auth()->user()->isManagerInCourse((int) $validated['course_id']), 403);
+
+        $lastOrderIdx = Section::where('course_id', $validated['course_id'])
             ->max('order_idx');
 
         $request->merge([
@@ -42,9 +44,9 @@ class SectionController extends Controller
         ]);
 
         Section::create([
-            'name' => $request->name,
-            'visibility' => $request->visibility,
-            'course_id' => $request->course_id,
+            'name' => $validated['name'],
+            'visibility' => $validated['visibility'],
+            'course_id' => $validated['course_id'],
             'order_idx' => $request->order_idx,
         ]);
 
@@ -56,12 +58,20 @@ class SectionController extends Controller
 
     public function reorder(Request $request)
     {
-        foreach ($request->sections as $section) {
+        $validated = $request->validate([
+            'sections' => 'required|array',
+            'sections.*.id' => 'required|exists:sections,id',
+            'sections.*.order_idx' => 'required|integer',
+        ]);
 
-            Section::where('id', $section['id'])
-                ->update([
-                    'order_idx' => $section['order_idx']
-                ]);
+        $sections = collect($validated['sections'])->map(function ($section) {
+            $record = Section::findOrFail($section['id']);
+            abort_unless(auth()->user()->isManagerInCourse($record->course_id), 403);
+            return [$record, $section['order_idx']];
+        });
+
+        foreach ($sections as [$record, $orderIdx]) {
+            $record->update(['order_idx' => $orderIdx]);
         }
 
         return response()->json([
@@ -83,14 +93,8 @@ class SectionController extends Controller
     $course = $section->course;
 
 
-    $roles = [
-        'student' => 'Student',
-        'teacher' => 'Teacher',
-        'admin' => 'Admin',
-    ];
-
     $user = auth()->user();
-    $isManager = $user->isAdmin($course->id) || $user->isTeacher($course->id);
+    $isManager = $user->isManagerInCourse($course->id);
 
     $materials = $section->materials;
 
@@ -145,7 +149,6 @@ class SectionController extends Controller
     return view('courses.sections.show', compact(
         'section',
         'course',
-        'roles',
         'materials',
         'visibleMaterials',
         'visibleActivities',
@@ -170,11 +173,13 @@ class SectionController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $section = Section::findOrFail($id);
+        abort_unless(auth()->user()->isManagerInCourse($section->course_id), 403);
+
         $request->validate([
             'name' => 'required',
             'visibility' => 'required',
         ]);
-        $section = Section::findOrFail($id);
         $section->update([
             'name' => $request->name,
             'visibility' => $request->visibility,
@@ -192,6 +197,7 @@ class SectionController extends Controller
     public function destroy(string $id)
     {
         $section = Section::findOrFail($id);
+        abort_unless(auth()->user()->isManagerInCourse($section->course_id), 403);
         $section->delete();
 
         return back()->with(

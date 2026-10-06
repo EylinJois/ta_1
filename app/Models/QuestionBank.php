@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QuestionBank extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
-    protected $fillable=['course_id','created_by','name','description','visibility'];
+    protected $fillable=['course_id','created_by','name','description','is_public'];
 
     public function course()
     {

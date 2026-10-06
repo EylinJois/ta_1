@@ -11,7 +11,7 @@
 @section('content')
 
 <div class="mb-4">
-    <a href="{{ route('quizzes.show', $quiz) }}" class="btn btn-secondary-custom">
+    <a href="{{ route('quizzes.show', $quiz) }}" class="btn btn-icon-plain">
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>
@@ -35,21 +35,21 @@
 {{-- Summary stats --}}
 <div class="row g-3 mb-4">
 
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
         <div class="stat-card">
             <h3>{{ $totalAttempts }}</h3>
             <span>Total Attempts</span>
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
         <div class="stat-card">
             <h3>{{ $uniqueStudents }}</h3>
             <span>Students Attempted</span>
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
         <div class="stat-card">
             <h3>
                 @if(!is_null($averageScore))
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
         <div class="stat-card">
             <h3>
                 @if(!is_null($passCount))

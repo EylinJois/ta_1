@@ -40,15 +40,17 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
-    public function courses(): BelongsToMany
+    public function classes(): BelongsToMany
     {
         return $this->belongsToMany(
-            Course::class,
-            'course_user_role'
+            Clas::class,
+            'class_user_role',
+            'user_id',
+            'class_id'
         )
-        ->using(CourseUserRole::class)
-        ->withPivot('role')
-        ->withTimestamps();
+            ->using(ClassUserRole::class)
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function createdMaterials(): HasMany
@@ -64,21 +66,24 @@ class User extends Authenticatable
         return $this->hasMany(Note::class);
     }
 
-    public function activities(): HasMany
+    public function activities(): BelongsToMany
     {
-        return $this->hasMany(Activity::class);
+        return $this->belongsToMany(Activity::class, 'calendar_event_participants', 'user_id', 'activity_id')->withTimestamps();
     }
 
 
-    public function folders(): HasMany  {
+    public function folders(): HasMany
+    {
         return $this->hasMany(Folder::class);
     }
 
-    public function attempts(): HasMany  {
+    public function attempts(): HasMany
+    {
         return $this->hasMany(Attempt::class);
     }
 
-    public function questionBanks(): HasMany  {
+    public function questionBanks(): HasMany
+    {
         return $this->hasMany(QuestionBank::class);
     }
 
@@ -88,27 +93,45 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
-    public function isAdmin(int $courseId): bool
+    public function isAdmin(int $classId): bool
     {
-        return $this->courses()
-            ->where('course_id', $courseId)
+        return $this->classes()
+            ->where('classes.id', $classId)
             ->wherePivot('role', 'admin')
             ->exists();
     }
 
-    public function isTeacher(int $courseId): bool
+    public function isTeacher(int $classId): bool
     {
-        return $this->courses()
-            ->where('course_id', $courseId)
+        return $this->classes()
+            ->where('classes.id', $classId)
             ->wherePivot('role', 'teacher')
             ->exists();
     }
 
-    public function isStudent(int $courseId): bool
+    public function isStudent(int $classId): bool
     {
-        return $this->courses()
-            ->where('course_id', $courseId)
+        return $this->classes()
+            ->where('classes.id', $classId)
             ->wherePivot('role', 'student')
             ->exists();
+    }
+
+    public function hasRoleInCourse(int $courseId, array|string $roles): bool
+    {
+        return $this->classes()
+            ->where('classes.course_id', $courseId)
+            ->wherePivotIn('role', (array) $roles)
+            ->exists();
+    }
+
+    public function isAdminInCourse(int $courseId): bool
+    {
+        return $this->hasRoleInCourse($courseId, 'admin');
+    }
+
+    public function isManagerInCourse(int $courseId): bool
+    {
+        return $this->hasRoleInCourse($courseId, ['admin', 'teacher']);
     }
 }

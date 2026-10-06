@@ -1,28 +1,4 @@
-{{--
-    Universal Note create/edit modal.
 
-    Include this ONCE, globally — e.g. near the end of resources/views/layouts/app.blade.php,
-    just before </body>:
-
-        @include('notes.partials.note-modal')
-
-    Also make sure notes.css is loaded globally (or at least on every page
-    that might open this modal), since the form reuses its classes
-    (.note-form-sidebar, .note-material-picker, .photo-preview-grid, etc).
-
-    Open it from anywhere with:
-
-        openNoteModal({ mode: 'create' })
-        openNoteModal({ mode: 'create', materialId: 12 })
-        openNoteModal({ mode: 'create', folderId: 4 })
-        openNoteModal({ mode: 'edit', noteId: 57 })
-
-    Listen for when a note is saved (e.g. to refresh a list on the current page):
-
-        document.addEventListener('note-saved', function (e) {
-            console.log(e.detail); // the created/updated note as JSON
-        });
---}}
 
 <div class="modal fade" id="noteModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -94,15 +70,6 @@
                                     </label>
                                 </div>
 
-                                <label class="form-label">
-                                    Link to Materials
-                                    <span class="text-muted small">(optional)</span>
-                                </label>
-
-                                <div class="note-material-picker" id="noteModalMaterialPicker">
-                                    <p class="text-muted small mb-0">Loading…</p>
-                                </div>
-
                             </div>
 
                         </div>
@@ -143,7 +110,6 @@
         const contentInput = document.getElementById('noteModalContentInput');
         const folderSelect = document.getElementById('noteModalFolderSelect');
         const pinnedInput = document.getElementById('noteModalPinnedInput');
-        const materialPicker = document.getElementById('noteModalMaterialPicker');
 
         const photoInput = document.getElementById('noteModalPhotoInput');
         const photoPreview = document.getElementById('noteModalPhotoPreview');
@@ -177,27 +143,6 @@
                 opt.textContent = f.breadcrumb || f.name;
                 if (selectedId && String(selectedId) === String(f.id)) opt.selected = true;
                 folderSelect.appendChild(opt);
-            });
-        }
-
-        function renderMaterialOptions(materials, selectedIds) {
-            selectedIds = (selectedIds || []).map(String);
-
-            if (!materials.length) {
-                materialPicker.innerHTML = '<p class="text-muted small mb-0">No materials available to link.</p>';
-                return;
-            }
-
-            materialPicker.innerHTML = '';
-
-            materials.forEach(function(m) {
-                const wrap = document.createElement('div');
-                wrap.className = 'form-check';
-                wrap.innerHTML =
-                    '<input type="checkbox" class="form-check-input" name="material_ids[]" value="' + m.id + '" ' +
-                    'id="noteModalMaterial' + m.id + '" ' + (selectedIds.includes(String(m.id)) ? 'checked' : '') + '>' +
-                    '<label class="form-check-label" for="noteModalMaterial' + m.id + '">' + m.name + '</label>';
-                materialPicker.appendChild(wrap);
             });
         }
 
@@ -287,7 +232,7 @@
                 pinnedInput.checked = !!note.pinned;
 
                 renderFolderOptions(data.folders, note.folder_id);
-                renderMaterialOptions(data.materials, note.material_ids || []);
+                // renderMaterialOptions(data.materials, note.material_ids || []);
                 renderExistingPhotos(note.files || []);
 
             } else {
@@ -297,7 +242,7 @@
                 photoLabel.textContent = 'Photos of Physical Notes';
 
                 renderFolderOptions(data.folders, options.folderId || null);
-                renderMaterialOptions(data.materials, options.materialId ? [options.materialId] : []);
+                // renderMaterialOptions(data.materials, options.materialId ? [options.materialId] : []);
 
                 modal.show();
             }

@@ -194,10 +194,7 @@ class SubmissionController extends Controller
     private function authorizeManage($section)
     {
         $course = $section->course;
-        abort_unless(
-            auth()->user()->isAdmin($course->id) || auth()->user()->isTeacher($course->id),
-            403
-        );
+        abort_unless(auth()->user()->isManagerInCourse($course->id), 403);
     }
 
     public function index(Assignment $assignment)

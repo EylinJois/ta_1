@@ -25,75 +25,61 @@
             @endif
         </span>
         <h2>{{ $assignment->name }}</h2>
-        <p class="mb-0">{{ $assignment->description }}</p>
-    </div>
-</div>
+        <p class="mb-3">{{ $assignment->description }}</p>
 
-<div class="row g-3 mb-4">
+        <div class="assignment-meta">
 
-    <div class="col-md-3">
-        <div class="stat-card">
-            <span>Submission type:</span>
-            @if($assignment->submission_type === 'both')
-            <h4>Written or File</h4>
+            <div class="assignment-meta-item">
+                <span>Submission type</span>
+                <strong>
+                    @if($assignment->submission_type === 'both')
+                        Written or File
+                    @else
+                        {{ ucfirst($assignment->submission_type) }}
+                    @endif
+                </strong>
+            </div>
+
+            @if($isManager)
+            <div class="assignment-meta-item">
+                <span>Total submissions</span>
+                <strong>{{ $submissions->count() }}</strong>
+            </div>
+
+            <div class="assignment-meta-item">
+                <span>Graded</span>
+                <strong>{{ $submissions->where('status', 'graded')->count() }} / {{ $submissions->count() }}</strong>
+            </div>
             @else
-            <h4>{{ ucfirst($assignment->submission_type) }}</h4>
+            <div class="assignment-meta-item">
+                <span>Score</span>
+                <strong>{{ $submission?->score ?? '-' }}</strong>
+            </div>
+
+            <div class="assignment-meta-item">
+                <span>Submission status</span>
+                <strong>
+                    @if($submission)
+                        @switch($submission->status)
+                        @case('draft') Draft @break
+                        @case('submitted') Submitted @break
+                        @case('late') Submitted Late @break
+                        @case('graded') Graded @break
+                        @endswitch
+                    @else
+                        Not Started
+                    @endif
+                </strong>
+            </div>
             @endif
+
+            <div class="assignment-meta-item">
+                <span>Due on</span>
+                <strong>{{ $assignment->due_at ? $assignment->due_at->format('d M Y, H:i') : '—' }}</strong>
+            </div>
+
         </div>
     </div>
-
-    @if($isManager)
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <span>Total submissions:</span>
-            <h4>{{ $submissions->count() }}</h4>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <span>Graded:</span>
-            <h4>{{ $submissions->where('status', 'graded')->count() }} / {{ $submissions->count() }}</h4>
-        </div>
-    </div>
-
-    @else
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <span>Score:</span>
-            <h4>{{ $submission?->score ?? '-' }}</h4>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <span>Submission status:</span>
-            <h4>
-                @if($submission)
-                @switch($submission->status)
-                @case('draft') Draft @break
-                @case('submitted') Submitted @break
-                @case('late') Submitted Late @break
-                @case('graded') Graded @break
-                @endswitch
-                @else
-                Not Started
-                @endif
-            </h4>
-        </div>
-    </div>
-
-    @endif
-
-    <div class="col-md-3">
-        <div class="stat-card">
-            <span>Due on:</span>
-            <h4>{{ $assignment->due_at ? $assignment->due_at->format('d M Y, H:i') : '—' }}</h4>
-        </div>
-    </div>
-
 </div>
 
 @if($isManager)
