@@ -31,13 +31,15 @@ class QuizQuestionController extends Controller
     private function storeOptions(Question $question, Request $request)
     {
         $optionTexts = $request->input('option_text', []);
-        $correctIndexes = array_map('intval', $request->input('is_correct', []));
+        $scorePercentages = array_map('floatval', $request->input('score_percent', []));
 
         foreach (array_values($optionTexts) as $index => $text) {
+            $percent = $scorePercentages[$index] ?? 0;
+
             QuestionOption::create([
                 'question_id' => $question->id,
                 'text' => $text,
-                'is_correct' => in_array($index, $correctIndexes, true),
+                'score_percent' => $percent,
                 'order_index' => $index,
             ]);
         }

@@ -137,7 +137,7 @@
                         </form>
                         @endif
 
-                        <a href="{{ route('progress.course', ['course' => $course->id, 'studentId' => $participant->id]) }}"
+                        <a href="{{ route('progress.course', ['courseId' => $course->id, 'studentId' => $participant->id, 'fromCourse' => true]) }}"
                             class="icon-action-btn edit-btn" title="View Progress">
                             <i class="bi bi-bar-chart-line"></i>
                         </a>

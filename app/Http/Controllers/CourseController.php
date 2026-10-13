@@ -126,6 +126,8 @@ class CourseController extends Controller
             ->orderBy('order_idx', 'asc')
             ->get();
 
+    
+
         return view('courses.show', compact('course', 'classes', 'users', 'sections'));
     }
 

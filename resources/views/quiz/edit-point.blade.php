@@ -35,7 +35,7 @@
                             min="0"
                             name="point_override"
                             class="form-control"
-                            placeholder="{{ $question->point }} pt (default)"
+                            placeholder="{{ $question->point }} pt"
                             value="{{ $question->pivot->point_override }}">
                         <small class="text-muted">
                             Leave blank to use this question's default of {{ rtrim(rtrim(number_format($question->point, 2), '0'), '.') }} pts for this quiz.

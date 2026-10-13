@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
 @endpush
 
+
 @section('content')
 
 <div class="mb-4">
@@ -15,6 +16,13 @@
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>
+
+@session('error')
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endsession
 
 {{-- Banner --}}
 <div class="row align-items-center question-bank-banner mb-4">
@@ -437,7 +445,13 @@
                 }
             }
 
+            function initModal(){
+                setSectionState(optionsSection, true);
+                choiceHint.classList.remove('d-none');
+            }
+
             typeSelect.addEventListener('change', refreshSections);
+            initModal();
 
             /* ========== QUESTION OPTIONS ========== */
 
@@ -447,14 +461,8 @@
                 });
             }
 
-            function enforceSingleCorrect(changedCheckbox) {
-                if (typeSelect.value !== 'choice') return;
-                optionsContainer.querySelectorAll('.correct-option').forEach(function(cb) {
-                    if (cb !== changedCheckbox) cb.checked = false;
-                });
-            }
 
-            function createOption(text = '', isCorrect = false) {
+            function createOption(text = '', scorePercent = 0) {
 
                 const option = document.createElement('div');
                 option.className = 'option-row card mb-3';
@@ -468,9 +476,9 @@
                     </div>
                     <div class="col-md-2">
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input correct-option"
-                                name="is_correct[]" value="0" ${isCorrect ? 'checked' : ''}>
-                            <label class="form-check-label">Correct</label>
+                            <input type="number" class="form-control"
+                                name="score_percent[]" value="${scorePercent}" min="0" max="100">
+                            <label class="form-check-label">Score (%)</label>
                         </div>
                     </div>
                     <div class="col-md-2 text-end">
@@ -483,7 +491,6 @@
         `;
 
                 optionsContainer.appendChild(option);
-                updateCorrectValues();
             }
 
             addOptionBtn.addEventListener('click', () => createOption());
@@ -492,13 +499,6 @@
                 if (e.target.closest('.remove-option')) {
                     if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
                     e.target.closest('.option-row').remove();
-                    updateCorrectValues();
-                }
-            });
-
-            optionsContainer.addEventListener('change', function(e) {
-                if (e.target.classList.contains('correct-option')) {
-                    enforceSingleCorrect(e.target);
                 }
             });
 
@@ -607,7 +607,7 @@
             /* ========== SEED, THEN APPLY VISIBILITY (in that order, once) ========== */
 
             if (seedOptions.length) {
-                seedOptions.forEach(o => createOption(o.text, !!o.is_correct));
+                seedOptions.forEach(o => createOption(o.text, o.score_percent));
             } else {
                 createOption();
                 createOption();
@@ -623,9 +623,7 @@
             // so it correctly disables whatever ends up hidden.
             refreshSections();
         }
-
         document.querySelectorAll('.question-modal').forEach(initQuestionModal);
-
     });
 </script>
 @endpush

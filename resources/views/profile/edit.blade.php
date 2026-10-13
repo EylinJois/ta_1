@@ -5,7 +5,7 @@
 @section('page-title', 'Edit Profile')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/profile.css') }}">
+<link rel="stylesheet" href="{{ asset('css/profile.css') }}">
 @endpush
 
 @section('content')
@@ -16,20 +16,38 @@
 
         <div class="profile-card">
 
+        
+            @session('success')
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endsession
+
             {{-- Header --}}
             <div class="profile-header">
 
                 <div class="profile-image-wrapper">
 
-                    @if(auth()->user()->img)
+                    <label for="img" class="profile-image-label" title="Change profile picture">
+
+                        @if(auth()->user()->img)
                         <img src="{{ asset('storage/' . auth()->user()->img) }}"
-                             alt="Profile Image"
-                             class="profile-image">
-                    @else
+                            alt="Profile Image"
+                            class="profile-image"
+                            id="profilePreview">
+                        @else
                         <img src="https://ui-avatars.com/api/?name={{ auth()->user()->name }}"
-                             alt="Profile Image"
-                             class="profile-image">
-                    @endif
+                            alt="Profile Image"
+                            class="profile-image"
+                            id="profilePreview">
+                        @endif
+
+                        <span class="profile-image-overlay">
+                            <i class="bi bi-camera"></i>
+                        </span>
+
+                    </label>
 
                 </div>
 
@@ -45,8 +63,8 @@
 
             {{-- Form --}}
             <form action="{{ route('profile.update', auth()->user()->id) }}"
-                  method="POST"
-                  enctype="multipart/form-data">
+                method="POST"
+                enctype="multipart/form-data">
 
                 @csrf
                 @method('PUT')
@@ -61,10 +79,10 @@
                         </label>
 
                         <input type="text"
-                               name="name"
-                               class="form-control"
-                               value="{{ old('name', auth()->user()->name) }}"
-                               required>
+                            name="name"
+                            class="form-control"
+                            value="{{ old('name', auth()->user()->name) }}"
+                            required>
 
                     </div>
 
@@ -76,24 +94,20 @@
                         </label>
 
                         <input type="email"
-                               name="email"
-                               class="form-control"
-                               value="{{ old('email', auth()->user()->email) }}"
-                               required>
+                            name="email"
+                            class="form-control"
+                            value="{{ old('email', auth()->user()->email) }}"
+                            required>
 
                     </div>
 
                     {{-- Profile Image --}}
                     <div class="col-12 mb-4">
-
                         <label class="form-label">
                             Profile Image
                         </label>
-
-                        <input type="file"
-                               name="img"
-                               class="form-control">
-
+                        <input type="file" name="img" id="img"
+                        class="form-control" accept="image/*">
                     </div>
 
                     {{-- Password --}}
@@ -104,8 +118,8 @@
                         </label>
 
                         <input type="password"
-                               name="password"
-                               class="form-control">
+                            name="password"
+                            class="form-control">
 
                     </div>
 
@@ -117,8 +131,8 @@
                         </label>
 
                         <input type="password"
-                               name="password_confirmation"
-                               class="form-control">
+                            name="password_confirmation"
+                            class="form-control">
 
                     </div>
 
@@ -126,13 +140,13 @@
 
                 <div class="d-flex justify-content-end gap-3">
 
-                    <a href="{{ url()->previous() }}"
-                       class="btn btn-secondary-custom">
+                    <a href="{{ route('home')}}"
+                        class="btn btn-secondary-custom">
                         Cancel
                     </a>
 
                     <button type="submit"
-                            class="btn btn-theme">
+                        class="btn btn-theme">
                         <i class="bi bi-check-circle"></i>
                         Save Changes
                     </button>
@@ -146,5 +160,16 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>
+    document.getElementById('img').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('profilePreview').src = URL.createObjectURL(file);
+        }
+    });
+</script>
+@endpush
 
 @endsection

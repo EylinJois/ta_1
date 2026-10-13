@@ -26,7 +26,7 @@
         </div>
         @endif
 
-        <div class="table-card">
+        <div class="table-card attempt-header-card mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
 
             <h6 class="mb-3">Questions</h6>
 
@@ -162,7 +162,7 @@
 
             @endforeach
 
-            <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+            <div class="attempt-pager d-flex justify-content-between mt-4 pt-3 border-top">
                 <button type="button" class="btn btn-secondary-custom" id="prevBtn" disabled>
                     <i class="bi bi-arrow-left"></i>
                     Previous

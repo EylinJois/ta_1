@@ -66,15 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(Note::class);
     }
 
-    public function activities(): BelongsToMany
+    public function activities()
     {
-        return $this->belongsToMany(Activity::class, 'calendar_event_participants', 'user_id', 'activity_id')->withTimestamps();
-    }
-
-
-    public function folders(): HasMany
-    {
-        return $this->hasMany(Folder::class);
+        return $this->belongsToMany(Activity::class, 'calendar_event_participants', 'user_id', 'activity_id')
+            ->withPivot('status', 'deleted_at')
+            ->withTimestamps();
     }
 
     public function attempts(): HasMany
@@ -115,6 +111,11 @@ class User extends Authenticatable
             ->where('classes.id', $classId)
             ->wherePivot('role', 'student')
             ->exists();
+    }
+
+    public function managedClasses()
+    {
+        return $this->classes()->wherePivotIn('role', ['admin', 'teacher']);
     }
 
     public function hasRoleInCourse(int $courseId, array|string $roles): bool

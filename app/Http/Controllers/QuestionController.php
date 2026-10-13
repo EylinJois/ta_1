@@ -40,8 +40,8 @@ class QuestionController extends Controller
 
             'option_text' => 'required_if:type,choice,multiple_select|array|min:2',
             'option_text.*' => 'required|string|max:1000',
-            'is_correct' => 'required_if:type,choice,multiple_select|array|min:1',
-            'is_correct.*' => 'integer|min:0',
+            'score_percent' => 'required_if:type,choice,multiple_select|array|min:2',
+            'score_percent.*' => 'integer|min:0|max:100',
 
             'accepted_answers' => 'required_if:type,short_answer,both|array|min:1',
             'accepted_answers.*' => 'required|string|max:255',
@@ -59,25 +59,38 @@ class QuestionController extends Controller
         if (in_array($validated['type'], ['choice', 'multiple_select'])) {
 
             $optionCount = count($request->input('option_text', []));
-            $correctIndexes = array_map('intval', $request->input('is_correct', []));
+            $scorePercentages = array_map('intval', $request->input('score_percent', []));
 
-            foreach ($correctIndexes as $index) {
-                if ($index < 0 || $index >= $optionCount) {
+            foreach ($scorePercentages as $index => $percent) {
+                if ($percent < 0 || $percent > 100) {
                     return back()
-                        ->withErrors(['is_correct' => 'Invalid option marked as correct.'])
+                        ->withErrors(['score_percent' => 'Invalid score percentage.'])
                         ->withInput();
                 }
             }
 
-            if ($validated['type'] === 'choice' && count($correctIndexes) !== 1) {
+            if ($optionCount !== count($scorePercentages)) {
                 return back()
-                    ->withErrors(['is_correct' => 'Multiple choice questions need exactly one correct option.'])
+                    ->withErrors(['option_text' => 'The number of options and score percentages must match.'])
                     ->withInput();
             }
+        }
 
-            if ($validated['type'] === 'multiple_select' && count($correctIndexes) < 1) {
+        if (in_array($validated['type'], ['short_answer', 'both'])) {
+
+            $correctIndexes = array_map('intval', $request->input('is_correct', []));
+
+            foreach ($correctIndexes as $index) {
+                if ($index < 0 || $index >= count($request->input('accepted_answers', []))) {
+                    return back()
+                        ->withErrors(['is_correct' => 'Invalid correct option index.'])
+                        ->withInput();
+                }
+            }
+
+            if ($validated['type'] === 'short_answer' && count($correctIndexes) !== 1) {
                 return back()
-                    ->withErrors(['is_correct' => 'Select at least one correct option.'])
+                    ->withErrors(['is_correct' => 'Short answer questions need exactly one correct option.'])
                     ->withInput();
             }
         }
@@ -126,13 +139,13 @@ class QuestionController extends Controller
     private function storeOptions(Question $question, Request $request)
     {
         $optionTexts = $request->input('option_text', []);
-        $correctIndexes = array_map('intval', $request->input('is_correct', []));
+        $optionPercentages = array_map('intval', $request->input('score_percent', []));
 
         foreach (array_values($optionTexts) as $index => $text) {
             QuestionOption::create([
                 'question_id' => $question->id,
                 'text' => $text,
-                'is_correct' => in_array($index, $correctIndexes, true),
+                'score_percent' => $optionPercentages[$index] ?? 0,
                 'order_index' => $index,
             ]);
         }
@@ -199,8 +212,8 @@ class QuestionController extends Controller
 
         'option_text' => 'required_if:type,choice,multiple_select|array|min:2',
         'option_text.*' => 'required|string|max:1000',
-        'is_correct' => 'required_if:type,choice,multiple_select|array|min:1',
-        'is_correct.*' => 'integer|min:0',
+        'score_percent' => 'required_if:type,choice,multiple_select|array|min:2',
+        'score_percent.*' => 'integer|min:0|max:100',
 
         'accepted_answers' => 'required_if:type,short_answer,both|array|min:1',
         'accepted_answers.*' => 'required|string|max:255',
@@ -214,30 +227,24 @@ class QuestionController extends Controller
         'max_files' => 'nullable|integer|min:1|max:255',
     ]);
 
-    // A quiz-only question (no bank) must stay bank-less on update — it
-    // shouldn't be silently re-parented into a bank via this form, since
-    // this endpoint has no bank-picker field for that question type.
     if (is_null($question->question_bank_id) && !empty($validated['question_bank_id'])) {
         return back()->withErrors(['question_bank_id' => 'This question is not part of a question bank.']);
     }
 
     if (in_array($validated['type'], ['choice', 'multiple_select'])) {
         $optionCount = count($request->input('option_text', []));
-        $correctIndexes = array_map('intval', $request->input('is_correct', []));
+        $scorePercentages = array_map('intval', $request->input('score_percent', []));
 
-        foreach ($correctIndexes as $index) {
+        foreach ($scorePercentages as $index => $percent) {
             if ($index < 0 || $index >= $optionCount) {
-                return back()->withErrors(['is_correct' => 'Invalid option marked as correct.'])->withInput();
+                return back()->withErrors(['score_percent' => 'Invalid option score.'])->withInput();
             }
         }
 
-        if ($validated['type'] === 'choice' && count($correctIndexes) !== 1) {
-            return back()->withErrors(['is_correct' => 'Multiple choice questions need exactly one correct option.'])->withInput();
+        if ($validated['type'] === 'choice' && count(array_filter($scorePercentages, function($v) { return $v === 100; })) !== 1) {
+            return back()->withErrors(['score_percent' => 'Multiple choice questions need exactly one correct option.'])->withInput();
         }
 
-        if ($validated['type'] === 'multiple_select' && count($correctIndexes) < 1) {
-            return back()->withErrors(['is_correct' => 'Select at least one correct option.'])->withInput();
-        }
     }
 
     DB::transaction(function () use ($request, $validated, $question) {
@@ -269,12 +276,9 @@ class QuestionController extends Controller
         }
     });
 
-    // Bank questions still go to the bank page; quiz-only questions have
-    // no bank page to return to, so just go back to wherever this was
-    // submitted from (the quiz's manage-questions page).
     if ($question->question_bank_id) {
         return redirect()
-            ->route('question-banks.show', $question->question_bank_id)
+            ->route('questionbank.show', $question->question_bank_id)
             ->with('success', 'Question updated.');
     }
 

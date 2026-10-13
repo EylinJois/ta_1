@@ -6,52 +6,13 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
-<style>
-    .grade-score-box {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .grade-score-box input {
-        width: 80px;
-        text-align: center;
-    }
-
-    .grade-max-point {
-        color: #999;
-        font-weight: 600;
-    }
-
-    .readonly-answer-block {
-        background: #fafafa;
-        border-radius: 14px;
-        padding: 16px 20px;
-    }
-
-    .readonly-option-row {
-        padding: 10px 16px;
-        border-radius: 12px;
-        margin-bottom: 6px;
-        border: 1px solid #eee;
-    }
-
-    .readonly-option-row.was-selected {
-        border-color: #D62828;
-        background: rgba(214, 40, 40, .06);
-    }
-
-    .readonly-option-row.is-correct {
-        border-color: #2e7d32;
-        background: rgba(46, 125, 50, .06);
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('css/quiz.css') }}">
 @endpush
 
 @section('content')
 
 <div class="mb-4">
-    <a href="{{ route('quizzes.attempts.index', $quiz->id) }}" class="btn btn-secondary-custom">
+    <a href="{{ back()->getTargetUrl()}}" class="btn btn-back">
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>
@@ -94,13 +55,15 @@
                 @foreach($question->options as $option)
                 <div class="readonly-option-row
                         {{ $answer && $answer->select_option_id === $option->id ? 'was-selected' : '' }}
-                        {{ $option->is_correct ? 'is-correct' : '' }}">
+                        {{ $option->score_percent == 100 ? 'is-correct' : '' }}">
                     {{ $option->text }}
                     @if($answer && $answer->select_option_id === $option->id)
                     <span class="badge bg-secondary ms-1">Student's answer</span>
                     @endif
-                    @if($option->is_correct)
+                    @if($option->score_percent == 100)
                     <span class="badge bg-success ms-1">Correct</span>
+                    @elseif($option->score_percent > 0)
+                    <span class="badge bg-success ms-1">Partially correct</span>
                     @endif
                 </div>
                 @endforeach
@@ -110,13 +73,15 @@
                 @foreach($question->options as $option)
                 <div class="readonly-option-row
                         {{ in_array($option->id, $selectedIds) ? 'was-selected' : '' }}
-                        {{ $option->is_correct ? 'is-correct' : '' }}">
+                        {{ $option->score_percent == 100 || in_array($option->id, $selectedIds) ? 'is-correct' : '' }}">
                     {{ $option->text }}
                     @if(in_array($option->id, $selectedIds))
                     <span class="badge bg-secondary ms-1">Selected</span>
                     @endif
-                    @if($option->is_correct)
+                    @if($option->score_percent == 100)
                     <span class="badge bg-success ms-1">Correct</span>
+                    @elseif($option->score_percent > 0)
+                    <span class="badge bg-success ms-1">Partially correct</span>
                     @endif
                 </div>
                 @endforeach
@@ -156,7 +121,8 @@
 
             </div>
 
-            {{-- SCORE INPUT --}}
+            @if(auth()->user()->isManagerInCourse($courseId))
+            {{-- SCORE INPUT (managers) --}}
             <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
 
                 <div class="flex-grow-1" style="min-width:250px;">
@@ -176,6 +142,29 @@
                 </div>
 
             </div>
+            @else
+            {{-- SCORE + FEEDBACK (students, read-only) --}}
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+                <div class="flex-grow-1" style="min-width:250px;">
+                    <label class="form-label">Feedback</label>
+                    <div class="readonly-answer-block py-2">
+                        {{ $answer?->feedback ?: 'No feedback for this question.' }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label d-block">Score</label>
+                    <div class="grade-score-display">
+                        <span class="grade-score-value">
+                            {{ !is_null($answer?->score) ? rtrim(rtrim(number_format($answer->score, 2), '0'), '.') : '—' }}
+                        </span>
+                        <span class="grade-max-point">/ {{ $maxPoint }}</span>
+                    </div>
+                </div>
+
+            </div>
+            @endif
 
         </div>
 
@@ -187,7 +176,7 @@
     <div class="d-flex justify-content-end">
         <button type="submit" class="btn btn-theme btn-lg px-5">
             <i class="bi bi-check-circle"></i> Save Grade
-        </button> 
+        </button>
     </div>
     @else
     <div class="d-flex justify-content-end">

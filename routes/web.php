@@ -13,7 +13,6 @@ use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TTSController;
 use App\Http\Controllers\NoteController;
-use App\Http\Controllers\FolderController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProgressController;
@@ -208,9 +207,7 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::resource('notes', NoteController::class)->except(['update']);
     Route::put('/notes/{note}/update', [NoteController::class, 'update'])->name('notes.update');
-    Route::patch('/notes/{note}', [NoteController::class, 'pin'])->name('notes.pin');
-    Route::resource('folders', FolderController::class);
-    Route::get('/notes/form-data', [NoteController::class, 'formData'])->name('notes.form-data');
+    Route::patch('/notes/{note}/pin', [NoteController::class, 'pin'])->name('notes.pin');
     Route::get('/notes/{note}/edit-data', [NoteController::class, 'editData'])->name('notes.edit-data');
 
     /*
@@ -224,6 +221,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('calendar/events/{activity}', [CalendarController::class, 'update'])->name('calendar.events.update');
     Route::delete('calendar/events/{activity}', [CalendarController::class, 'destroy'])->name('calendar.events.destroy');
     Route::patch('calendar/events/{activity}/status', [CalendarController::class, 'updateStatus'])->name('calendar.events.status');
+    Route::patch('/calendar/events/{activity}/cancel', [CalendarController::class, 'cancel'])
+    ->name('calendar.events.cancel');
 
     /*
     |----------------------------------------------------------------------
@@ -231,7 +230,7 @@ Route::middleware(['auth'])->group(function () {
     |----------------------------------------------------------------------
     */
     Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
-    Route::get('courses/{course}/progress/{studentId}', [ProgressController::class, 'courseIndex'])->name('progress.course');
+    Route::get('courses/{courseId}/progress/calculate/{studentId}', [ProgressController::class, 'calculate'])->name('progress.calculate');
+    Route::get('courses/{courseId}/progress/{studentId}/{fromCourse?}', [ProgressController::class, 'courseIndex'])->name('progress.course');
     Route::post('courses/{course}/progress', [ProgressController::class, 'store'])->name('progress.store');
-    Route::get('courses/{course}/progress/calculate/{student}', [ProgressController::class, 'calculate'])->name('progress.calculate');
 });

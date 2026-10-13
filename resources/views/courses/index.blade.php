@@ -2,8 +2,6 @@
 
 @section('title', 'Courses')
 
-@section('page-title', 'Courses')
-
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/course.css') }}">
 @endpush
@@ -11,26 +9,25 @@
 @section('content')
 
 {{-- Header --}}
-<div class="courses-header mb-4">
+<div class="row mb-4">
 
-    <div>
+    <div class="col">
 
-        <h3 class="mb-1">
-            Mandarin Courses
-        </h3>
-
-        <p class="text-muted mb-0">
-            Explore available Mandarin learning courses.
-        </p>
+        <h2>
+            My Courses
+        </h2>
 
     </div>
 
-    <a href="{{ route('courses.create') }}"
-       class="btn btn-theme">
-        <i class="bi bi-plus-circle"></i>
-        Add Course
-    </a>
+    <div class="col-auto">
 
+        <a href="{{ route('courses.create') }}"
+           class="btn btn-theme">
+            <i class="bi bi-plus-circle"></i>
+            Add Course
+        </a>
+
+    </div>
 </div>
 
 @if(Auth::user()->classes()->count() > 0)

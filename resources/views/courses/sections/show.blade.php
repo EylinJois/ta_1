@@ -2,8 +2,6 @@
 
 @section('title', $section->name)
 
-@section('page-title', 'Section Detail')
-
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/course.css') }}">
 @endpush
@@ -11,6 +9,11 @@
 @section('content')
 
 {{-- COURSE HEADER --}}
+
+        <a href="{{ route('courses.show',$course) }}"
+            class="btn back-to-course-btn">
+            <i class="bi bi-arrow-left"></i>
+        </a>
 <div class="course-detail-banner mb-4">
 
     <div class="row align-items-center">
@@ -79,10 +82,6 @@
 <div class="table-card mb-4">
 
     <div class="courses-header mb-4 section-materials-header">
-        <a href="{{ route('courses.show',$course) }}"
-            class="btn back-to-course-btn">
-            <i class="bi bi-arrow-left"></i>
-        </a>
         <h4 class="section-title mb-0">
             {{ $section->name }}
         </h4>

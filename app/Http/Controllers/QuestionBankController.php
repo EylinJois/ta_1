@@ -18,8 +18,11 @@ class QuestionBankController extends Controller
         $filter = $request->input('filter', 'all'); // all | mine | others
         $search = $request->input('search');
 
-        $questionBanks = QuestionBank::with(['creator', 'course'])
-            ->withCount('questions')
+        $questionBanks = QuestionBank::with([
+        'creator',
+        'course' => fn ($q) => $q->withTrashed(),
+    ])
+    ->withCount('questions')
             ->where(function ($q) use ($user) {
                 $q->where('created_by', $user->id)
                     ->orWhere('is_public', 1);

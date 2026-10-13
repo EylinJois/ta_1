@@ -62,7 +62,8 @@
         <div class="week-day-header {{ $isToday ? 'is-today' : '' }}">
             <span class="week-day-name">{{ $day->format('D') }}</span>
             <div class="week-day-num">{{ $day->day }}</div>
-            <button type="button" class="week-add-btn" onclick="openCreateModal('{{ $day->format('Y-m-d') }}')">
+            <button type="button" class="week-add-btn" onclick="openCreateModal('{{ $day->format('Y-m-d') }}')"
+                aria-label="Add event on {{ $day->format('M j') }}">
                 <i class="bi bi-plus-circle"></i>
             </button>
         </div>
@@ -72,17 +73,17 @@
             @forelse($dayActivities as $activity)
             @php
             $typeClass = match($activity->type) {
-            'Study Session' => 'type-study',
-            'Quiz' => 'type-quiz',
-            'Assignment' => 'type-assignment',
-            'Meeting' => 'type-meeting',
-            'Reminder' => 'type-personal',
+                'Study Session' => 'type-study',
+                'Quiz' => 'type-quiz',
+                'Assignment' => 'type-assignment',
+                'Meeting' => 'type-meeting',
+                default => 'type-personal',
             };
-            $statusClass = match($activity->status) {
-            'completed' => 'status-completed',
-            'cancelled' => 'status-cancelled',
-            'missed' => 'status-missed',
-            default => '',
+            $statusClass = match($activity->display_status) {
+                'completed' => 'status-completed',
+                'cancelled' => 'status-cancelled',
+                'missed' => 'status-missed',
+                default => '',
             };
             @endphp
             <div class="week-event-item {{ $typeClass }} {{ $statusClass }}" onclick="openEventDetail({{ $activity->id }})">
@@ -107,8 +108,9 @@
 
 </div>
 
-{{-- CREATE EVENT MODAL — one single shared modal, not per-day --}}
-<div class="modal fade" id="createEventModal" tabindex="-1">
+{{-- CREATE EVENT MODAL --}}
+<div class="modal fade" id="createEventModal" tabindex="-1"
+    data-has-errors="{{ $errors->any() ? '1' : '0' }}">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal">
             <form action="{{ route('calendar.events.store') }}" method="POST">
@@ -132,33 +134,37 @@
 
                     <div class="mb-3">
                         <label class="form-label">Date</label>
-                        <input type="date" name="event_date" id="createEventDate" class="form-control" required>
+                        <input type="date" name="event_date" id="createEventDate" value="{{ old('event_date') }}"
+                            class="form-control" required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Title</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <input type="text" name="name" value="{{ old('name') }}" class="form-control" required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="2"></textarea>
+                        <textarea name="description" class="form-control" rows="2">{{ old('description') }}</textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-6 mb-3">
                             <label class="form-label">Starts</label>
-                            <input type="time" name="starts_time" id="createStartsTime" class="form-control" required>
+                            <input type="time" name="starts_time" id="createStartsTime" value="{{ old('starts_time') }}"
+                                class="form-control" required>
                         </div>
                         <div class="col-6 mb-3">
                             <label class="form-label">Ends <small class="text-muted">(optional)</small></label>
-                            <input type="time" name="ends_time" id="createEndsTime" class="form-control">
+                            <input type="time" name="ends_time" id="createEndsTime" value="{{ old('ends_time') }}"
+                                class="form-control">
                         </div>
                     </div>
 
                     <div class="form-check mb-3">
                         <input type="hidden" name="is_all_day" value="0">
-                        <input type="checkbox" class="form-check-input" id="isAllDayCheck" name="is_all_day" value="1">
+                        <input type="checkbox" class="form-check-input" id="isAllDayCheck" name="is_all_day" value="1"
+                            {{ old('is_all_day') ? 'checked' : '' }}>
                         <label class="form-check-label" for="isAllDayCheck">All-day event</label>
                     </div>
 
@@ -166,18 +172,41 @@
                         <div class="col-6 mb-3">
                             <label class="form-label">Type</label>
                             <select name="type" id="eventTypeSelect" class="form-select" required>
-                                <option value="Study Session">Study Session</option>
-                                <option value="Meeting">Meeting</option>
-                                <option value="Other">Other</option>
+                                @foreach(['Study Session', 'Meeting', 'Other'] as $type)
+                                <option value="{{ $type }}" {{ old('type') === $type ? 'selected' : '' }}>{{ $type }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
 
                     <div class="mb-3 d-none" id="meetingLinkGroup">
                         <label class="form-label">Meeting Link <small class="text-muted">(optional)</small></label>
-                        <input type="url" name="meeting_link" id="meetingLinkInput" class="form-control"
-                            placeholder="https://..." disabled>
+                        <input type="url" name="meeting_link" id="meetingLinkInput" value="{{ old('meeting_link') }}"
+                            class="form-control" placeholder="https://..." disabled>
                     </div>
+
+                    {{-- Only users who are admin/teacher of at least one class --}}
+                    @if($managedClasses->isNotEmpty())
+                    <div class="mb-1">
+                        <label class="form-label">Share with classes <small class="text-muted">(optional)</small></label>
+
+                        <div class="border rounded-3 px-3 py-2" style="max-height: 180px; overflow-y: auto;">
+                            @foreach($managedClasses as $class)
+                            <div class="form-check py-1">
+                                <input class="form-check-input" type="checkbox" name="class_ids[]"
+                                    value="{{ $class->id }}" id="shareClass{{ $class->id }}"
+                                    {{ collect(old('class_ids', []))->contains($class->id) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="shareClass{{ $class->id }}">
+                                    {{ $class->name }}
+                                    <small class="text-muted">· {{ $class->course->name }}</small>
+                                </label>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        <div class="form-text">Everyone in the selected classes is added to this event.</div>
+                    </div>
+                    @endif
 
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -211,9 +240,7 @@
 
 @push('scripts')
 <script>
-    const hasFormErrors = @json($errors->any());
-
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -223,7 +250,7 @@
             '>': '&gt;',
             '"': '&quot;',
             "'": '&#039;'
-        } [c]));
+        }[c]));
 
         // Only http(s) links are allowed; adds https:// when the scheme is missing
         function safeUrl(raw) {
@@ -239,22 +266,22 @@
         }
 
         function updateEventStatus(id, status) {
-            fetch(`/calendar/events/${id}/status`, {
+            const isCancel = status === 'cancel';
+
+            fetch(`/calendar/events/${id}/${isCancel ? 'cancel' : 'status'}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({
-                        status
-                    }),
+                    body: isCancel ? null : JSON.stringify({ status }),
                 })
-                .then(function(r) {
+                .then(function (r) {
                     if (!r.ok) throw new Error();
                     window.location.reload();
                 })
-                .catch(function() {
+                .catch(function () {
                     alert('Failed to update event status. Please try again.');
                 });
         }
@@ -265,24 +292,27 @@
         const meetingGroup = document.getElementById('meetingLinkGroup');
         const meetingInput = document.getElementById('meetingLinkInput');
 
+        // set by Blade on the modal element, so no Blade code lives inside this script
+        const hasFormErrors = createModalEl.dataset.hasErrors === '1';
+
         function toggleMeetingLink() {
             const isMeeting = typeSelect.value === 'Meeting';
             meetingGroup.classList.toggle('d-none', !isMeeting);
-            meetingInput.disabled = !isMeeting; 
+            meetingInput.disabled = !isMeeting;   // disabled inputs are not submitted
             if (!isMeeting) meetingInput.value = '';
         }
 
         typeSelect.addEventListener('change', toggleMeetingLink);
-        toggleMeetingLink(); 
+        toggleMeetingLink();
 
-        window.openCreateModal = function(dateStr) {
+        window.openCreateModal = function (dateStr) {
             document.getElementById('createEventDate').value = dateStr;
             document.getElementById('createStartsTime').value = '08:00';
             document.getElementById('createEndsTime').value = '';
             bootstrap.Modal.getOrCreateInstance(createModalEl).show();
         };
 
-        createModalEl.addEventListener('shown.bs.modal', function() {
+        createModalEl.addEventListener('shown.bs.modal', function () {
             const dateField = document.getElementById('createEventDate');
             const startsTimeField = document.getElementById('createStartsTime');
 
@@ -299,7 +329,8 @@
 
             title.textContent = activity.name;
 
-            const isSystemGenerated = !!activity.source_type_id;
+            const status = activity.my_status;
+            const isSystemGenerated = !!activity.source_type;
             const startDate = new Date(activity.starts_at);
             const endDate = activity.ends_at ? new Date(activity.ends_at) : null;
 
@@ -309,23 +340,21 @@
                 month: 'long',
                 year: 'numeric'
             });
-            const timeOpts = {
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            const timeLabel = activity.is_all_day ?
-                'All day' :
-                startDate.toLocaleTimeString(undefined, timeOpts) +
-                (endDate ? ' – ' + endDate.toLocaleTimeString(undefined, timeOpts) : '');
+            const timeOpts = { hour: '2-digit', minute: '2-digit' };
+            const timeLabel = activity.is_all_day
+                ? 'All day'
+                : startDate.toLocaleTimeString(undefined, timeOpts)
+                    + (endDate ? ' – ' + endDate.toLocaleTimeString(undefined, timeOpts) : '');
 
             const statusBadgeClass = {
                 scheduled: 'bg-info text-dark',
                 completed: 'bg-success',
-                cancelled: 'bg-secondary',
                 missed: 'bg-danger',
-            } [activity.status] || 'bg-secondary';
+                cancelled: 'bg-secondary',
+            }[status] || 'bg-secondary';
 
-            const canChangeStatus = activity.status === 'scheduled';
+            const canChangeStatus = status === 'scheduled';
+            const canCancel = !!activity.can_cancel;
             const meetingUrl = safeUrl(activity.meeting_link);
             const meetingHost = meetingUrl ? new URL(meetingUrl).hostname.replace(/^www\./, '') : null;
 
@@ -338,13 +367,20 @@
             body.innerHTML = `
                 <div class="d-flex flex-wrap gap-2 mb-4">
                     ${activity.type ? `<span class="badge rounded-pill bg-dark">${escapeHtml(activity.type)}</span>` : ''}
-                    <span class="badge rounded-pill text-capitalize ${statusBadgeClass}">${escapeHtml(activity.status)}</span>
+                    <span class="badge rounded-pill text-capitalize ${statusBadgeClass}">${escapeHtml(status)}</span>
                 </div>
 
                 ${infoRow('bi-calendar-event', `
                     <div class="fw-semibold">${escapeHtml(dateLabel)}</div>
                     <div class="text-muted">${escapeHtml(timeLabel)}</div>
                 `)}
+
+                ${activity.source_url ? infoRow('bi-box-arrow-up-right', `
+                    <a href="${escapeHtml(activity.source_url)}" class="fw-semibold text-decoration-none">
+                        Open ${escapeHtml(activity.source_label)}
+                    </a>
+                    <div class="text-muted small">Linked to this event</div>
+                `) : ''}
 
                 ${meetingUrl ? infoRow('bi-camera-video', `
                     <div class="d-flex align-items-center justify-content-between gap-3">
@@ -366,40 +402,56 @@
                 ${isSystemGenerated ? `
                     <div class="alert alert-light border small mb-3">
                         This event is automatically managed and its schedule cannot be edited directly,
-                        but you can still mark it complete or cancelled.
+                        but you can still mark it complete or missed.
                     </div>
                 ` : ''}
 
-                ${canChangeStatus ? `
-                    <div class="d-flex gap-2 pt-3 border-top">
-                        <button type="button" class="btn btn-success flex-fill" id="completeEventBtn">
-                            <i class="bi bi-check-circle"></i> Mark Complete
-                        </button>
-                        <button type="button" class="btn btn-secondary-custom flex-fill" id="cancelEventBtn">
-                            <i class="bi bi-x-circle"></i> Cancel Event
-                        </button>
+                ${canChangeStatus || canCancel ? `
+                    <div class="d-flex flex-wrap gap-2 pt-3 border-top">
+                        ${canChangeStatus ? `
+                            <button type="button" class="btn btn-success flex-fill" id="completeEventBtn">
+                                <i class="bi bi-check-circle"></i> Mark Complete
+                            </button>
+                            <button type="button" class="btn btn-secondary-custom flex-fill" id="missedEventBtn">
+                                <i class="bi bi-x-circle"></i> Mark Missed
+                            </button>
+                        ` : ''}
+                        ${canCancel ? `
+                            <button type="button" class="btn btn-outline-danger w-100" id="cancelEventBtn">
+                                <i class="bi bi-slash-circle"></i> Cancel Event for Everyone
+                            </button>
+                        ` : ''}
                     </div>
                 ` : ''}
             `;
 
             const completeBtn = document.getElementById('completeEventBtn');
             if (completeBtn) {
-                completeBtn.addEventListener('click', function() {
+                completeBtn.addEventListener('click', function () {
                     updateEventStatus(activity.id, 'completed');
+                });
+            }
+
+            const missedBtn = document.getElementById('missedEventBtn');
+            if (missedBtn) {
+                missedBtn.addEventListener('click', function () {
+                    if (confirm('Mark this event as missed?')) {
+                        updateEventStatus(activity.id, 'missed');
+                    }
                 });
             }
 
             const cancelBtn = document.getElementById('cancelEventBtn');
             if (cancelBtn) {
-                cancelBtn.addEventListener('click', function() {
-                    if (confirm('Cancel this event?')) {
-                        updateEventStatus(activity.id, 'cancelled');
+                cancelBtn.addEventListener('click', function () {
+                    if (confirm('Cancel this event for all participants?')) {
+                        updateEventStatus(activity.id, 'cancel');
                     }
                 });
             }
         }
 
-        window.openEventDetail = function(activityId) {
+        window.openEventDetail = function (activityId) {
 
             const modalEl = document.getElementById('eventDetailModal');
             const body = document.getElementById('eventDetailBody');
@@ -411,18 +463,16 @@
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
             fetch(`/calendar/events/${activityId}`, {
-                    headers: {
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Accept': 'application/json' },
                 })
-                .then(function(r) {
+                .then(function (r) {
                     if (!r.ok) throw new Error();
                     return r.json();
                 })
-                .then(function(activity) {
+                .then(function (activity) {
                     renderEventDetail(activity, body, title);
                 })
-                .catch(function() {
+                .catch(function () {
                     body.innerHTML = '<p class="text-danger">Failed to load event details.</p>';
                 });
         };

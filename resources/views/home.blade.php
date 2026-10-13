@@ -30,13 +30,6 @@
             @endif
         </p>
     </div>
-
-    <div>
-        <a href="{{ route('courses.create') }}" class="btn btn-light">
-            <i class="bi bi-plus-circle"></i>
-            Create Course
-        </a>
-    </div>
 </div>
 
 @if($memberships->isEmpty())

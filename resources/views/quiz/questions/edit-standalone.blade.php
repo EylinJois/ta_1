@@ -80,7 +80,7 @@
 
                             <label class="form-label d-flex justify-content-between align-items-center">
                                 <span>Answer Options</span>
-                                <span class="choice-hint text-muted small d-none">Check the one correct option</span>
+                                <span class="choice-hint text-muted small d-none">Give the correct option 100%. Options left at 0% earn nothing.</span>
                             </label>
 
                             <div class="options-container"></div>

@@ -12,12 +12,12 @@ class QuestionOption extends Model
     protected $fillable = [
         'question_id',
         'text',
-        'is_correct',
+        'score_percent',
         'order_index'
     ];
 
     protected $casts = [
-        'is_correct' => 'boolean'
+        'score_percent' => 'integer',
     ];
 
     public function question()

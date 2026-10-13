@@ -4,7 +4,7 @@
     tabindex="-1"
     aria-labelledby="editQuestionModalLabel{{ $question->id }}"
     aria-hidden="true"
-    data-seed-options="{{ $question->options->map(fn($o) => ['text' => $o->text, 'is_correct' => $o->is_correct])->toJson() }}"
+    data-seed-options="{{ $question->options->map(fn($o) => ['text' => $o->text, 'score_percent' => $o->score_percent])->toJson() }}"
     data-seed-answers="{{ $question->acceptedAnswers->map(fn($a) => ['answer' => $a->answer, 'ignore_case' => $a->ignore_case, 'ignore_space' => $a->ignore_space])->toJson() }}"
     data-seed-file-config="{{ json_encode([
         'allowed' => $question->file_allowed ?? [],
@@ -70,7 +70,7 @@
                         <div class="options-section d-none">
                             <label class="form-label d-flex justify-content-between align-items-center">
                                 <span>Answer Options</span>
-                                <span class="choice-hint text-muted small d-none">Check the one correct option</span>
+                                <span class="choice-hint text-muted small d-none">Give the correct option 100%. Options left at 0% earn nothing.</span>
                             </label>
                             <div class="options-container"></div>
                             <button type="button" class="add-option-btn btn btn-secondary-custom btn-sm">

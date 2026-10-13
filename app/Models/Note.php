@@ -17,7 +17,6 @@ class Note extends Model
         'title',
         'content',
         'pinned',
-        'folder_id',
         'user_id'
     ];
 
@@ -25,21 +24,9 @@ class Note extends Model
         'pinned' => 'boolean'
     ];
 
-    public function materials(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Material::class,
-            'note_materials'
-        );
-    }
-
     public function notefiles(): HasMany
     {
          return $this->hasMany(NoteFile::class, 'note_id');
     }
 
-    public function folder(): BelongsTo
-    {
-        return $this->belongsTo(Folder::class);
-    }
 }

@@ -308,22 +308,23 @@ class AttemptController extends Controller
             foreach ($answers as $answer) {
 
                 $question = $answer->quizQuestion->question;
-                $points = $answer->quizQuestion->point_override ?? $question->point;
+                $points = (float) ($answer->quizQuestion->point_override ?? $question->point);
 
                 switch ($question->type) {
 
                     case 'choice':
-                        $correctOption = $question->options->firstWhere('is_correct', true);
-                        $answer->score = ($correctOption && $answer->select_option_id === $correctOption->id)
-                            ? $points : 0;
+                        $selected = $question->options->firstWhere('id', (int) $answer->select_option_id);
+                        $percent = max(0, min(100, $selected?->score_percent ?? 0));
+
+                        $answer->score = round($points * $percent / 100, 2);
                         break;
 
                     case 'multiple_select':
-                        // Full credit only on an exact match of the correct
-                        // set — no partial credit in this implementation.
-                        $correctIds = $question->options->where('is_correct', true)->pluck('id')->sort()->values();
-                        $selectedIds = $answer->selectedOptions->pluck('id')->sort()->values();
-                        $answer->score = $correctIds->all() === $selectedIds->all() ? $points : 0;
+                        $percent = $question->options
+                            ->whereIn('id', $answer->selectedOptions->pluck('id'))
+                            ->sum('score_percent');
+
+                        $answer->score = round($points * max(0, min(100, $percent)) / 100, 2);
                         break;
 
                     case 'short_answer':
@@ -410,13 +411,13 @@ class AttemptController extends Controller
             ->get()
             ->keyBy('quiz_question_id');
 
-            $courseId = $quiz->section->course_id;
-        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers','courseId'));
+        $courseId = $quiz->section->course_id;
+        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers', 'courseId'));
     }
 
     public function review(Attempt $attempt)
     {
-        if($attempt->status === 'in_progress'){
+        if ($attempt->status === 'in_progress') {
             return redirect()->route('attempts.index', $attempt)
                 ->with('error', 'This attempt is still in progress and cannot be reviewed yet.');
         }
@@ -448,7 +449,7 @@ class AttemptController extends Controller
 
         $courseId = $quiz->section->course_id;
 
-        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers','courseId'));
+        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers', 'courseId'));
     }
     public function saveGrade(Request $request, Attempt $attempt)
     {

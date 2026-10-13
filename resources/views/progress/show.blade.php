@@ -1,8 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $student->name . "'s Progress - " . $course->name)
-
-@section('page-title', 'Student Progress')
+@section('title', "Progress Report")
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/course.css') }}">
@@ -11,7 +9,7 @@
 @section('content')
 
 <div class="mb-4">
-    <a href="{{ route('courses.show', $course) }}" class="btn btn-icon-plain">
+    <a href="{{ back()->getTargetUrl() }}" class="btn btn-icon-plain">
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>
@@ -29,7 +27,11 @@
 
         <div class="student-progress-info">
             <h4 class="section-title mb-0">{{ $student->name }}'s Progress</h4>
-            <div class="text-muted small">{{ $student->email }} · {{ $course->name }}</div>
+            @if($fromCourse)
+            <div class="text-muted small">{{ $student->email }} · {{ $course->name}}</div>
+            @else
+            <div class="text-muted small">{{ $reports->first()->origin_name }}</div>
+            @endif
         </div>
 
         @if($isManager)
@@ -42,12 +44,12 @@
     </div>
 </div>
 
-{{-- Progress history --}}
+{{-- Progress Report --}}
 <div class="table-card">
 
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="section-title mb-0">Progress History</h4>
+        <h4 class="section-title mb-0">Progress Report</h4>
         <span class="badge bg-danger">
             {{ $reports->count() }}
             {{ Str::plural('Report', $reports->count()) }}
@@ -59,26 +61,26 @@
             <thead>
                 <tr>
                     <th>Title</th>
-                    <th>Period</th>
-                    <th>Progress</th>
-                    <th>Quiz Avg</th>
-                    <th>Comment</th>
-                    <th>Last Updated</th>
+<th style="width: 15%; white-space: nowrap;">Period</th>
+<th>Progress</th>
+<th>Avg Scores</th>
+<th>Comment</th>
+<th>Last Updated</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($reports as $report)
                 <tr>
                     <td class="fw-semibold">{{ $report->title }}</td>
+                    <td class="text-nowrap">
+    @if($report->start_period || $report->end_period)
+        <div>{{ $report->start_period?->format('d M y') ?? '—' }} - {{ $report->end_period?->format('d M y') ?? '—' }}</div>
+    @else
+        —
+    @endif
+</td>
                     <td>
-                        @if($report->start_period || $report->end_period)
-                        {{ $report->start_period?->format('d M Y') }} – {{ $report->end_period?->format('d M Y') }}
-                        @else
-                        —
-                        @endif
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 wrap" style="max-width: 200px;">
                             <div class="progress flex-grow-1" style="height: 8px; width: 100px; border-radius: 999px;">
                                 <div class="progress-bar bg-danger" style="width: {{ $report->progress }}%; border-radius: 999px;"></div>
                             </div>
@@ -86,7 +88,7 @@
                         </div>
                     </td>
                     <td>
-                        {{ !is_null($report->avg_quiz_score) ? rtrim(rtrim(number_format($report->avg_quiz_score, 2), '0'), '.') : '—' }}
+                        {{ !is_null($report->avg_all_score) ? rtrim(rtrim(number_format($report->avg_all_score, 2), '0'), '.') : '—' }}%
                     </td>
                     <td>{{ $report->comment ?: '—' }}</td>
                     <td>{{ $report->updated_at->format('d M Y') }}</td>
@@ -101,6 +103,103 @@
             </tbody>
         </table>
 
+    </div>
+
+</div>
+
+{{-- Score History --}}
+<div class="row g-4 mt-0">
+
+    {{-- Quiz scores --}}
+    <div class="col-12 col-lg-6">
+        <div class="table-card h-100">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <h4 class="section-title mb-0">Quiz Scores</h4>
+                <span class="badge bg-danger">
+                    {{ $attempts->count() }} {{ Str::plural('Attempt', $attempts->count()) }}
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                            <th class="text-nowrap">Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($attempts as $attempt)
+                        <tr>
+                            <td class="fw-semibold">
+                                {{ $attempt->quiz?->title ?? $attempt->quiz?->name ?? 'Deleted quiz' }}
+                            </td>
+                            <td>
+                                {{ !is_null($attempt->score) ? rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') : '—' }}%
+                            </td>
+                            <td>
+                                <span class="badge {{ $attempt->status === 'graded' ? 'bg-success' : 'bg-secondary' }}">
+                                    {{ ucfirst($attempt->status) }}
+                                </span>
+                            </td>
+                            <td class="text-nowrap">{{ $attempt->created_at?->format('d M Y, H:i') ?? '—' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No quiz attempts yet.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    {{-- Assignment scores --}}
+    <div class="col-12 col-lg-6">
+        <div class="table-card h-100">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                <h4 class="section-title mb-0">Assignment Scores</h4>
+                <span class="badge bg-danger">
+                    {{ $submissions->count() }} {{ Str::plural('Submission', $submissions->count()) }}
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Assignment</th>
+                            <th>Score</th>
+                            <th class="text-nowrap">Submitted At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($submissions as $submission)
+                        <tr>
+                            <td class="fw-semibold">
+                                {{ $submission->assignment?->title ?? $submission->assignment?->name ?? 'Deleted assignment' }}
+                            </td>
+                            <td>
+                                {{ !is_null($submission->score) ? rtrim(rtrim(number_format($submission->score, 2), '0'), '.') . '%' : 'Not graded' }}
+                            </td>
+                            <td class="text-nowrap">{{ $submission->submitted_at?->format('d M Y, H:i') ?? '—' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">No assignment submissions yet.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
     </div>
 
 </div>
@@ -145,8 +244,8 @@
                             <input type="number" name="progress" class="form-control progress-input" min="0" max="100" placeholder="Auto-calculated if left blank">
                         </div>
                         <div class="col-6 mb-2">
-                            <label class="form-label fw-semibold">Avg. Quiz Score</label>
-                            <input type="number" step="0.01" name="avg_quiz_score" class="form-control quiz-score-input" min="0" placeholder="Auto-calculated if left blank">
+                            <label class="form-label fw-semibold">Avg. All Scores</label>
+                            <input type="number" step="0.01" name="avg_all_score" class="form-control quiz-score-input" min="0" placeholder="Auto-calculated if left blank">
                         </div>
                     </div>
 
@@ -180,13 +279,11 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        const courseId = {
-            {
-                $course -> id
-            }
-        };
+        const courseId = {{ $course->id ?? 0}};
 
         document.querySelectorAll('.calculate-btn').forEach(function(btn) {
+
+            const defaultLabel = '<i class="bi bi-calculator"></i> Calculate';
 
             btn.addEventListener('click', function() {
 
@@ -198,21 +295,34 @@
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calculating...';
 
-                fetch(`/courses/${courseId}/progress/calculate/${studentId}`)
-                    .then(r => r.json())
+                fetch(`/courses/${courseId}/progress/calculate/${studentId}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(function(r) {
+                        if (!r.ok) throw new Error('Request failed: ' + r.status);
+                        return r.json();
+                    })
                     .then(function(data) {
                         progressInput.value = data.progress;
-                        scoreInput.value = data.avg_quiz_score ?? '';
+                        scoreInput.value = data.avg_all_score ?? data.avg_quiz_score ?? '';
                     })
                     .catch(function() {
                         alert('Failed to calculate progress.');
                     })
                     .finally(function() {
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="bi bi-calculator"></i> Calculate From Course Data';
+                        btn.innerHTML = defaultLabel;
                     });
             });
 
+        });
+
+        // Avoids the aria-hidden warning when the modal closes with focus inside it
+        document.addEventListener('hide.bs.modal', function() {
+            if (document.activeElement) document.activeElement.blur();
         });
 
     });

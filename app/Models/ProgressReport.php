@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProgressReport extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -16,9 +18,10 @@ class ProgressReport extends Model
         'start_period',
         'end_period',
         'progress',
-        'avg_quiz_score',
+        'avg_all_score',
         'comment',
-        'created_by'
+        'created_by',
+        'origin_name',
     ];
 
     protected $casts = [

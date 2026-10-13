@@ -135,7 +135,7 @@
                     </button>
 
                     <h5 class="mb-0">
-                        @yield('page-title')
+                        Mandarin LMS
                     </h5>
 
                 </div>
@@ -272,7 +272,6 @@
     </script>
 
     @stack('scripts')
-    @include('notes.partials.note-modal')
 </body>
 
 </html>

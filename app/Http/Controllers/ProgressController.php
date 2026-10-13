@@ -5,48 +5,109 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\ProgressReport;
 use App\Models\User;
+use App\Models\Attempt;
+use App\Models\Submission;
 use Illuminate\Http\Request;
 use App\Services\ProgressCalculationService;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Laravel\Prompts\Progress;
+use Illuminate\Support\Facades\Log;
 
 class ProgressController extends Controller
 {
     public function index()
     {
         $user = auth()->user();
-        $courses = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', $user->id))
-            ->with('classes.users')
-            ->get();
-        $classNames = $user->classes()->pluck('name', 'course_id')->toArray();
-        
-        $reports = ProgressReport::where('user_id', $user->id)
+
+        $groups = ProgressReport::where('user_id', $user->id)
+            ->with(['course' => fn($q) => $q->withTrashed()])
             ->orderByDesc('created_at')
-            ->get();
-        return view('progress.index-student', compact('courses', 'classNames', 'reports'));
+            ->get()
+            ->groupBy('course_id');
+
+        return view('progress.index-student', compact('groups'));
     }
 
-    public function courseIndex(Course $course, $studentId)
+    public function courseIndex($courseId, $studentId, $fromCourse = false)
     {
         $user = auth()->user();
 
         $student = User::findOrFail($studentId);
-        $isManager = $user->isManagerInCourse($course->id);
 
-        abort_unless($isManager || $user->id === $student->id, 403);
+        if ($fromCourse) {
+            $isManager = $user->isManagerInCourse($courseId);
+            $course = Course::findOrFail($courseId);
+            abort_unless($isManager || $user->id === $student->id, 403);
+        } else {
+            $isManager = false;
+            $course = null;
+            abort_unless($user->id === $student->id, 403);
+        }
 
-        $reports = ProgressReport::where('course_id', $course->id)
+        $reports = ProgressReport::where('course_id', $courseId)
             ->where('user_id', $studentId)
-            ->orderByDesc('updated_at') // sort by date updated
+            ->orderByDesc('updated_at')
             ->get();
 
-        return view('progress.show', compact('course', 'student', 'reports', 'isManager'));
+        $quizIds = DB::table('quizzes')
+            ->join('sections', 'sections.id', '=', 'quizzes.section_id')
+            ->where('sections.course_id', $courseId)
+            ->pluck('quizzes.id');
+
+        $assignmentIds = DB::table('assignments')
+            ->join('sections', 'sections.id', '=', 'assignments.section_id')
+            ->where('sections.course_id', $courseId)
+            ->pluck('assignments.id');
+
+        $attempts = Attempt::where('user_id', $studentId)
+            ->whereIn('quiz_id', $quizIds)
+            ->with(['quiz' => fn($q) => $q->withTrashed()])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $submissions = Submission::where('user_id', $studentId)
+            ->whereIn('assignment_id', $assignmentIds)
+            ->with(['assignment' => fn($q) => $q->withTrashed()])
+            ->orderByDesc('submitted_at')
+            ->get();
+
+
+        return view('progress.show', compact(
+            'course',
+            'student',
+            'reports',
+            'isManager',
+            'attempts',
+            'submissions',
+            'fromCourse'
+        ));
     }
 
-    public function calculate(Course $course, User $student, ProgressCalculationService $calculator)
+    public function calculate($courseId, $studentId, ProgressCalculationService $calculator)
     {
         $user = auth()->user();
-        abort_unless($user->isManagerInCourse($course->id), 403);
+        abort_unless($user->isManagerInCourse($courseId), 403);
 
+        $student = User::findOrFail($studentId);
+        $course = Course::findOrFail($courseId);
+
+        try {
         return response()->json($calculator->calculate($student, $course));
+    } catch (\Throwable $e) {
+        Log::error('Progress calculation failed', [
+            'course_id'  => $course->id,
+            'student_id' => $student->id,
+            'error'      => $e->getMessage(),
+            'trace'      => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'message' => config('app.debug')
+                ? $e->getMessage()
+                : 'Could not calculate progress. Check the server log.',
+        ], 500);
+    }
     }
 
     public function store(Request $request, Course $course, ProgressCalculationService $calculator)
@@ -60,24 +121,33 @@ class ProgressController extends Controller
             'start_period' => 'nullable|date',
             'end_period' => 'nullable|date|after_or_equal:start_period',
             'progress' => 'nullable|integer|min:0|max:100',
-            'avg_quiz_score' => 'nullable|numeric|min:0',
+            'avg_all_score' => 'nullable|numeric|min:0',
             'comment' => 'nullable|string',
         ]);
 
-        // Auto-calculate whichever numeric field the teacher left blank,
-        // rather than requiring manual entry every time.
-        if (is_null($validated['progress']) || is_null($validated['avg_quiz_score'])) {
+        $student = User::findOrFail($validated['user_id']);
 
-            $student = \App\Models\User::findOrFail($validated['user_id']);
+        if (is_null($validated['progress']) || is_null($validated['avg_all_score'])) {
             $calculated = $calculator->calculate($student, $course);
 
             $validated['progress'] = $validated['progress'] ?? $calculated['progress'];
-            $validated['avg_quiz_score'] = $validated['avg_quiz_score'] ?? $calculated['avg_quiz_score'];
+            $validated['avg_all_score'] = $validated['avg_all_score'] ?? $calculated['avg_quiz_score'];
         }
 
+        $className = $student->classes()
+            ->where('course_id', $course->id)
+            ->value('name');
+
+        $originName = Str::limit(
+            $className ? $course->name . ' - ' . $className : $course->name,
+            100,
+            ''
+        );
+
         ProgressReport::create(array_merge($validated, [
-            'course_id' => $course->id,
-            'created_by' => $user->id,
+            'course_id'   => $course->id,
+            'origin_name' => $originName,
+            'created_by'  => $user->id,
         ]));
 
         return back()->with('success', 'Progress report added.');

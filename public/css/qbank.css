@@ -148,6 +148,67 @@
     box-shadow:0 20px 40px rgba(0,0,0,.1);
 }
 
+@media (max-width: 768px) {
+
+    .attempts-table thead {
+        display: none;
+    }
+
+    .attempts-table,
+    .attempts-table tbody,
+    .attempts-table tr,
+    .attempts-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .attempts-table tr {
+        border: 1px solid #eee;
+        border-radius: 16px;
+        padding: 8px 16px;
+        margin-bottom: 12px;
+        background: #fff;
+    }
+
+    .attempts-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        border: 0;
+        border-bottom: 1px dashed #f0f0f0;
+        text-align: right;
+    }
+
+    .attempts-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .attempts-table td::before {
+        content: attr(data-label);
+        flex-shrink: 0;
+        font-weight: 600;
+        font-size: 13px;
+        color: #999;
+        text-align: left;
+    }
+
+    /* Full-width button at the bottom of each card */
+    .attempts-table td.attempt-action-cell {
+        display: block;
+        padding-top: 12px;
+    }
+
+    .attempts-table td.attempt-action-cell::before {
+        display: none;
+    }
+
+    .attempts-table td.attempt-action-cell .btn {
+        width: 100%;
+    }
+}
+
 /* =====================================
    TOP BANNER
 ===================================== */

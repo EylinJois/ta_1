@@ -68,7 +68,7 @@
                     Participants
                 </a>
                 @if(Auth::user()->isStudent($class->id))
-                <a href="{{ route('progress.course', [$course->id, Auth::user()->id]) }}"
+                <a href="{{ route('progress.course', [$course->id, Auth::user()->id, true]) }}"
                     class="btn btn-dark-custom">
                     <i class="bi bi-award-fill"></i>
                     My Progress

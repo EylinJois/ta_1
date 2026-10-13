@@ -11,12 +11,7 @@ class QuestionBank extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable=['course_id','created_by','name','description','is_public'];
-
-    public function course()
-    {
-        return $this->belongsTo(Course::class);
-    }
+    protected $fillable = ['course_id', 'created_by', 'name', 'description', 'is_public'];
 
     public function created_by()
     {
@@ -29,7 +24,12 @@ class QuestionBank extends Model
     }
 
     public function creator()
-{
-    return $this->belongsTo(User::class, 'created_by');
-}
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class)->withTrashed();
+    }
 }

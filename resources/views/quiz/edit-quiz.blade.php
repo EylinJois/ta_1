@@ -88,9 +88,10 @@
                                 Opened at
                             </label>
                             <input
-                                type="date"
-                                class="form-control"
-                                name="opened_at">
+    type="date"
+    class="form-control"
+    name="opened_at"
+    value="{{ old('opened_at', $quiz->opened_at?->format('Y-m-d')) }}">
                             <small class="text-muted">
                                 Leave empty to open instantly after creation.
                             </small>
@@ -102,7 +103,8 @@
                             <input
                                 type="date"
                                 class="form-control"
-                                name="due_at">
+                                name="due_at"
+                                value="{{ old('due_at', $quiz->due_at?->format('Y-m-d')) }}">
                             <small class="text-muted">
                                 Leave empty for no due date. Must be after opened at.
                             </small>

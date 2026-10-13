@@ -195,12 +195,6 @@ class MaterialController extends Controller
         ]);
     }
 
-    /**
-     * Remove every uploaded asset (file/PDF/EPUB) currently attached to a
-     * material, deleting both the physical file on disk and the DB rows.
-     * Used by update() when a new file replaces an old one, and by
-     * destroy() when the material itself is removed.
-     */
     private function deleteMaterialAssets(Material $material)
     {
         $materialAssets = $material->materialAsset()->with('mediaAsset')->get();

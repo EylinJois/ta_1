@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Assignment extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable=['name','description','visibility','submission_type','due_at',
     'opened_at','accepted_mime','max_size','edit_submission',

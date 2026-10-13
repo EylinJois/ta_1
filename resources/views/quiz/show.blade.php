@@ -2,10 +2,9 @@
 
 @section('title', $quiz->name)
 
-@section('page-title', 'Quiz')
-
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
+<link rel="stylesheet" href="{{ asset('css/quiz.css') }}">
 @endpush
 
 @section('content')
@@ -48,9 +47,9 @@
                 <span>Duration {{ $quiz->duration ? '(hh:mm)' : '' }}</span>
                 <strong>
                     @if($quiz->duration)
-                        {{ gmdate('H:i', $quiz->duration) }}
+                    {{ gmdate('H:i', $quiz->duration) }}
                     @else
-                        <i class="bi bi-infinity"></i>
+                    <i class="bi bi-infinity"></i>
                     @endif
                 </strong>
             </div>
@@ -59,9 +58,9 @@
                 <span>{{ Str::plural('Attempt', $quiz->max_attempt ?? 2) }} Allowed</span>
                 <strong>
                     @if($quiz->max_attempt)
-                        {{ $quiz->max_attempt }}
+                    {{ $quiz->max_attempt }}
                     @else
-                        <i class="bi bi-infinity"></i>
+                    <i class="bi bi-infinity"></i>
                     @endif
                 </strong>
             </div>
@@ -70,9 +69,9 @@
                 <span>Pass Score</span>
                 <strong>
                     @if($quiz->pass_score)
-                        {{ rtrim(rtrim(number_format($quiz->pass_score, 2), '0'), '.') }}%
+                    {{ rtrim(rtrim(number_format($quiz->pass_score, 2), '0'), '.') }}%
                     @else
-                        —
+                    —
                     @endif
                 </strong>
             </div>
@@ -81,9 +80,9 @@
                 <span>Your Best Score</span>
                 <strong>
                     @if(!is_null($bestScore))
-                        {{ rtrim(rtrim(number_format($bestScore, 2), '0'), '.') }}%
+                    {{ rtrim(rtrim(number_format($bestScore, 2), '0'), '.') }}%
                     @else
-                        —
+                    —
                     @endif
                 </strong>
             </div>
@@ -101,11 +100,11 @@
         <p class="text-muted mb-3">
             <i class="bi bi-lock-fill"></i>
             @if($notYetOpen)
-                This quiz is not available yet. It opens on
-                {{ $quiz->opened_at }}.
+            This quiz is not available yet. It opens on
+            {{ $quiz->opened_at }}.
             @else
-                This quiz is closed. The due date was
-                {{ $quiz->due_at }}.
+            This quiz is closed. The due date was
+            {{ $quiz->due_at }}.
             @endif
         </p>
         <button type="button" class="btn btn-secondary-custom btn-lg px-5" disabled>
@@ -166,7 +165,7 @@
     </h5>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle text-center">
+        <table class="table table-hover align-middle text-center attempts-table">
             <thead>
                 <tr>
                     <th>#</th>
@@ -180,8 +179,8 @@
             <tbody>
                 @foreach($attempts as $attempt)
                 <tr>
-                    <td>{{ $attempt->attempt_no }}</td>
-                    <td>
+                    <td data-label="Attempt">{{ $attempt->attempt_no }}</td>
+                    <td data-label="Status">
                         @switch($attempt->status)
                         @case('in_progress')
                         <span class="badge bg-warning text-dark">In Progress</span>
@@ -194,31 +193,34 @@
                         @break
                         @endswitch
                     </td>
-                    <td>
+                    <td data-label="Score">
                         @if(!is_null($attempt->score) && $attempt->status == 'graded')
-                        {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}%
+                        <div class="attempt-score-cell">
+                            <span class="attempt-score-value">
+                                {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}%
+                            </span>
                             @if($quiz->pass_score)
-                                @if($attempt->score >= $quiz->pass_score)
-                                <span class="badge bg-success ms-1">Passed</span>
-                                @else
-                                <span class="badge bg-danger ms-1">Not Passed</span>
-                                @endif
+                            @if($attempt->score >= $quiz->pass_score)
+                            <span class="badge bg-success attempt-pass-badge">Passed</span>
+                            @else
+                            <span class="badge bg-danger attempt-pass-badge">Not Passed</span>
                             @endif
+                            @endif
+                        </div>
                         @else
                         —
                         @endif
                     </td>
-                    <td>{{ $attempt->started_at->format('d M Y, H:i') }}</td>
-                    <td>{{ $attempt->submitted_at ? $attempt->submitted_at->format('d M Y, H:i') : '—' }}</td>
-                    <td>
-                        <a href="{{ route('attempts.review', $attempt) }}"
-                            class="btn edit-btn">
+                    <td data-label="Started">{{ $attempt->started_at->format('d M Y, H:i') }}</td>
+                    <td data-label="Submitted">{{ $attempt->submitted_at ? $attempt->submitted_at->format('d M Y, H:i') : '—' }}</td>
+                    <td data-label="Action" class="attempt-action-cell">
+                        <a href="{{ route('attempts.review', $attempt) }}" class="btn edit-btn">
                             <i class="bi bi-eye-fill"></i>
                             Review Attempt
                         </a>
                     </td>
                 </tr>
-                    @endforeach
+                @endforeach
             </tbody>
         </table>
     </div>

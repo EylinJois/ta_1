@@ -3,13 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Folder;
-use App\Models\Material;
 use App\Models\Note;
 use App\Models\NoteFile;
 use App\Models\MediaAsset;
-use App\Models\Section;
-use App\Models\Course;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -21,55 +17,32 @@ class NoteController extends Controller
      */
     public function index()
     {
-        $currentFolderId = request('folder');
+        $notes = Note::where('user_id', auth()->id())
+            ->orderByDesc('pinned')
+            ->orderByDesc('updated_at')
+            ->get();
 
-        $currentFolder = $currentFolderId
-            ? Folder::findOrFail($currentFolderId)
-            : null;
-
-        $breadcrumbs = collect();
-
-        if ($currentFolder) {
-            $folder = $currentFolder;
-
-            while ($folder) {
-                $breadcrumbs->prepend($folder);
-                $folder = $folder->parent;
-            }
-
-            $subfolders = Folder::where('parent_folder_id', $currentFolder->id)->get();
-            $notes = Note::where('folder_id', $currentFolder->id)->get();
-        } else {
-            $subfolders = Folder::whereNull('parent_folder_id')->get();
-            $notes = Note::whereNull('folder_id')->get();
-        }
-
-        return view('notes.index', compact(
-            'currentFolder',
-            'breadcrumbs',
-            'subfolders',
-            'notes'
-        ));
+        return view('notes.index', compact('notes'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
-    {
-        $folder = Folder::where('id', request('folder'))->first() ?? null;
-        $allFolders = Folder::where('user_id', auth()->id())->get();
+{
+    return view('notes.form', [
+        'note'      => new Note()
+    ]);
+}
 
-        $courseIds = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', Auth::id()))
-            ->pluck('courses.id');
-        $sectionIds = Section::whereIn('course_id', $courseIds)
-            ->pluck('id');
-        $materials = Material::whereIn('section_id', $sectionIds)
-            ->where('visibility', 1)
-            ->get();
+public function edit(Note $note)
+{
+    $note->load('noteFiles.mediaAsset');
 
-        return view('notes.create', compact('folder', 'allFolders', 'materials'));
-    }
+    return view('notes.form', [
+        'note'      => $note
+    ]);
+}
 
 
 
@@ -79,26 +52,6 @@ class NoteController extends Controller
     public function show(string $id)
     {
         //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $note = Note::findOrFail($id);
-        $folder = Folder::where('id', request('folder'))->first() ?? null;
-        $allFolders = Folder::where('user_id', auth()->id())->get();
-
-        $courseIds = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', Auth::id()))
-            ->pluck('courses.id');
-        $sectionIds = Section::whereIn('course_id', $courseIds)
-            ->pluck('id');
-        $materials = Material::whereIn('section_id', $sectionIds)
-            ->where('visibility', 1)
-            ->get();
-
-        return view('notes.edit', compact('note', 'folder', 'allFolders', 'materials'));
     }
 
 
@@ -120,12 +73,11 @@ class NoteController extends Controller
                 $file->delete();
             }
 
-            $note->materials()->detach();
             $note->delete();
         });
 
         return redirect()
-            ->route('notes.index', $note->folder_id ? ['folder' => $note->folder_id] : [])
+            ->route('notes.index')
             ->with('success', 'Note deleted successfully.');
     }
 
@@ -138,48 +90,17 @@ class NoteController extends Controller
         return response()->json(['status' => 'ok', 'pinned' => $note->pinned]);
     }
 
-    /**
-     * Small dataset the modal fetches once (cached client-side) to populate
-     * the Folder <select> and the Materials checkbox list.
-     */
-    public function formData()
-    {
-        $folders = Folder::where('user_id', auth()->id())
-            ->orderBy('name')
-            ->get()
-            ->map(fn($f) => [
-                'id' => $f->id,
-                'name' => $f->name,
-                'breadcrumb' => $f->name,
-            ]);
-
-        $materials = Material::orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn($m) => ['id' => $m->id, 'name' => $m->name]);
-
-        return response()->json([
-            'folders' => $folders,
-            'materials' => $materials,
-        ]);
-    }
-
-    /**
-     * Note data + attached photo URLs + linked material ids, for pre-filling
-     * the edit modal.
-     */
     public function editData(Note $note)
     {
         abort_unless($note->user_id === auth()->id(), 403);
 
-        $note->load(['files.mediaAsset', 'materials']);
+        $note->load(['files.mediaAsset']);
 
         return response()->json([
             'id' => $note->id,
             'title' => $note->title,
             'content' => $note->content,
-            'folder_id' => $note->folder_id,
             'pinned' => $note->pinned,
-            'material_ids' => $note->materials->pluck('id'),
             'files' => $note->files->filter(fn($f) => $f->mediaAsset)->map(fn($f) => [
                 'id' => $f->id,
                 'original_name' => $f->original_name,
@@ -193,36 +114,21 @@ class NoteController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
-            'folder_id' => 'nullable|exists:folders,id',
             'photos' => 'nullable|array',
-            'photos.*' => 'image|max:10240', // 10MB per photo
-            'material_ids' => 'nullable|array',
-            'material_ids.*' => 'exists:materials,id',
+            'photos.*' => 'image|max:10240', 
         ]);
-
-        if (!empty($validated['folder_id'])) {
-            $ownsFolder = Folder::where('id', $validated['folder_id'])
-                ->where('user_id', auth()->id())
-                ->exists();
-
-            abort_unless($ownsFolder, 403);
-        }
 
         $note = DB::transaction(function () use ($request, $validated) {
 
             $note = Note::create([
                 'title' => $validated['title'],
                 'content' => $validated['content'] ?? null,
-                'folder_id' => $validated['folder_id'] ?? null,
                 'pinned' => $request->boolean('pinned'),
                 'user_id' => auth()->id(),
             ]);
 
             $this->attachPhotos($request, $note);
 
-            if (!empty($validated['material_ids'])) {
-                $note->materials()->sync($validated['material_ids']);
-            }
 
             return $note;
         });
@@ -232,7 +138,7 @@ class NoteController extends Controller
         }
 
         return redirect()
-            ->route('notes.edit', ['note' => $note->id, 'folder' => $note->folder_id])
+            ->route('notes.edit', ['note' => $note->id])
             ->with('success', 'Note created successfully.');
     }
 
@@ -243,29 +149,17 @@ class NoteController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
-            'folder_id' => 'nullable|exists:folders,id',
             'photos' => 'nullable|array',
             'photos.*' => 'image|max:10240',
-            'material_ids' => 'nullable|array',
-            'material_ids.*' => 'exists:materials,id',
             'remove_file_ids' => 'nullable|array',
             'remove_file_ids.*' => 'exists:note_files,id',
         ]);
-
-        if (!empty($validated['folder_id'])) {
-            $ownsFolder = Folder::where('id', $validated['folder_id'])
-                ->where('user_id', auth()->id())
-                ->exists();
-
-            abort_unless($ownsFolder, 403);
-        }
 
         DB::transaction(function () use ($request, $validated, $note) {
 
             $note->update([
                 'title' => $validated['title'],
                 'content' => $validated['content'] ?? null,
-                'folder_id' => $validated['folder_id'] ?? null,
                 'pinned' => $request->boolean('pinned'),
             ]);
 
@@ -282,8 +176,6 @@ class NoteController extends Controller
             }
 
             $this->attachPhotos($request, $note);
-
-            $note->materials()->sync($validated['material_ids'] ?? []);
         });
 
         if ($request->wantsJson()) {
@@ -291,7 +183,7 @@ class NoteController extends Controller
         }
 
         return redirect()
-            ->route('notes.index', $note->folder_id ? ['folder' => $note->folder_id] : [])
+            ->route('notes.edit', ['note' => $note->id])
             ->with('success', 'Note updated successfully.');
     }
 

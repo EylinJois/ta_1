@@ -35,14 +35,16 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
             {{-- =========================
                      HEADER
                 ========================= --}}
-            <div class="courses-header mb-4">
+            <div class="mb-4 d-flex gap-3">
 
+            <div class="">
                 <a href="{{ route('sections.show', $section) }}"
                     class="btn btn-secondary-custom">
                     <i class="bi bi-arrow-left"></i>
                 </a>
+            </div>
 
-                <div>
+                <div class="">
 
                     <h4 class="mb-0">
                         Edit Material
@@ -53,6 +55,12 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
                     </small>
 
                 </div>
+
+                @if(session('success'))
+                <div class="alert alert-success mb-0 ms-auto">
+                    {{ session('success') }}
+                </div>
+                @endif
 
             </div>
 
@@ -65,7 +73,7 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
                         =================================== --}}
                     <div class="col-lg-5">
 
-                        <div class="card shadow-sm border-0 mb-4">
+                        <div class="card border-0 mb-4">
 
                             <div class="card-header bg-white">
                                 <h5 class="mb-0">
@@ -176,7 +184,7 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
 
                     <div class="col-lg-7">
 
-                        <div class="card shadow-sm border-0">
+                        <div class="card border-0">
 
                             <div class="card-header bg-white">
 

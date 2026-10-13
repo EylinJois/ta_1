@@ -174,6 +174,9 @@
 
 </div>
 
+@foreach($quiz->questions->filter(fn ($q) => $q->question_bank_id) as $question)
+    @include('quiz.edit-point', ['quiz' => $quiz, 'question' => $question])
+@endforeach
 @include('quiz.questions.create-standalone')
 @include('quiz.edit-quiz')
 
@@ -432,37 +435,45 @@
                 });
             }
 
-            function createOption(text = '', isCorrect = false) {
+            function createOption(text = '', percent = 0) {
 
-                const option = document.createElement('div');
-                option.className = 'option-row card mb-3';
+    const option = document.createElement('div');
+    option.className = 'option-row card mb-3';
 
-                option.innerHTML = `
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <input type="text" class="form-control" name="option_text[]"
-                                placeholder="Option text" value="${text.replace(/"/g, '&quot;')}" required>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input correct-option"
-                                    name="is_correct[]" value="0" ${isCorrect ? 'checked' : ''}>
-                                <label class="form-check-label">Correct</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <button type="button" class="btn btn-danger remove-option">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
+    option.innerHTML = `
+    <div class="card-body">
+        <div class="row align-items-center g-2">
+            <div class="col-md-7">
+                <input type="text" class="form-control" name="option_text[]"
+                    placeholder="Option text" value="${text.replace(/"/g, '&quot;')}" required>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input type="number" class="form-control option-percent" name="option_percent[]"
+                        min="0" max="100" step="0.01" value="${percent}" title="Percentage of the question's score">
+                    <span class="input-group-text">%</span>
                 </div>
-            `;
+            </div>
+            <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-danger remove-option">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+`;
 
-                optionsContainer.appendChild(option);
-                updateCorrectValues();
-            }
+    optionsContainer.appendChild(option);
+}
+
+addOptionBtn.addEventListener('click', () => createOption());
+
+optionsContainer.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-option')) {
+        if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
+        e.target.closest('.option-row').remove();
+    }
+});
 
             addOptionBtn.addEventListener('click', () => createOption());
 
@@ -576,11 +587,11 @@
             }
 
             if (seedOptions.length) {
-                seedOptions.forEach(o => createOption(o.text, !!o.is_correct));
-            } else {
-                createOption();
-                createOption();
-            }
+    seedOptions.forEach(o => createOption(o.text, o.score_percent ?? (o.is_correct ? 100 : 0)));
+} else {
+    createOption();
+    createOption();
+}
 
             if (seedAnswers.length) {
                 seedAnswers.forEach(a => createAnswer(a.answer, !!a.ignore_case, !!a.ignore_space));
