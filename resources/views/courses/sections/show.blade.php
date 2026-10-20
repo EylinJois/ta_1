@@ -20,16 +20,18 @@
 
         <div class="col-lg-8">
 
-            <span class="course-badge">
-                Mandarin Learning Course
-            </span>
-
             <h2>
                 {{ $course->name }}
             </h2>
 
-            <p>
-                {{ $course->description }}
+            <p x-data="{ open: false }">
+                <span x-show="!open">{{ Str::limit($course->description, 100, '') }}</span>
+                <span x-show="open" x-cloak>{{ $course->description }}</span>
+
+                @if (mb_strlen($course->description) > 100)
+                <br>
+                <a href="#" style="color: white; font-weight: bold;" @click.prevent="open = !open" x-text="open ? 'Show less' : 'Read more...'"></a>
+                @endif
             </p>
 
             <div class="course-meta">
@@ -81,7 +83,7 @@
 {{-- MATERIALS --}}
 <div class="table-card mb-4">
 
-    <div class="courses-header mb-4 section-materials-header">
+    <div class="courses-header mb-4">
         <h4 class="section-title mb-0">
             {{ $section->name }}
         </h4>

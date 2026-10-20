@@ -65,17 +65,17 @@
         <div class="row align-items-center min-vh-100">
 
             {{-- Left Content --}}
-            <div class="col-lg-6 mb-5 mb-lg-0">
+            <div class="col-lg-6 mb-5 mb-lg-0 mt-5">
 
                 <div class="hero-content">
 
                     <h1>
-                        Learn Mandarin Smarter with Modern LMS Technology
+                        Learn Mandarin with Modern TTS Technology
                     </h1>
 
                     <p>
-                        Access video lessons, interactive quizzes,
-                        Mandarin TTS conversations, assignments,
+                        Access video lessons, quizzes,
+                        Mandarin pronounciation TTS, assignments,
                         calendars, notes, and HSK progress tracking
                         in one platform.
                     </p>

@@ -72,24 +72,48 @@ class QuizController extends Controller
             'due_at' => $request->due_at,
         ]);
 
-        $activity = Activity::create([
-            'name' => $quiz->name,
-            'description' => $quiz->description,
-            'starts_at' => $quiz->opened_at ?? now(),
-            'ends_at' => $quiz->due_at ?? null,
-            'user_id' => auth()->id(),
-            'type' => 'Quiz',
-            'source_type' => 'quiz',
-            'source_id' => $quiz->id,
-            'course_id' => $quiz->section->course_id,
-        ]);
-        $participants = $quiz->section->course->classes()
-            ->with('users')
-            ->get()
-            ->flatMap(fn ($class) => $class->users->filter(fn ($participant) => $participant->pivot->role === 'student'))
-            ->unique('id');
-        foreach ($participants as $participant) {
-            $activity->participants()->syncWithoutDetaching([$participant->id]);
+        if ($quiz->opened_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'quiz',
+                'source_id' => $quiz->id,
+                'name' => 'Quiz Opened',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $quiz->name . ' is opened on ' . $quiz->opened_at->format('d M Y, H:i'),
+                'starts_at' => $quiz->opened_at,
+                'type' => 'quiz',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($quiz->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
+
+        if ($quiz->due_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'quiz',
+                'source_id' => $quiz->id,
+                'name' => 'Quiz Due',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $quiz->name . ' is due on ' . $quiz->due_at->format('d M Y, H:i'),
+                'starts_at' => $quiz->due_at,
+                'type' => 'quiz',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($quiz->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
         }
         return redirect()->route('quizzes.edit', $quiz->id);
     }
@@ -277,6 +301,50 @@ class QuizController extends Controller
             'opened_at' => $validated['opened_at'] ?? null,
             'due_at' => $validated['due_at'] ?? null,
         ]);
+
+        if ($quiz->opened_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'quiz',
+                'source_id' => $quiz->id,
+                'name' => 'Quiz Opened',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $quiz->name . ' is opened on ' . $quiz->opened_at->format('d M Y, H:i'),
+                'starts_at' => $quiz->opened_at,
+                'type' => 'quiz',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($quiz->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
+
+        if ($quiz->due_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'quiz',
+                'source_id' => $quiz->id,
+                'name' => 'Quiz Due',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $quiz->name . ' is due on ' . $quiz->due_at->format('d M Y, H:i'),
+                'starts_at' => $quiz->due_at,
+                'type' => 'quiz',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($quiz->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
 
         return back()->with('success', 'Quiz updated.');
     }

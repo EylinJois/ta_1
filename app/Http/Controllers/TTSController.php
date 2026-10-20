@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Overtrue\Pinyin\Pinyin;
 use Afaya\EdgeTTS\Service\EdgeTTS;
 
 class TTSController extends Controller
 {
-    const STREAM_LIMIT = 200;
+    const STREAM_LIMIT = 200;      // Hanzi; above this the audio is served as a temp file
+    const TEMP_DIR = 'tts-temp';
+    const TTL_MINUTES = 30;
 
     public function generate(Request $request)
     {
@@ -19,64 +23,52 @@ class TTSController extends Controller
 
         $text = trim($request->text);
 
-        // Generate pinyin
-        $pinyinCollection = (new Pinyin())->sentence($text);
-
-        // Join with spaces instead of commas
-        $pinyin = implode(' ', $pinyinCollection->toArray());
-
-        // Remove spaces before Chinese punctuation
+        $pinyin = implode(' ', (new Pinyin())->sentence($text)->toArray());
         $pinyin = preg_replace('/\s+([，。！？；：])/u', '$1', $pinyin);
 
-        // Count Hanzi only
-        preg_match_all('/\p{Han}/u', $text, $matches);
-        $hanziCount = count($matches[0]);
+        $hanziCount = preg_match_all('/\p{Han}/u', $text);
 
         $tts = new EdgeTTS();
-
         $tts->synthesize($text, 'zh-CN-XiaoxiaoNeural');
+        $audio = $tts->toRaw();
 
-        /*
-        |--------------------------------------------------------------------------
-        | SHORT TEXT
-        |--------------------------------------------------------------------------
-        */
+        $payload = [
+            'hanzi' => $text,
+            'pinyin' => $pinyin,
+            'hanzi_count' => $hanziCount,
+        ];
 
+        // SHORT TEXT: Base64 in the JSON, nothing touches the disk
         if ($hanziCount <= self::STREAM_LIMIT) {
-
-            return response()->json([
-                'hanzi' => $text,
-                'pinyin' => $pinyin,
-                'audio' => base64_encode($tts->toRaw()),
+            return response()->json($payload + [
+                'audio' => base64_encode($audio),
                 'type' => 'stream',
-                'hanzi_count' => $hanziCount,
             ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | LONG TEXT
-        |--------------------------------------------------------------------------
-        */
+        $id = (string) Str::uuid();
+        Storage::disk('local')->put(self::TEMP_DIR . "/{$id}.mp3", $audio);
 
-        $directory = public_path('tts');
-
-        if (! File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
-        }
-
-        $filename = sha1($text) . '.mp3';
-
-        if (! File::exists($directory . '/' . $filename)) {
-            $tts->toFile($directory . '/' . $filename);
-        }
-
-        return response()->json([
-            'hanzi' => $text,
-            'pinyin' => $pinyin,
-            'audio' => asset("tts/$filename"),
+        return response()->json($payload + [
+            'audio' => URL::temporarySignedRoute(
+                'tts.audio',
+                now()->addMinutes(self::TTL_MINUTES),
+                ['id' => $id]
+            ),
             'type' => 'file',
-            'hanzi_count' => $hanziCount,
+        ]);
+    }
+
+    public function audio(string $id)
+    {
+        abort_unless(Str::isUuid($id), 404);
+
+        $path = self::TEMP_DIR . "/{$id}.mp3";
+
+        abort_unless(Storage::disk('local')->exists($path), 404);
+
+        return response()->file(Storage::disk('local')->path($path), [
+            'Content-Type' => 'audio/mpeg',
         ]);
     }
 

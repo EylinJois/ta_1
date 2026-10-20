@@ -435,7 +435,7 @@ class MaterialController extends Controller
      */
     public function destroy(string $id)
     {
-        $material = Material::findOrFail($id);
+        $material = Material::with('section')->findOrFail($id);
         $this->authorizeManage($material->section);
 
         DB::transaction(function () use ($material) {

@@ -16,7 +16,6 @@ class Question extends Model
         'question',
         'type',
         'point',
-        'explanation',
         'order_index',
         'file_allowed',
         'max_file_size',

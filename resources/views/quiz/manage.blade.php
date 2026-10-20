@@ -88,7 +88,7 @@
                 <button type="button"
                     class="btn btn-theme btn-sm"
                     data-bs-toggle="modal"
-                    data-bs-target="#createStandaloneQuestionModal">
+                    data-bs-target="#createQuestionModal">
                     <i class="bi bi-plus-circle"></i>
                     Add Question
                 </button>
@@ -138,7 +138,7 @@
                         <button type="button"
                             class="icon-action-btn edit-btn"
                             data-bs-toggle="modal"
-                            data-bs-target="#editStandaloneQuestionModal{{ $question->id }}">
+                            data-bs-target="#editQuestionModal{{ $question->id }}">
                             <i class="bi bi-pencil-fill"></i>
                         </button>
                         @else
@@ -158,7 +158,7 @@
                 </div>
 
                 @if(is_null($question->question_bank_id))
-                @include('quiz.questions.edit-standalone', ['question' => $question])
+                @include('quiz.questions.modal', ['question' => $question, 'modalId' => 'editQuestionModal'.$question->id])
                 @endif
 
                 @empty
@@ -177,7 +177,7 @@
 @foreach($quiz->questions->filter(fn ($q) => $q->question_bank_id) as $question)
     @include('quiz.edit-point', ['quiz' => $quiz, 'question' => $question])
 @endforeach
-@include('quiz.questions.create-standalone')
+@include('quiz.questions.modal', ['modalId'=>'createQuestionModal', 'question' => null, 'questionBank' => null])
 @include('quiz.edit-quiz')
 
 @endsection
@@ -341,274 +341,6 @@
                     }),
                 });
             },
-        });
-
-        /* ===================== QUESTION MODAL (create / edit, standalone only) ===================== */
-
-        function initQuestionModal(modal) {
-
-            const typeSelect = modal.querySelector('.question-type-select');
-            const optionsSection = modal.querySelector('.options-section');
-            const answersSection = modal.querySelector('.answers-section');
-            const fileSection = modal.querySelector('.file-section');
-            const choiceHint = modal.querySelector('.choice-hint');
-            const optionsContainer = modal.querySelector('.options-container');
-            const answersContainer = modal.querySelector('.answers-container');
-            const addOptionBtn = modal.querySelector('.add-option-btn');
-            const addAnswerBtn = modal.querySelector('.add-answer-btn');
-
-            const seedOptions = JSON.parse(modal.dataset.seedOptions || '[]');
-            const seedAnswers = JSON.parse(modal.dataset.seedAnswers || '[]');
-            const seedFileConfig = JSON.parse(modal.dataset.seedFileConfig || '{}');
-
-            const required = {
-                typeSelect,
-                optionsSection,
-                answersSection,
-                fileSection,
-                choiceHint,
-                optionsContainer,
-                answersContainer,
-                addOptionBtn,
-                addAnswerBtn,
-            };
-
-            for (const [name, el] of Object.entries(required)) {
-                if (!el) {
-                    console.warn(`Question modal "${modal.id}" is missing .${name.replace(/([A-Z])/g, '-$1').toLowerCase()} — skipping init.`);
-                    return;
-                }
-            }
-
-            let answerRowCounter = 0;
-
-            function setSectionState(section, visible) {
-                section.classList.toggle('d-none', !visible);
-                section.querySelectorAll('input, textarea, select').forEach(function(field) {
-                    field.disabled = !visible;
-                });
-            }
-
-            function refreshSections() {
-
-                setSectionState(optionsSection, false);
-                setSectionState(answersSection, false);
-                setSectionState(fileSection, false);
-                choiceHint.classList.add('d-none');
-
-                switch (typeSelect.value) {
-                    case 'choice':
-                        setSectionState(optionsSection, true);
-                        choiceHint.classList.remove('d-none');
-                        break;
-                    case 'multiple_select':
-                        setSectionState(optionsSection, true);
-                        break;
-                    case 'short_answer':
-                        setSectionState(answersSection, true);
-                        break;
-                    case 'file':
-                        setSectionState(fileSection, true);
-                        break;
-                    case 'both':
-                        setSectionState(answersSection, true);
-                        setSectionState(fileSection, true);
-                        break;
-                    case 'written':
-                    default:
-                        break;
-                }
-            }
-
-            typeSelect.addEventListener('change', refreshSections);
-
-            function updateCorrectValues() {
-                optionsContainer.querySelectorAll('.option-row').forEach(function(row, index) {
-                    row.querySelector('.correct-option').value = index;
-                });
-            }
-
-            function enforceSingleCorrect(changedCheckbox) {
-                if (typeSelect.value !== 'choice') return;
-                optionsContainer.querySelectorAll('.correct-option').forEach(function(cb) {
-                    if (cb !== changedCheckbox) cb.checked = false;
-                });
-            }
-
-            function createOption(text = '', percent = 0) {
-
-    const option = document.createElement('div');
-    option.className = 'option-row card mb-3';
-
-    option.innerHTML = `
-    <div class="card-body">
-        <div class="row align-items-center g-2">
-            <div class="col-md-7">
-                <input type="text" class="form-control" name="option_text[]"
-                    placeholder="Option text" value="${text.replace(/"/g, '&quot;')}" required>
-            </div>
-            <div class="col-md-3">
-                <div class="input-group">
-                    <input type="number" class="form-control option-percent" name="option_percent[]"
-                        min="0" max="100" step="0.01" value="${percent}" title="Percentage of the question's score">
-                    <span class="input-group-text">%</span>
-                </div>
-            </div>
-            <div class="col-md-2 text-end">
-                <button type="button" class="btn btn-danger remove-option">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-`;
-
-    optionsContainer.appendChild(option);
-}
-
-addOptionBtn.addEventListener('click', () => createOption());
-
-optionsContainer.addEventListener('click', function(e) {
-    if (e.target.closest('.remove-option')) {
-        if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
-        e.target.closest('.option-row').remove();
-    }
-});
-
-            addOptionBtn.addEventListener('click', () => createOption());
-
-            optionsContainer.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-option')) {
-                    if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
-                    e.target.closest('.option-row').remove();
-                    updateCorrectValues();
-                }
-            });
-
-            optionsContainer.addEventListener('change', function(e) {
-                if (e.target.classList.contains('correct-option')) {
-                    enforceSingleCorrect(e.target);
-                }
-            });
-
-            function createAnswer(answer = '', ignoreCase = true, ignoreSpace = true) {
-
-                const rowIndex = answerRowCounter++;
-
-                const row = document.createElement('div');
-                row.className = 'accepted-answer-row card mb-3';
-
-                row.innerHTML = `
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" name="accepted_answers[${rowIndex}]"
-                                placeholder="Accepted answer" value="${answer.replace(/"/g, '&quot;')}" required>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-check">
-                                <input type="hidden" name="ignore_case[${rowIndex}]" value="0">
-                                <input type="checkbox" class="form-check-input" name="ignore_case[${rowIndex}]"
-                                    value="1" ${ignoreCase ? 'checked' : ''}>
-                                <label class="form-check-label small">Ignore case</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-check">
-                                <input type="hidden" name="ignore_space[${rowIndex}]" value="0">
-                                <input type="checkbox" class="form-check-input" name="ignore_space[${rowIndex}]"
-                                    value="1" ${ignoreSpace ? 'checked' : ''}>
-                                <label class="form-check-label small">Ignore spaces</label>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <button type="button" class="btn btn-danger remove-answer">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-                answersContainer.appendChild(row);
-            }
-
-            addAnswerBtn.addEventListener('click', () => createAnswer());
-
-            answersContainer.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-answer')) {
-                    if (answersContainer.querySelectorAll('.accepted-answer-row').length <= 1) return;
-                    e.target.closest('.accepted-answer-row').remove();
-                }
-            });
-
-            const fileTypeCheckboxes = modal.querySelectorAll('.file-type-checkbox');
-            const fileAllowedCustom = modal.querySelector('.file-allowed-custom');
-            const fileAllowedJson = modal.querySelector('.file-allowed-json');
-
-            function syncFileAllowedJson() {
-
-                const checked = Array.from(fileTypeCheckboxes)
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
-
-                const custom = fileAllowedCustom.value
-                    .split(',')
-                    .map(s => s.trim().toLowerCase().replace(/^\./, ''))
-                    .filter(Boolean);
-
-                const combined = [...new Set([...checked, ...custom])];
-
-                fileAllowedJson.value = JSON.stringify(combined);
-            }
-
-            fileTypeCheckboxes.forEach(cb => cb.addEventListener('change', syncFileAllowedJson));
-            fileAllowedCustom.addEventListener('input', syncFileAllowedJson);
-
-            function applySeedFileConfig() {
-
-                const allowed = seedFileConfig.allowed || [];
-                const knownExtensions = Array.from(fileTypeCheckboxes).map(cb => cb.value);
-
-                fileTypeCheckboxes.forEach(cb => {
-                    cb.checked = allowed.includes(cb.value);
-                });
-
-                const customExtensions = allowed.filter(ext => !knownExtensions.includes(ext));
-                fileAllowedCustom.value = customExtensions.join(', ');
-
-                syncFileAllowedJson();
-
-                const maxFileSizeInput = modal.querySelector('input[name="max_file_size"]');
-                const maxFilesInput = modal.querySelector('input[name="max_files"]');
-
-                if (seedFileConfig.max_file_size) maxFileSizeInput.value = seedFileConfig.max_file_size;
-                if (seedFileConfig.max_files) maxFilesInput.value = seedFileConfig.max_files;
-            }
-
-            if (seedOptions.length) {
-    seedOptions.forEach(o => createOption(o.text, o.score_percent ?? (o.is_correct ? 100 : 0)));
-} else {
-    createOption();
-    createOption();
-}
-
-            if (seedAnswers.length) {
-                seedAnswers.forEach(a => createAnswer(a.answer, !!a.ignore_case, !!a.ignore_space));
-            } else {
-                createAnswer();
-            }
-
-            applySeedFileConfig();
-            refreshSections();
-        }
-
-        document.querySelectorAll('.question-modal').forEach(function(modal) {
-            try {
-                initQuestionModal(modal);
-            } catch (err) {
-                console.error(`Failed to initialize modal "${modal.id}":`, err);
-            }
         });
 
         /* ===================== BANK CODE SEARCH (Pick Manually panel only) ===================== */

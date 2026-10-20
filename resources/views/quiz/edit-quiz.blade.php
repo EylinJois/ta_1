@@ -88,10 +88,10 @@
                                 Opened at
                             </label>
                             <input
-    type="date"
-    class="form-control"
-    name="opened_at"
-    value="{{ old('opened_at', $quiz->opened_at?->format('Y-m-d')) }}">
+                                type="datetime-local"
+                                class="form-control"
+                                name="opened_at"
+                        value="{{ old('opened_at', $quiz->opened_at?->format('Y-m-d\TH:i')) }}">
                             <small class="text-muted">
                                 Leave empty to open instantly after creation.
                             </small>
@@ -101,10 +101,10 @@
                                 Due at
                             </label>
                             <input
-                                type="date"
+                                type="datetime-local"
                                 class="form-control"
                                 name="due_at"
-                                value="{{ old('due_at', $quiz->due_at?->format('Y-m-d')) }}">
+                            value="{{ old('due_at', $quiz->due_at?->format('Y-m-d\TH:i')) }}">
                             <small class="text-muted">
                                 Leave empty for no due date. Must be after opened at.
                             </small>

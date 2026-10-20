@@ -808,12 +808,6 @@ textarea.form-control{
 
 @media(max-width: 768px){
 
-    .courses-header{
-        flex-direction: column;
-        gap: 20px;
-        align-items: flex-start;
-    }
-
     .course-detail-banner{
         padding: 30px;
     }
@@ -1054,4 +1048,39 @@ textarea.form-control{
 .select2-container--default .select2-results__option--highlighted[aria-selected]{
     background-color: #D62828;
     color: white;
+}
+
+.pdf-container {
+    position: relative;
+    height: 85vh;
+    overflow: auto;
+    padding: 16px;
+}
+
+#pdfPages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: max-content;
+}
+
+#pdfPages canvas {
+    display: block;
+    margin: 0 auto;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+}
+
+.pdf-viewer:fullscreen {
+    background: #fff;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-viewer:fullscreen .pdf-container {
+    flex: 1;
+    height: auto;
 }

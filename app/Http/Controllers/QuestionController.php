@@ -32,18 +32,17 @@ class QuestionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'question_bank_id' => 'required|exists:question_banks,id',
+            'question_bank_id' => 'nullable|exists:question_banks,id',
             'question' => 'required|string',
             'type' => 'required|in:choice,multiple_select,written,short_answer,file,both',
             'point' => 'nullable|numeric|min:0',
-            'explanation' => 'nullable|string',
 
             'option_text' => 'required_if:type,choice,multiple_select|array|min:2',
             'option_text.*' => 'required|string|max:1000',
             'score_percent' => 'required_if:type,choice,multiple_select|array|min:2',
-            'score_percent.*' => 'integer|min:0|max:100',
+            'score_percent.*' => 'integer|min:-100|max:100',
 
-            'accepted_answers' => 'required_if:type,short_answer,both|array|min:1',
+            'accepted_answers' => 'required_if:type,short_answer|array|min:1',
             'accepted_answers.*' => 'required|string|max:255',
             'ignore_case' => 'nullable|array',
             'ignore_case.*' => 'boolean',
@@ -55,14 +54,14 @@ class QuestionController extends Controller
             'max_files' => 'nullable|integer|min:1|max:255',
         ]);
 
-        // Cross-field checks the rules above can't express on their own.
+        //Multiple choice/select
         if (in_array($validated['type'], ['choice', 'multiple_select'])) {
 
             $optionCount = count($request->input('option_text', []));
             $scorePercentages = array_map('intval', $request->input('score_percent', []));
 
             foreach ($scorePercentages as $index => $percent) {
-                if ($percent < 0 || $percent > 100) {
+                if ($percent < -100 || $percent > 100) {
                     return back()
                         ->withErrors(['score_percent' => 'Invalid score percentage.'])
                         ->withInput();
@@ -74,30 +73,21 @@ class QuestionController extends Controller
                     ->withErrors(['option_text' => 'The number of options and score percentages must match.'])
                     ->withInput();
             }
-        }
 
-        if (in_array($validated['type'], ['short_answer', 'both'])) {
+            $total = array_sum($scorePercentages);
 
-            $correctIndexes = array_map('intval', $request->input('is_correct', []));
-
-            foreach ($correctIndexes as $index) {
-                if ($index < 0 || $index >= count($request->input('accepted_answers', []))) {
-                    return back()
-                        ->withErrors(['is_correct' => 'Invalid correct option index.'])
-                        ->withInput();
-                }
-            }
-
-            if ($validated['type'] === 'short_answer' && count($correctIndexes) !== 1) {
+            if ($total > 100 || $total < -100) {
                 return back()
-                    ->withErrors(['is_correct' => 'Short answer questions need exactly one correct option.'])
+                    ->withErrors(['score_percent' => 'The total score of all options must be between -100% and 100%.'])
                     ->withInput();
             }
         }
 
-        $order_idx=Question::where('question_bank_id', $validated['question_bank_id'])->max('order_index');
+        $bankId = $validated['question_bank_id'] ?? null;
+
+        $order_idx = Question::where('question_bank_id', $bankId)->max('order_index');
         $request->merge([
-            'order_idx' => $order_idx+1
+            'order_idx' => $order_idx + 1
         ]);
 
         $question = DB::transaction(function () use ($request, $validated) {
@@ -109,7 +99,6 @@ class QuestionController extends Controller
                 'question' => $validated['question'],
                 'type' => $validated['type'],
                 'point' => $validated['point'] ?? 0,
-                'explanation' => $validated['explanation'] ?? null,
                 'file_allowed' => $fileConfig['file_allowed'],
                 'max_file_size' => $fileConfig['max_file_size'],
                 'max_files' => $fileConfig['max_files'],
@@ -122,7 +111,6 @@ class QuestionController extends Controller
                     $this->storeOptions($question, $request);
                     break;
                 case 'short_answer':
-                case 'both':
                     $this->storeAcceptedAnswers($question, $request);
                     break;
             }
@@ -202,88 +190,98 @@ class QuestionController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, Question $question)
-{
-    $validated = $request->validate([
-        'question_bank_id' => 'nullable|exists:question_banks,id', // now nullable
-        'question' => 'required|string',
-        'type' => 'required|in:choice,multiple_select,written,short_answer,file,both',
-        'point' => 'nullable|min:0',
-        'explanation' => 'nullable|string',
+    {
+        $validated = $request->validate([
+            'question_bank_id' => 'nullable|exists:question_banks,id',
+            'question' => 'required|string',
+            'type' => 'required|in:choice,multiple_select,written,short_answer,file,both',
+            'point' => 'nullable|numeric|min:0',
 
-        'option_text' => 'required_if:type,choice,multiple_select|array|min:2',
-        'option_text.*' => 'required|string|max:1000',
-        'score_percent' => 'required_if:type,choice,multiple_select|array|min:2',
-        'score_percent.*' => 'integer|min:0|max:100',
+            'option_text' => 'required_if:type,choice,multiple_select|array|min:2',
+            'option_text.*' => 'required|string|max:1000',
+            'score_percent' => 'required_if:type,choice,multiple_select|array|min:2',
+            'score_percent.*' => 'integer|min:-100|max:100',
 
-        'accepted_answers' => 'required_if:type,short_answer,both|array|min:1',
-        'accepted_answers.*' => 'required|string|max:255',
-        'ignore_case' => 'nullable|array',
-        'ignore_case.*' => 'boolean',
-        'ignore_space' => 'nullable|array',
-        'ignore_space.*' => 'boolean',
+            'accepted_answers' => 'required_if:type,short_answer|array|min:1',
+            'accepted_answers.*' => 'required|string|max:255',
+            'ignore_case' => 'nullable|array',
+            'ignore_case.*' => 'boolean',
+            'ignore_space' => 'nullable|array',
+            'ignore_space.*' => 'boolean',
 
-        'file_allowed_json' => 'nullable|string',
-        'max_file_size' => 'nullable|integer|min:1|max:1024',
-        'max_files' => 'nullable|integer|min:1|max:255',
-    ]);
+            'file_allowed_json' => 'nullable|string',
+            'max_file_size' => 'nullable|integer|min:1|max:1024',
+            'max_files' => 'nullable|integer|min:1|max:255',
+        ]);
 
-    if (is_null($question->question_bank_id) && !empty($validated['question_bank_id'])) {
-        return back()->withErrors(['question_bank_id' => 'This question is not part of a question bank.']);
-    }
+        if (is_null($question->question_bank_id) && !empty($validated['question_bank_id'])) {
+            return back()->withErrors(['question_bank_id' => 'This question is not part of a question bank.']);
+        }
 
-    if (in_array($validated['type'], ['choice', 'multiple_select'])) {
-        $optionCount = count($request->input('option_text', []));
-        $scorePercentages = array_map('intval', $request->input('score_percent', []));
+        //multiple choice
+        if (in_array($validated['type'], ['choice', 'multiple_select'])) {
+            $optionCount = count($request->input('option_text', []));
+            $scorePercentages = array_map('intval', $request->input('score_percent', []));
 
-        foreach ($scorePercentages as $index => $percent) {
-            if ($index < 0 || $index >= $optionCount) {
-                return back()->withErrors(['score_percent' => 'Invalid option score.'])->withInput();
+            if ($optionCount !== count($scorePercentages)) {
+                return back()
+                    ->withErrors(['option_text' => 'The number of options and score percentages must match.'])
+                    ->withInput();
+            }
+
+            $total = array_sum($scorePercentages);
+
+            if ($total > 100 || $total < -100) {
+                return back()
+                    ->withErrors(['score_percent' => 'The total score of all options must be between -100% and 100%.'])
+                    ->withInput();
+            }
+
+            if (
+                $validated['type'] === 'choice'
+                && count(array_filter($scorePercentages, fn($v) => $v === 100)) !== 1
+            ) {
+                return back()
+                    ->withErrors(['score_percent' => 'Multiple choice questions need exactly one correct option.'])
+                    ->withInput();
             }
         }
 
-        if ($validated['type'] === 'choice' && count(array_filter($scorePercentages, function($v) { return $v === 100; })) !== 1) {
-            return back()->withErrors(['score_percent' => 'Multiple choice questions need exactly one correct option.'])->withInput();
+        DB::transaction(function () use ($request, $validated, $question) {
+
+            $fileConfig = $this->extractFileConfig($request, $validated['type']);
+
+            $question->update([
+                'question' => $validated['question'],
+                'type' => $validated['type'],
+                'point' => $validated['point'] ?? 0,
+                'file_allowed' => $fileConfig['file_allowed'],
+                'max_file_size' => $fileConfig['max_file_size'],
+                'max_files' => $fileConfig['max_files'],
+            ]);
+
+            $question->options()->delete();
+            $question->acceptedAnswers()->delete();
+
+            switch ($validated['type']) {
+                case 'choice':
+                case 'multiple_select':
+                    $this->storeOptions($question, $request);
+                    break;
+                case 'short_answer':
+                    $this->storeAcceptedAnswers($question, $request);
+                    break;
+            }
+        });
+
+        if ($question->question_bank_id) {
+            return redirect()
+                ->route('questionbank.show', $question->question_bank_id)
+                ->with('success', 'Question updated.');
         }
 
+        return back()->with('success', 'Question updated.');
     }
-
-    DB::transaction(function () use ($request, $validated, $question) {
-
-        $fileConfig = $this->extractFileConfig($request, $validated['type']);
-
-        $question->update([
-            'question' => $validated['question'],
-            'type' => $validated['type'],
-            'point' => $validated['point'] ?? 0,
-            'explanation' => $validated['explanation'] ?? null,
-            'file_allowed' => $fileConfig['file_allowed'],
-            'max_file_size' => $fileConfig['max_file_size'],
-            'max_files' => $fileConfig['max_files'],
-        ]);
-
-        $question->options()->delete();
-        $question->acceptedAnswers()->delete();
-
-        switch ($validated['type']) {
-            case 'choice':
-            case 'multiple_select':
-                $this->storeOptions($question, $request);
-                break;
-            case 'short_answer':
-            case 'both':
-                $this->storeAcceptedAnswers($question, $request);
-                break;
-        }
-    });
-
-    if ($question->question_bank_id) {
-        return redirect()
-            ->route('questionbank.show', $question->question_bank_id)
-            ->with('success', 'Question updated.');
-    }
-
-    return back()->with('success', 'Question updated.');
-}
 
 
     public function destroy(Question $question)

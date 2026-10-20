@@ -59,9 +59,15 @@
                         <p class="text-muted mb-2">{{ $sentence->pinyin }}</p>
                         <p class="mb-3">{{ $sentence->meaning }}</p>
 
-                        <button type="button" class="btn btn-secondary-custom btn-sm play-sentence-btn">
-                            <i class="bi bi-play-fill"></i> Play
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary-custom btn-sm play-sentence-btn">
+                                <i class="bi bi-play-fill"></i> Play
+                            </button>
+
+                            <button type="button" class="btn btn-secondary-custom btn-sm reset-sentence-btn" disabled>
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
 
                     </div>
                 </div>
@@ -100,7 +106,7 @@
             <i class="bi bi-file-earmark-arrow-down display-1 text-danger"></i>
             <h3>{{ $material->name }}</h3>
             <a id="downloadFileBtn" href="{{ route('media.download', $asset->mediaAsset) }}" class="btn btn-theme">
-                Download    
+                Download
             </a>
         </div>
 
@@ -114,15 +120,15 @@
 
         <div class="pdf-viewer text-center">
             <div class="pdf-toolbar mb-3 d-flex align-items-center gap-2 justify-content-center">
-                <button id="prevPage" class="btn btn-secondary btn-sm">Previous</button>
-                <span>Page <span id="pageNum">1</span> / <span id="pageCount">0</span></span>
-                <button id="nextPage" class="btn btn-secondary btn-sm">Next</button>
+                <span>Total page: <span id="pageCount">0</span></span>
                 <button id="zoomOut" class="btn btn-outline-secondary btn-sm">−</button>
-                <span id="zoomLevel">100%</span>
+                <span id="zoomLevel">120%</span>
                 <button id="zoomIn" class="btn btn-outline-secondary btn-sm">+</button>
+                <button id="fullscreen" class="btn btn-outline-secondary btn-sm">Fullscreen</button>
             </div>
-            <div class="pdf-container border rounded bg-light">
-                <canvas id="pdfCanvas"></canvas>
+
+            <div id="pdfContainer" class="pdf-container border rounded bg-light">
+                <div id="pdfPages"></div>
             </div>
         </div>
 
@@ -168,253 +174,262 @@
     </div>
 </div>
 
-    @push('scripts')
-    <script>
-        (function() {
-            const materialId = {
-                {
-                    $material -> id
+@push('scripts')
+<script>
+    (function() {
+        const materialId = {{$material->id}};
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        document.getElementById('markCompleteBtn')?.addEventListener('click', function() {
+
+            const btn = this;
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+
+            fetch(`/materials/${materialId}/progress`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        progress_percent: 100,
+                        force_complete: true
+                    }),
+                })
+                .then(function(r) {
+                    if (!r.ok) throw new Error();
+                    btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completed';
+                })
+                .catch(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    alert('Failed to mark as complete. Please try again.');
+                });
+        });
+    })();
+</script>
+
+@if($material->type == 'Youtube Video')
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    let ytPlayer;
+
+    function onYouTubeIframeAPIReady() {
+        ytPlayer = new YT.Player('ytPlayer', {});
+    }
+</script>
+@endif
+
+@if($material->type == 'PDF')
+<script type="module">
+    import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+
+    const url = "{{ Storage::url($pdf->mediaAsset->file_path) }}";
+    const pagesEl = document.getElementById("pdfPages");
+    let pdfDoc = null;
+    let scale = 1.2;
+
+    async function renderAll() {
+        pagesEl.innerHTML = "";
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const viewport = page.getViewport({
+                scale
+            });
+            const canvas = document.createElement("canvas");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            pagesEl.appendChild(canvas);
+            await page.render({
+                canvasContext: canvas.getContext("2d"),
+                viewport
+            }).promise;
+        }
+        document.getElementById("zoomLevel").textContent = Math.round(scale * 100) + "%";
+    }
+
+    pdfjsLib.getDocument(url).promise.then(pdf => {
+        pdfDoc = pdf;
+        document.getElementById("pageCount").textContent = pdf.numPages;
+        renderAll();
+    });
+
+    document.getElementById("zoomIn").onclick = () => {
+        scale += 0.2;
+        renderAll();
+    };
+    document.getElementById("zoomOut").onclick = () => {
+        if (scale > 0.4) {
+            scale -= 0.2;
+            renderAll();
+        }
+    };
+    document.getElementById("fullscreen").onclick = () => {
+        const v = document.querySelector(".pdf-viewer");
+        document.fullscreenElement ? document.exitFullscreen() : v.requestFullscreen();
+    };
+</script>
+@endif
+
+@if($material->type == 'EPUB')
+<script>
+    const url = "{{ Storage::url($epub->mediaAsset->file_path) }}";
+
+    const book = ePub(url);
+    const rendition = book.renderTo("epubViewer", {
+        width: "100%",
+        height: "100%"
+    });
+
+    let fontSize = 100;
+
+    rendition.display();
+
+    book.ready
+        .then(() => book.locations.generate(1000))
+        .then(() => {
+            document.getElementById("pageCount").textContent = book.locations.total;
+            updatePage();
+        });
+
+    function updatePage() {
+        const current = rendition.currentLocation();
+        if (!current) return;
+        const page = book.locations.locationFromCfi(current.start.cfi);
+        document.getElementById("pageNum").textContent = page;
+
+    }
+
+    rendition.on("relocated", updatePage);
+
+    document.getElementById("prevPage").addEventListener("click", () => rendition.prev());
+    document.getElementById("nextPage").addEventListener("click", () => rendition.next());
+
+    document.getElementById("zoomIn").addEventListener("click", function() {
+        fontSize += 10;
+        rendition.themes.fontSize(fontSize + "%");
+        document.getElementById("zoomLevel").textContent = fontSize + "%";
+    });
+
+    document.getElementById("zoomOut").addEventListener("click", function() {
+        if (fontSize <= 50) return;
+        fontSize -= 10;
+        rendition.themes.fontSize(fontSize + "%");
+        document.getElementById("zoomLevel").textContent = fontSize + "%";
+    });
+</script>
+@endif
+
+@if($material->type == 'Page')
+<script>
+    (function() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        // One Audio object per card, so pause/resume keeps its position
+        const audios = new WeakMap();
+        let currentCard = null;
+
+        function setPlayUi(card, playing) {
+            const btn = card.querySelector('.play-sentence-btn');
+            btn.innerHTML = playing ?
+                '<i class="bi bi-pause-fill"></i> Pause' :
+                '<i class="bi bi-play-fill"></i> Play';
+        }
+
+        function resetCard(card) {
+            const audio = audios.get(card);
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            setPlayUi(card, false);
+            card.querySelector('.reset-sentence-btn').disabled = true;
+        }
+
+        function startAudio(card, audio) {
+            audio.play();
+            setPlayUi(card, true);
+            card.querySelector('.reset-sentence-btn').disabled = false;
+        }
+
+        document.querySelectorAll('.sentence-view-card').forEach(function(card) {
+            const playBtn = card.querySelector('.play-sentence-btn');
+            const resetBtn = card.querySelector('.reset-sentence-btn');
+
+            resetBtn.addEventListener('click', function() {
+                resetCard(card);
+            });
+
+            playBtn.addEventListener('click', function() {
+                const hanzi = card.dataset.hanzi;
+                if (!hanzi) return;
+
+                // Stop any other sentence that is playing
+                if (currentCard && currentCard !== card) resetCard(currentCard);
+                currentCard = card;
+
+                const existing = audios.get(card);
+
+                if (existing) {
+                    // Playing -> pause (keeps position)
+                    if (!existing.paused) {
+                        existing.pause();
+                        setPlayUi(card, false);
+                        return;
+                    }
+                    // Paused or finished -> resume / play
+                    startAudio(card, existing);
+                    return;
                 }
-            };
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-            document.getElementById('markCompleteBtn')?.addEventListener('click', function() {
+                // First play: generate the audio
+                playBtn.disabled = true;
+                playBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
 
-                const btn = this;
-                btn.disabled = true;
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
-
-                fetch(`/materials/${materialId}/progress`, {
+                fetch('{{ route("tts.generate") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken
                         },
                         body: JSON.stringify({
-                            progress_percent: 100,
-                            force_complete: true
+                            text: hanzi
                         }),
                     })
                     .then(function(r) {
                         if (!r.ok) throw new Error();
-                        btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completed';
+                        return r.json();
+                    })
+                    .then(function(data) {
+                        const audioSrc = data.type === 'stream' ?
+                            `data:audio/mpeg;base64,${data.audio}` :
+                            data.audio;
+
+                        const audio = new Audio(audioSrc);
+                        audio.addEventListener('ended', function() {
+                            resetCard(card);
+                        });
+
+                        audios.set(card, audio);
+                        startAudio(card, audio);
                     })
                     .catch(function() {
-                        btn.disabled = false;
-                        btn.innerHTML = originalHtml;
-                        alert('Failed to mark as complete. Please try again.');
+                        setPlayUi(card, false);
+                        alert('Could not play audio. Please try again.');
+                    })
+                    .finally(function() {
+                        playBtn.disabled = false;
                     });
             });
-        })();
-    </script>
-
-    @if($material->type == 'Youtube Video')
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script>
-        let ytPlayer;
-
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('ytPlayer', {});
-        }
-    </script>
-    @endif
-
-    @if($material->type == 'PDF')
-    <script type="module">
-        import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
-
-        const url = "{{ Storage::url($pdf->mediaAsset->file_path) }}";
-
-        let pdfDoc = null;
-        let pageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
-        let scale = 1.2;
-
-        const canvas = document.getElementById("pdfCanvas");
-        const ctx = canvas.getContext("2d");
-
-        function renderPage(num) {
-            pageRendering = true;
-
-            pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({
-                    scale: scale
-                });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                const renderTask = page.render({
-                    canvasContext: ctx,
-                    viewport: viewport
-                });
-
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
-
-                document.getElementById("pageNum").textContent = num;
-                document.getElementById("zoomLevel").textContent = Math.round(scale * 100) + "%";
-            });
-        }
-
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        function previousPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        }
-
-        function nextPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        }
-
-        function zoomIn() {
-            scale += 0.2;
-            queueRenderPage(pageNum);
-        }
-
-        function zoomOut() {
-            if (scale <= 0.4) return;
-            scale -= 0.2;
-            queueRenderPage(pageNum);
-        }
-
-        pdfjsLib.getDocument(url).promise.then(function(pdf) {
-            pdfDoc = pdf;
-            document.getElementById("pageCount").textContent = pdf.numPages;
-
-            renderPage(pageNum);
         });
+    })();
+</script>
+@endif
 
-        document.getElementById("prevPage").addEventListener("click", previousPage);
-        document.getElementById("nextPage").addEventListener("click", nextPage);
-        document.getElementById("zoomIn").addEventListener("click", zoomIn);
-        document.getElementById("zoomOut").addEventListener("click", zoomOut);
-    </script>
-    @endif
-
-    @if($material->type == 'EPUB')
-    <script>
-        const url = "{{ Storage::url($epub->mediaAsset->file_path) }}";
-
-        const book = ePub(url);
-        const rendition = book.renderTo("epubViewer", {
-            width: "100%",
-            height: "100%"
-        });
-
-        let fontSize = 100;
-
-        rendition.display();
-
-        book.ready
-            .then(() => book.locations.generate(1000))
-            .then(() => {
-                document.getElementById("pageCount").textContent = book.locations.total;
-                updatePage();
-            });
-
-        function updatePage() {
-            const current = rendition.currentLocation();
-            if (!current) return;
-            const page = book.locations.locationFromCfi(current.start.cfi);
-            document.getElementById("pageNum").textContent = page;
-
-        }
-
-        rendition.on("relocated", updatePage);
-
-        document.getElementById("prevPage").addEventListener("click", () => rendition.prev());
-        document.getElementById("nextPage").addEventListener("click", () => rendition.next());
-
-        document.getElementById("zoomIn").addEventListener("click", function() {
-            fontSize += 10;
-            rendition.themes.fontSize(fontSize + "%");
-            document.getElementById("zoomLevel").textContent = fontSize + "%";
-        });
-
-        document.getElementById("zoomOut").addEventListener("click", function() {
-            if (fontSize <= 50) return;
-            fontSize -= 10;
-            rendition.themes.fontSize(fontSize + "%");
-            document.getElementById("zoomLevel").textContent = fontSize + "%";
-        });
-    </script>
-    @endif
-
-    @if($material->type == 'Page')
-    <script>
-        (function() {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-            document.querySelectorAll('.play-sentence-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    const card = btn.closest('.sentence-view-card');
-                    const hanzi = card.dataset.hanzi;
-                    if (!hanzi) return;
-
-                    // Reuse cached audio if we've already generated it this page view
-                    if (card.dataset.audioSrc) {
-                        new Audio(card.dataset.audioSrc).play();
-                        return;
-                    }
-
-                    btn.disabled = true;
-                    const originalHtml = btn.innerHTML;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
-
-                    fetch('{{ route("tts.generate") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
-                            },
-                            body: JSON.stringify({
-                                text: hanzi
-                            }),
-                        })
-                        .then(function(r) {
-                            if (!r.ok) throw new Error();
-                            return r.json();
-                        })
-                        .then(function(data) {
-                            const audioSrc = data.type === 'stream' ?
-                                `data:audio/mpeg;base64,${data.audio}` :
-                                data.audio;
-
-                            card.dataset.audioSrc = audioSrc;
-                            new Audio(audioSrc).play();
-                        })
-                        .catch(function() {
-                            alert('Could not play audio. Please try again.');
-                        })
-                        .finally(function() {
-                            btn.disabled = false;
-                            btn.innerHTML = originalHtml;
-                        });
-                });
-            });
-        })();
-    </script>
-    @endif
-
-    @endpush
-    @endsection
+@endpush
+@endsection

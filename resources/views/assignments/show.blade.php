@@ -25,7 +25,7 @@
             @endif
         </span>
         <h2>{{ $assignment->name }}</h2>
-        <p class="mb-3">{{ $assignment->description }}</p>
+        <p class="mb-3">{!! nl2br(e($assignment->description)) !!}</p>
 
         <div class="assignment-meta">
 
@@ -33,9 +33,9 @@
                 <span>Submission type</span>
                 <strong>
                     @if($assignment->submission_type === 'both')
-                        Written or File
+                    Written or File
                     @else
-                        {{ ucfirst($assignment->submission_type) }}
+                    {{ ucfirst($assignment->submission_type) }}
                     @endif
                 </strong>
             </div>
@@ -60,14 +60,14 @@
                 <span>Submission status</span>
                 <strong>
                     @if($submission)
-                        @switch($submission->status)
-                        @case('draft') Draft @break
-                        @case('submitted') Submitted @break
-                        @case('late') Submitted Late @break
-                        @case('graded') Graded @break
-                        @endswitch
+                    @switch($submission->status)
+                    @case('draft') Draft @break
+                    @case('submitted') Submitted @break
+                    @case('late') Submitted Late @break
+                    @case('graded') Graded @break
+                    @endswitch
                     @else
-                        Not Started
+                    Not Started
                     @endif
                 </strong>
             </div>
@@ -142,11 +142,6 @@
                     </td>
 
                     <td>
-
-                        <!-- <a href="{{ route('submissions.show', $sub) }}" class="btn btn-secondary-custom btn-sm">
-                            <i class="bi bi-eye"></i>
-                            View
-                        </a> -->
 
                         @if($sub->status !== 'draft')
                         <a href="{{ route('submissions.edit', $sub) }}" class="btn edit-btn">
@@ -258,13 +253,10 @@
             </ul>
         </div>
         @endif
-        
+
         @if($canEdit)
         <div class="d-flex gap-2 justify-content-end">
-            <button type="button" class="btn btn-secondary-custom" id="saveDraftBtn">
-                <i class="bi bi-save"></i>
-                Save Draft
-            </button>
+            <div id="submitMessage" class="alert mb-0 py-2 d-none"></div>
             <button type="button" class="btn btn-theme" id="submitAssignmentBtn"
                 @if(!$canSubmitLate) disabled @endif>
                 <i class="bi bi-check-circle"></i>
@@ -287,7 +279,7 @@
 
         const isManager = @json($isManager);
         if (isManager) {
-            return; // manager view has no submission form/JS to wire up
+            return;
         }
 
         const assignmentId = {{$assignment->id}};
@@ -342,9 +334,14 @@
             return textarea ? textarea.value : '';
         }
 
-        function submitForm(action) {
+        function showMessage(text, type) {
+            const box = document.getElementById('submitMessage');
+            box.textContent = text;
+            box.className = 'alert alert-' + type + ' mb-0 py-2';
+        }
+
+        function submitForm() {
             const formData = new FormData();
-            formData.append('action', action);
             if (document.getElementById('submittedText')) {
                 formData.append('submitted_text', getSubmittedText());
             }
@@ -361,7 +358,9 @@
                     const contentType = r.headers.get('content-type') || '';
 
                     if (r.ok) {
-                        window.location.reload();
+                        const body = await r.json();
+                        showMessage(body.message || 'Assignment submitted.', 'success');
+                        setTimeout(() => window.location.reload(), 1500);
                         return;
                     }
 
@@ -369,30 +368,23 @@
                         const body = await r.json();
                         const message = body.errors ?
                             Object.values(body.errors).flat().join(' ') :
-                            (body.message || 'Failed to save.');
+                            (body.message || 'Failed to submit.');
                         throw new Error(message);
                     }
 
                     console.error('Non-JSON error response:', await r.text());
-                    throw new Error(`Something went wrong (HTTP ${r.status}). Check the console for details.`);
+                    throw new Error(`Something went wrong (HTTP ${r.status}).`);
                 })
                 .catch(function(err) {
-                    alert(err.message);
+                    showMessage(err.message, 'danger');
                 });
-        }
-
-        const saveDraftBtn = document.getElementById('saveDraftBtn');
-        if (saveDraftBtn) {
-            saveDraftBtn.addEventListener('click', function() {
-                submitForm('draft');
-            });
         }
 
         const submitBtn = document.getElementById('submitAssignmentBtn');
         if (submitBtn) {
             submitBtn.addEventListener('click', function() {
                 if (confirm('Submit this assignment? You may not be able to edit it afterward.')) {
-                    submitForm('submit');
+                    submitForm();
                 }
             });
         }

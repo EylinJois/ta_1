@@ -8,6 +8,7 @@ use App\Models\Submission;
 use App\Models\Section;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Activity;
 
 class AssignmentController extends Controller
 {
@@ -135,6 +136,50 @@ class AssignmentController extends Controller
             'created_by' => auth()->id(),
         ]));
 
+        if ($assignment->opened_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'assignment',
+                'source_id' => $assignment->id,
+                'name' => 'Assignment Opened',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $assignment->name . ' is opened on ' . $assignment->opened_at->format('d M Y, H:i'),
+                'starts_at' => $assignment->opened_at,
+                'type' => 'Assignment',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($assignment->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
+
+        if ($assignment->due_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'assignment',
+                'source_id' => $assignment->id,
+                'name' => 'Assignment Due',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $assignment->name . ' is due on ' . $assignment->due_at->format('d M Y, H:i'),
+                'starts_at' => $assignment->due_at,
+                'type' => 'Assignment',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($assignment->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
+
         return redirect()
             ->route('sections.show', $section)
             ->with('success', 'Assignment created.');
@@ -154,6 +199,50 @@ class AssignmentController extends Controller
         $validated = $this->validateAssignment($request);
 
         $assignment->update($validated);
+
+        if ($assignment->opened_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'assignment',
+                'source_id' => $assignment->id,
+                'name' => 'Assignment Opened',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $assignment->name . ' is opened on ' . $assignment->opened_at->format('d M Y, H:i'),
+                'starts_at' => $assignment->opened_at,
+                'type' => 'Assignment',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($assignment->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
+
+        if ($assignment->due_at) {
+            $activity = Activity::firstOrNew([
+                'source_type' => 'assignment',
+                'source_id' => $assignment->id,
+                'name' => 'Assignment Due',
+            ]);
+
+            $isNew = !$activity->exists;
+
+            $activity->fill([
+                'description' => $assignment->name . ' is due on ' . $assignment->due_at->format('d M Y, H:i'),
+                'starts_at' => $assignment->due_at,
+                'type' => 'Assignment',
+            ])->save();
+
+            if ($isNew) {
+                foreach ($assignment->section->course->classes as $class) {
+                    $activity->participants()->syncWithoutDetaching($class->users()->pluck('users.id')->toArray());
+                }
+            }
+        }
 
         return redirect()
             ->route('sections.show', $assignment->section)

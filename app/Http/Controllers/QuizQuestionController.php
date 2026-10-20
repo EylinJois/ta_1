@@ -84,7 +84,6 @@ class QuizQuestionController extends Controller
             'question' => 'required|string',
             'type' => 'required|in:choice,multiple_select,written,short_answer,file,both',
             'point' => 'nullable|numeric|min:0',
-            'explanation' => 'nullable|string',
 
             'option_text' => 'required_if:type,choice,multiple_select|array|min:2',
             'option_text.*' => 'required|string|max:1000',
@@ -136,7 +135,6 @@ class QuizQuestionController extends Controller
                 'question' => $validated['question'],
                 'type' => $validated['type'],
                 'point' => $validated['point'] ?? 0,
-                'explanation' => $validated['explanation'] ?? null,
                 'order_index' => $request['order_idx'],
                 'file_allowed' => $fileConfig['file_allowed'],
                 'max_file_size' => $fileConfig['max_file_size'],

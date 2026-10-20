@@ -35,10 +35,16 @@ class ProgressController extends Controller
 
         $student = User::findOrFail($studentId);
 
+        $url = 'progress.index';
+
         if ($fromCourse) {
             $isManager = $user->isManagerInCourse($courseId);
             $course = Course::findOrFail($courseId);
+            $url = 'courses.participants.index';
             abort_unless($isManager || $user->id === $student->id, 403);
+            if(!$isManager){
+                $url = 'courses.show';
+            }
         } else {
             $isManager = false;
             $course = null;
@@ -80,7 +86,8 @@ class ProgressController extends Controller
             'isManager',
             'attempts',
             'submissions',
-            'fromCourse'
+            'fromCourse',
+            'url',
         ));
     }
 

@@ -9,7 +9,7 @@
 @section('content')
 
 <div class="mb-4">
-    <a href="{{ back()->getTargetUrl() }}" class="btn btn-icon-plain">
+    <a href="{{ route($url,['id' => $course->id ?? null]) }}" class="btn btn-icon-plain">
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>

@@ -121,14 +121,16 @@ class CourseController extends Controller
 
         $users = User::whereNotIn('id', $classes->flatMap->users->pluck('id')->unique())->get();
 
+        $url = 'courses.show';
+
         $sections = $course->sections()
             ->with('materials')
             ->orderBy('order_idx', 'asc')
             ->get();
 
-    
 
-        return view('courses.show', compact('course', 'classes', 'users', 'sections'));
+
+        return view('courses.show', compact('course', 'classes', 'users', 'sections', 'url'));
     }
 
     public function indexParticipants($id)
@@ -169,7 +171,16 @@ class CourseController extends Controller
 
         $class = $course->classes()->findOrFail($validated['class_id']);
 
-        // syncWithoutDetaching prevents duplicate rows for the same user in a class
+        $alreadyInCourse = $course->classes()
+            ->whereHas('users', fn($q) => $q->where('users.id', $validated['user_id']))
+            ->exists();
+
+        if ($alreadyInCourse) {
+            return back()
+                ->withErrors(['user_id' => 'This user is already a participant of a class in this course.'])
+                ->withInput();
+        }
+
         $class->users()->syncWithoutDetaching([
             $validated['user_id'] => ['role' => $validated['role']],
         ]);

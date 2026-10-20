@@ -14,7 +14,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\TTSController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\CalendarController;
-use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\MaterialProgressController;
 use Illuminate\Support\Facades\Route;
@@ -27,11 +26,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+
+Auth::routes();
+
 Route::get('/', function () {
     return view('welcome');
 });
-
-Auth::routes();
 
 /*
 |--------------------------------------------------------------------------
@@ -62,8 +62,6 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
 */
 
 Route::middleware(['auth'])->group(function () {
-
-    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::get('/profile', [UserController::class, 'profileEdit'])->name('profile.edit');
     Route::put('/profile/{id}', [UserController::class, 'profileUpdate'])->name('profile.update');
@@ -181,7 +179,6 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::get('assignments/{assignment}/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
-    Route::get('submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
     Route::get('submissions/{submission}/edit', [SubmissionController::class, 'edit'])->name('submissions.edit');
     Route::put('submissions/{submission}', [SubmissionController::class, 'gradeUpdate'])->name('submissions.grade.update');
     Route::prefix('assignments/{assignment}/submission')->name('submissions.')->group(function () {
@@ -199,6 +196,7 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::get('/tts', [TTSController::class, 'index'])->name('tts.index');
     Route::post('/tts/generate', [TTSController::class, 'generate'])->name('tts.generate');
+    Route::get('tts/audio/{id}', [TTSController::class, 'audio'])->name('tts.audio')->middleware('signed');
 
     /*
     |----------------------------------------------------------------------

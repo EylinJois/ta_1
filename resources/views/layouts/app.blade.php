@@ -27,6 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
     <script src="https://cdn.tiny.cloud/1/6jg5r5fxnxszclixu4n46rn1zod6g8l2yu2ah7fcauadjalp/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 
     @stack('styles')
 
@@ -53,16 +54,6 @@
             </div>
 
             <ul class="menu">
-
-                <li>
-                    <a href="{{ route('home') }}">
-                        <i class="bi bi-grid-fill"></i>
-                        <span class="menu-text">
-                            Home
-                        </span>
-                    </a>
-                </li>
-
                 <li>
                     <a href="{{ route('courses.index') }}">
                         <i class="bi bi-book-fill"></i>

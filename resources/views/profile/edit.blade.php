@@ -32,7 +32,7 @@
                     <label for="img" class="profile-image-label" title="Change profile picture">
 
                         @if(auth()->user()->img)
-                        <img src="{{ asset('storage/' . auth()->user()->img) }}"
+                        <img src="{{ asset('storage/' . auth()->user()->profileMedia()->file_path) }}"
                             alt="Profile Image"
                             class="profile-image"
                             id="profilePreview">
@@ -106,7 +106,7 @@
                         <label class="form-label">
                             Profile Image
                         </label>
-                        <input type="file" name="img" id="img"
+                        <input type="file" name="profile_media" id="img"
                         class="form-control" accept="image/*">
                     </div>
 
@@ -140,7 +140,7 @@
 
                 <div class="d-flex justify-content-end gap-3">
 
-                    <a href="{{ route('home')}}"
+                    <a href="{{ back()->getTargetUrl() }}"
                         class="btn btn-secondary-custom">
                         Cancel
                     </a>

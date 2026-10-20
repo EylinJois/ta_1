@@ -33,7 +33,6 @@ class SubmissionController extends Controller
 
         $validated = $request->validate([
             'submitted_text' => 'nullable|string',
-            'action' => 'required|in:draft,submit',
         ]);
 
         $existingSubmission = Submission::where('assignment_id', $assignment->id)
@@ -42,28 +41,8 @@ class SubmissionController extends Controller
 
         $isPastDue = $assignment->due_at && now()->gt($assignment->due_at);
 
-        // Fully closed: past due AND the assignment doesn't allow edits after
-        // the fact at all. Distinct from allow_late_submission, which only
-        // governs whether a late *first* submission is accepted.
         $isLocked = $isPastDue && !$assignment->edit_submission;
 
-        // Auto-finalize a lingering draft the moment the window closes, rather
-        // than leaving it stuck invisible forever. Stop here — nothing else
-        // in this request should act on it once it's just been finalized.
-        if ($existingSubmission && $existingSubmission->status === 'draft' && $isLocked) {
-
-            $existingSubmission->update([
-                'status' => 'late',
-                'submitted_at' => now(),
-            ]);
-
-            return response()->json([
-                'message' => 'The due date has passed — your draft was automatically submitted and can no longer be edited.',
-            ], 422);
-        }
-
-        // No submission exists yet, and either the window is closed to late
-        // starts, or it's fully locked — block starting one at all.
         if (!$existingSubmission && (($isPastDue && !$assignment->allow_late_submission) || $isLocked)) {
             return response()->json([
                 'message' => $isLocked
@@ -79,7 +58,7 @@ class SubmissionController extends Controller
 
         $this->editableGuard($assignment, $existingSubmission);
 
-        if ($validated['action'] === 'submit' && $isPastDue && !$assignment->allow_late_submission) {
+        if ($isPastDue && !$assignment->allow_late_submission) {
             return response()->json([
                 'message' => 'The due date has passed and late submissions are not allowed.',
             ], 422);
@@ -87,35 +66,27 @@ class SubmissionController extends Controller
 
         $submission->submitted_text = $validated['submitted_text'] ?? $submission->submitted_text;
 
-        if ($validated['action'] === 'submit') {
+        $hasText = filled($submission->submitted_text);
+        $hasFiles = $submission->exists && $submission->mediaAssets()->exists();
 
-            $hasText = filled($submission->submitted_text);
-            $hasFiles = $submission->exists && $submission->mediaAssets()->exists();
+        $error = match ($assignment->submission_type) {
+            'text' => !$hasText ? 'Please write your answer before submitting.' : null,
+            'file' => !$hasFiles ? 'Please attach a file before submitting.' : null,
+            'both' => (!$hasText && !$hasFiles) ? 'Please provide a written answer or attach a file before submitting.' : null,
+            default => null,
+        };
 
-            $error = match ($assignment->submission_type) {
-                'text' => !$hasText ? 'Please write your answer before submitting.' : null,
-                'file' => !$hasFiles ? 'Please attach a file before submitting.' : null,
-                'both' => (!$hasText && !$hasFiles) ? 'Please provide a written answer or attach a file before submitting.' : null,
-                default => null,
-            };
-
-            if ($error) {
-                return response()->json(['message' => $error], 422);
-            }
+        if ($error) {
+            return response()->json(['message' => $error], 422);
         }
 
-        if ($validated['action'] === 'draft') {
-            $submission->status = 'draft';
-        } else {
-            $submission->status = $isPastDue ? 'late' : 'submitted';
-            $submission->submitted_at = now();
-        }
-
+        $submission->status = $isPastDue ? 'late' : 'submitted';
+        $submission->submitted_at = now();
         $submission->save();
 
         return response()->json([
             'status' => 'ok',
-            'message' => $validated['action'] === 'draft' ? 'Draft saved.' : 'Assignment submitted.',
+            'message' => 'Assignment submitted.',
         ]);
     }
 
@@ -210,15 +181,6 @@ class SubmissionController extends Controller
         return view('assignments.submissions.index', compact('assignment', 'submissions'));
     }
 
-    public function show(Submission $submission)
-    {
-        // $this->authorizeManage($submission->assignment->section);
-
-        // $submission->load(['user', 'mediaAssets', 'assignment', 'grader']);
-        // $assignment = $submission->assignment;
-
-        // return view('assignments.show', compact('submission', 'assignment'));
-    }
 
     public function edit(Submission $submission)
     {

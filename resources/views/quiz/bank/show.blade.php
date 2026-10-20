@@ -257,7 +257,7 @@
     </div>
 
     {{-- Render this question's own edit modal right here, once per row --}}
-    @include('quiz.questions.edit', ['question' => $question])
+    @include('quiz.questions.modal', ['questionBank' => $questionBank, 'question' => $question])
 
     @empty
 
@@ -291,7 +291,7 @@
 
 </div>
 
-@include('quiz.questions.create')
+@include('quiz.questions.modal', ['questionBank' => $questionBank, 'question' => null])
 @include('quiz.bank.edit')
 @endsection
 
@@ -361,269 +361,19 @@
                         });
 
                     fetch("{{ route('questionbank.questions.reorder', $questionBank) }}", {
-
                         method: 'POST',
-
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-
                         body: JSON.stringify({
                             questions: order
                         })
-
                     });
-
                 }
-
             });
 
         }
-
-        /* ========== QUESTION MODAL (create / edit) ========== */
-
-        function initQuestionModal(modal) {
-
-            const typeSelect = modal.querySelector('.question-type-select');
-
-            const optionsSection = modal.querySelector('.options-section');
-            const answersSection = modal.querySelector('.answers-section');
-            const fileSection = modal.querySelector('.file-section');
-            const choiceHint = modal.querySelector('.choice-hint');
-
-            const optionsContainer = modal.querySelector('.options-container');
-            const answersContainer = modal.querySelector('.answers-container');
-
-            const addOptionBtn = modal.querySelector('.add-option-btn');
-            const addAnswerBtn = modal.querySelector('.add-answer-btn');
-
-            // Read seed data up front — before anything else references it.
-            const seedOptions = JSON.parse(modal.dataset.seedOptions || '[]');
-            const seedAnswers = JSON.parse(modal.dataset.seedAnswers || '[]');
-
-            let answerRowCounter = 0;
-
-            const seedFileConfig = JSON.parse(modal.dataset.seedFileConfig || '{}');
-
-            /* ========== SHOW / HIDE + ENABLE / DISABLE SECTIONS ========== */
-
-            function setSectionState(section, visible) {
-                section.classList.toggle('d-none', !visible);
-                section.querySelectorAll('input, textarea, select').forEach(function(field) {
-                    field.disabled = !visible;
-                });
-            }
-
-            function refreshSections() {
-
-                setSectionState(optionsSection, false);
-                setSectionState(answersSection, false);
-                setSectionState(fileSection, false);
-                choiceHint.classList.add('d-none');
-
-                switch (typeSelect.value) {
-                    case 'choice':
-                        setSectionState(optionsSection, true);
-                        choiceHint.classList.remove('d-none');
-                        break;
-                    case 'multiple_select':
-                        setSectionState(optionsSection, true);
-                        break;
-                    case 'short_answer':
-                        setSectionState(answersSection, true);
-                        break;
-                    case 'file':
-                        setSectionState(fileSection, true);
-                        break;
-                    case 'both':
-                        setSectionState(fileSection, true);
-                        break;
-                    case 'written':
-                    default:
-                        break;
-                }
-            }
-
-            function initModal(){
-                setSectionState(optionsSection, true);
-                choiceHint.classList.remove('d-none');
-            }
-
-            typeSelect.addEventListener('change', refreshSections);
-            initModal();
-
-            /* ========== QUESTION OPTIONS ========== */
-
-            function updateCorrectValues() {
-                optionsContainer.querySelectorAll('.option-row').forEach(function(row, index) {
-                    row.querySelector('.correct-option').value = index;
-                });
-            }
-
-
-            function createOption(text = '', scorePercent = 0) {
-
-                const option = document.createElement('div');
-                option.className = 'option-row card mb-3';
-
-                option.innerHTML = `
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <input type="text" class="form-control" name="option_text[]"
-                            placeholder="Option text" value="${text.replace(/"/g, '&quot;')}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-check">
-                            <input type="number" class="form-control"
-                                name="score_percent[]" value="${scorePercent}" min="0" max="100">
-                            <label class="form-check-label">Score (%)</label>
-                        </div>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <button type="button" class="btn btn-danger remove-option">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-                optionsContainer.appendChild(option);
-            }
-
-            addOptionBtn.addEventListener('click', () => createOption());
-
-            optionsContainer.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-option')) {
-                    if (optionsContainer.querySelectorAll('.option-row').length <= 2) return;
-                    e.target.closest('.option-row').remove();
-                }
-            });
-
-            /* ========== ACCEPTED ANSWERS ========== */
-
-            function createAnswer(answer = '', ignoreCase = true, ignoreSpace = true) {
-
-                const rowIndex = answerRowCounter++;
-
-                const row = document.createElement('div');
-                row.className = 'accepted-answer-row card mb-3';
-
-                row.innerHTML = `
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <input type="text" class="form-control" name="accepted_answers[${rowIndex}]"
-                            placeholder="Accepted answer" value="${answer.replace(/"/g, '&quot;')}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-check">
-                            <input type="hidden" name="ignore_case[${rowIndex}]" value="0">
-                            <input type="checkbox" class="form-check-input" name="ignore_case[${rowIndex}]"
-                                value="1" ${ignoreCase ? 'checked' : ''}>
-                            <label class="form-check-label small">Ignore case</label>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-check">
-                            <input type="hidden" name="ignore_space[${rowIndex}]" value="0">
-                            <input type="checkbox" class="form-check-input" name="ignore_space[${rowIndex}]"
-                                value="1" ${ignoreSpace ? 'checked' : ''}>
-                            <label class="form-check-label small">Ignore spaces</label>
-                        </div>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <button type="button" class="btn btn-danger remove-answer">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-                answersContainer.appendChild(row);
-            }
-
-            addAnswerBtn.addEventListener('click', () => createAnswer());
-
-            answersContainer.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-answer')) {
-                    if (answersContainer.querySelectorAll('.accepted-answer-row').length <= 1) return;
-                    e.target.closest('.accepted-answer-row').remove();
-                }
-            });
-
-            /* ========== FILE UPLOAD CONFIG ========== */
-
-            const fileTypeCheckboxes = modal.querySelectorAll('.file-type-checkbox');
-            const fileAllowedCustom = modal.querySelector('.file-allowed-custom');
-            const fileAllowedJson = modal.querySelector('.file-allowed-json');
-
-            function syncFileAllowedJson() {
-
-                const checked = Array.from(fileTypeCheckboxes)
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
-
-                const custom = fileAllowedCustom.value
-                    .split(',')
-                    .map(s => s.trim().toLowerCase().replace(/^\./, ''))
-                    .filter(Boolean);
-
-                // De-duplicate in case someone types an extension that's also a checkbox.
-                const combined = [...new Set([...checked, ...custom])];
-
-                fileAllowedJson.value = JSON.stringify(combined);
-            }
-
-            fileTypeCheckboxes.forEach(cb => cb.addEventListener('change', syncFileAllowedJson));
-            fileAllowedCustom.addEventListener('input', syncFileAllowedJson);
-
-            function applySeedFileConfig() {
-
-                const allowed = seedFileConfig.allowed || [];
-                const knownExtensions = Array.from(fileTypeCheckboxes).map(cb => cb.value);
-
-                fileTypeCheckboxes.forEach(cb => {
-                    cb.checked = allowed.includes(cb.value);
-                });
-
-                const customExtensions = allowed.filter(ext => !knownExtensions.includes(ext));
-                fileAllowedCustom.value = customExtensions.join(', ');
-
-                syncFileAllowedJson();
-
-                const maxFileSizeInput = modal.querySelector('input[name="max_file_size"]');
-                const maxFilesInput = modal.querySelector('input[name="max_files"]');
-
-                if (seedFileConfig.max_file_size) maxFileSizeInput.value = seedFileConfig.max_file_size;
-                if (seedFileConfig.max_files) maxFilesInput.value = seedFileConfig.max_files;
-            }
-
-            applySeedFileConfig();
-
-            /* ========== SEED, THEN APPLY VISIBILITY (in that order, once) ========== */
-
-            if (seedOptions.length) {
-                seedOptions.forEach(o => createOption(o.text, o.score_percent));
-            } else {
-                createOption();
-                createOption();
-            }
-
-            if (seedAnswers.length) {
-                seedAnswers.forEach(a => createAnswer(a.answer, !!a.ignore_case, !!a.ignore_space));
-            } else {
-                createAnswer();
-            }
-
-            // Runs exactly once, after every row (seeded or default) already exists,
-            // so it correctly disables whatever ends up hidden.
-            refreshSections();
-        }
-        document.querySelectorAll('.question-modal').forEach(initQuestionModal);
     });
 </script>
 @endpush

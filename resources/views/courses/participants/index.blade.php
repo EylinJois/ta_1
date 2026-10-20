@@ -90,7 +90,18 @@
                     </td>
                 </tr>
 
-                @forelse($class->users as $participant)
+                @php
+                $roleOrder = ['admin' => 0, 'teacher' => 1, 'student' => 2];
+
+                $classParticipants = $class->users
+                ->sortBy(fn ($participant) => [
+                $roleOrder[strtolower($participant->pivot->role)] ?? 99,
+                strtolower($participant->name),
+                ])
+                ->values();
+                @endphp
+
+                @forelse($classParticipants as $participant)
                 <tr class="participant-row"
                     data-class-id="{{ $class->id }}">
 
@@ -194,7 +205,12 @@
                 @csrf
 
                 <div class="modal-body">
-
+                    @php
+                    $enrolledUserIds = $classes
+                    ->flatMap(fn ($c) => $c->users->pluck('id'))
+                    ->unique()
+                    ->all();
+                    @endphp
                     {{-- User --}}
                     <div class="mb-4">
 
@@ -206,18 +222,22 @@
                             <option value="">Choose User</option>
                             @if(isset($users) && $users->count() > 0)
                             @foreach($users as $user)
-                            <option value="{{ $user->id }}">
+                            @php $isEnrolled = in_array($user->id, $enrolledUserIds); @endphp
+                            <option value="{{ $user->id }}" @disabled($isEnrolled)>
                                 {{ $user->name ?? '-' }} ({{ $user->email ?? '-' }})
+                                {{ $isEnrolled ? ' - already in this course' : '' }}
                             </option>
                             @endforeach
                             @endif
                         </select>
+                        @error('user_id')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
 
                     </div>
 
                     {{-- Role --}}
                     <div class="mb-4">
-
                         <label class="form-label">
                             Role in Class
                         </label>
@@ -225,21 +245,16 @@
                         <select name="role"
                             class="form-select"
                             required>
-
                             <option value="admin">
                                 Admin
                             </option>
-
                             <option value="teacher">
                                 Teacher
                             </option>
-
                             <option value="student">
                                 Student
                             </option>
-
                         </select>
-
                     </div>
 
                     <div class="mb-4">
@@ -441,8 +456,9 @@
 @endif
 @if($errors->renameClass->any() && old('rename_class_id'))
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        new bootstrap.Modal(document.getElementById('renameClassModal{{ (int) old('rename_class_id') }}')).show();
+    document.addEventListener('DOMContentLoaded', function() {
+        new bootstrap.Modal(document.getElementById('renameClassModal{{ (int) old('
+            rename_class_id ') }}')).show();
     });
 </script>
 @endif

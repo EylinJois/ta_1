@@ -44,6 +44,15 @@ body{
     transition: 0.3s;
 }
 
+@media(max-width: 991.98px){
+    .landing-navbar{
+        padding: 10px;
+    }
+    .hero-content{
+        padding-top: 100px;
+    }
+}
+
 .navbar-content{
     display: flex;
     justify-content: space-between;

@@ -31,8 +31,14 @@
                 {{ $course->name }}
             </h2>
 
-            <p>
-                {{ $course->description }}
+            <p x-data="{ open: false }">
+                <span x-show="!open">{{ Str::limit($course->description, 100, '') }}</span>
+                <span x-show="open" x-cloak>{{ $course->description }}</span>
+
+                @if (mb_strlen($course->description) > 100)
+                <br>
+                <a href="#" style="color: white; font-weight: bold;" @click.prevent="open = !open" x-text="open ? 'Show less' : 'Read more...'"></a>
+                @endif
             </p>
 
             <div class="course-meta">

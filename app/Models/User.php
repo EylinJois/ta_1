@@ -15,9 +15,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'is_admin',
-        'img',
-        'is_active',
+        'profile_media_id',
         'password',
         'email_verified_at',
         'remember_token',
@@ -29,8 +27,6 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'is_admin' => 'boolean',
-        'is_active' => 'boolean',
         'email_verified_at' => 'datetime',
     ];
 
@@ -39,6 +35,10 @@ class User extends Authenticatable
     | Relationships
     |--------------------------------------------------------------------------
     */
+    public function profileMedia()
+    {
+        return $this->belongsTo(MediaAsset::class, 'profile_media_id');
+    }
 
     public function classes(): BelongsToMany
     {
