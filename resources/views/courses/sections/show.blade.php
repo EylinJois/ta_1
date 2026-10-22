@@ -10,10 +10,10 @@
 
 {{-- COURSE HEADER --}}
 
-        <a href="{{ route('courses.show',$course) }}"
-            class="btn back-to-course-btn">
-            <i class="bi bi-arrow-left"></i>
-        </a>
+<a href="{{ route('courses.show',$course) }}"
+    class="btn back-to-course-btn">
+    <i class="bi bi-arrow-left"></i>
+</a>
 <div class="course-detail-banner mb-4">
 
     <div class="row align-items-center">
@@ -65,8 +65,7 @@
             @if(!empty($course->imgMedia))
 
             @if($course->imgMedia)
-    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="course-image">
-@endif
+            <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="course-image">
 
             @else
 
