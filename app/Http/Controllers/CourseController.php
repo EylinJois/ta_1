@@ -6,8 +6,10 @@ use App\Models\ClassUserRole;
 use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Clas;
+use App\Models\MediaAsset;
 use Illuminate\Validation\Rule;
 use Auth;
 
@@ -31,30 +33,60 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'img'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // KB
             'description' => 'nullable|string',
         ]);
 
-        $course = new Course();
-        $course->name = $request->input('name');
-        $course->description = $request->input('description');
+        $disk = 'public';
+        $storedPath = null;
 
-        if ($request->hasFile('img')) {
-            $imagePath = $request->file('img')->store('courses', 'public');
-            $course->img = $imagePath;
+        try {
+            DB::transaction(function () use ($request, $validated, $disk, &$storedPath) {
+                $course = new Course();
+                $course->name = $validated['name'];
+                $course->description = $validated['description'] ?? null;
+
+                if ($request->hasFile('img')) {
+                    $file = $request->file('img');
+
+                    $originalName = $file->getClientOriginalName();
+                    $mime = $file->getMimeType();
+                    $size = $file->getSize();
+
+                    $storedPath = $file->store('courses', $disk);
+
+                    $media = MediaAsset::create([
+                        'storage_disk'  => $disk,
+                        'file_path'     => $storedPath,
+                        'original_name' => $originalName,
+                        'mime'          => $mime,
+                        'size'          => $size,
+                        'uploaded_by'   => auth()->id(),
+                    ]);
+
+                    $course->img_media_id = $media->id;
+                }
+
+                $course->save();
+
+                $class = Clas::create([
+                    'course_id' => $course->id,
+                    'name'      => 'Default Class',
+                ]);
+
+                $class->users()->attach(auth()->id(), ['role' => 'admin']);
+            });
+        } catch (\Throwable $e) {
+            if ($storedPath) {
+                Storage::disk($disk)->delete($storedPath);
+            }
+            throw $e;
         }
 
-        $course->save();
-
-        $class = Clas::create([
-            'course_id' => $course->id,
-            'name' => 'Default Class',
-        ]);
-        $class->users()->attach(auth()->id(), ['role' => 'admin']);
-
-        return redirect()->route('courses.index')->with('success', 'Course created successfully.');
+        return redirect()->route('courses.index')
+            ->with('success', 'Course created successfully.');
     }
 
     public function destroy($id)
