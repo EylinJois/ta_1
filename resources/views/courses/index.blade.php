@@ -42,8 +42,8 @@
 
             {{-- Image --}}
             <div class="course-image-wrapper">
-                @if($course->img)
-                    <img src="{{ asset('storage/' . $course->img) }}" class="course-image">
+                @if($course->imgMedia)
+                    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="course-image">
                 @else
                     <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200"
                          class="course-image">

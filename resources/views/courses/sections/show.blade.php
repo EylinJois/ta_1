@@ -62,10 +62,11 @@
 
         <div class="col-lg-4">
 
-            @if(!empty($course->img))
+            @if(!empty($course->imgMedia))
 
-            <img src="{{ asset('storage/' . $course->img) }}"
-                class="detail-course-image">
+            @if($course->imgMedia)
+    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="course-image">
+@endif
 
             @else
 

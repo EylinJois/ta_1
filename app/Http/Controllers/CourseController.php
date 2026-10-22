@@ -94,8 +94,8 @@ class CourseController extends Controller
         $course = Course::findOrFail($id);
         $this->authorizeCourseAdmin($course);
 
-        if ($course->img) {
-            Storage::delete('public/' . $course->img);
+        if ($course->imgMedia) {
+            Storage::delete('public/' . $course->imgMedia);
         }
 
         $course->delete();

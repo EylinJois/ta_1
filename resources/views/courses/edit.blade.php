@@ -78,11 +78,9 @@
 
                         <div class="image-preview-container">
 
-                            @if($course->img)
-
-                            <img src="{{ asset('storage/' . $course->img) }}"
-                                id="previewImage"
-                                class="edit-course-image">
+                            @if($course->imgMedia)
+    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="course-image">
+@endif
 
                             @else
 
