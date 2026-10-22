@@ -44,4 +44,9 @@ class Course extends Model
     {
         return $this->hasMany(Clas::class);
     }
+
+    public function imgMedia()
+    {
+        return $this->belongsTo(MediaAsset::class, 'img_media_id');
+    }
 }

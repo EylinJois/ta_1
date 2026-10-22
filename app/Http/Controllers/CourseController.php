@@ -110,31 +110,64 @@ class CourseController extends Controller
         return view('courses.edit', compact('course'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Course $course)
     {
-        $course = Course::findOrFail($id);
         $this->authorizeCourseAdmin($course);
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'img'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // KB
             'description' => 'nullable|string',
         ]);
 
-        $course->name = $request->input('name');
-        $course->description = $request->input('description');
+        $disk = 'public';
+        $newPath = null;
+        $oldMedia = null;
 
-        if ($request->hasFile('img')) {
-            if ($course->img) {
-                Storage::delete('public/' . $course->img);
+        try {
+            DB::transaction(function () use ($request, $validated, $course, $disk, &$newPath, &$oldMedia) {
+                $course->fill([
+                    'name'        => $validated['name'],
+                    'description' => $validated['description'] ?? null,
+                ]);
+
+                if ($request->hasFile('img')) {
+                    $file = $request->file('img');
+
+                    $oldMedia = $course->imgMedia; // keep a reference, handle after commit
+
+                    $newPath = $file->store('courses', $disk);
+
+                    $media = MediaAsset::create([
+                        'storage_disk'  => $disk,
+                        'file_path'     => $newPath,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime'          => $file->getMimeType(),
+                        'size'          => $file->getSize(),
+                        'uploaded_by'   => auth()->id(),
+                    ]);
+
+                    $course->imgMedia()->associate($media);
+                }
+
+                $course->save();
+            });
+        } catch (\Throwable $e) {
+            // DB rolled back, but the new file is still on disk
+            if ($newPath) {
+                Storage::disk($disk)->delete($newPath);
             }
-            $imagePath = $request->file('img')->store('courses', 'public');
-            $course->img = $imagePath;
+            throw $e;
         }
 
-        $course->save();
+        // Only after a successful commit: remove the replaced image
+        if ($oldMedia) {
+            Storage::disk($oldMedia->storage_disk)->delete($oldMedia->file_path);
+            $oldMedia->delete(); // soft delete, since media_assets has deleted_at
+        }
 
-        return redirect()->route('courses.index')->with('success', 'Course updated successfully.');
+        return redirect()->route('courses.index')
+            ->with('success', 'Course updated successfully.');
     }
 
     public function show($id)
