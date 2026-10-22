@@ -110,13 +110,14 @@ class CourseController extends Controller
         return view('courses.edit', compact('course'));
     }
 
-    public function update(Request $request, Course $course)
+    public function update(Request $request, $id)
     {
+        $course = Course::findOrFail($id);
         $this->authorizeCourseAdmin($course);
 
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
-            'img'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // KB
+            'img'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string',
         ]);
 
@@ -134,7 +135,7 @@ class CourseController extends Controller
                 if ($request->hasFile('img')) {
                     $file = $request->file('img');
 
-                    $oldMedia = $course->imgMedia; // keep a reference, handle after commit
+                    $oldMedia = $course->imgMedia;
 
                     $newPath = $file->store('courses', $disk);
 
@@ -153,17 +154,15 @@ class CourseController extends Controller
                 $course->save();
             });
         } catch (\Throwable $e) {
-            // DB rolled back, but the new file is still on disk
             if ($newPath) {
                 Storage::disk($disk)->delete($newPath);
             }
             throw $e;
         }
 
-        // Only after a successful commit: remove the replaced image
         if ($oldMedia) {
             Storage::disk($oldMedia->storage_disk)->delete($oldMedia->file_path);
-            $oldMedia->delete(); // soft delete, since media_assets has deleted_at
+            $oldMedia->delete();
         }
 
         return redirect()->route('courses.index')
