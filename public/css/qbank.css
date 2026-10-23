@@ -1064,9 +1064,17 @@
 
 .qbank-search{
     position:relative;
-    flex:1;
-    min-width:240px;
+    flex:1 1 240px;
+    min-width:0;
     max-width:400px;
+    width:100%;
+}
+
+.qbank-search .form-control{
+    width:100%;
+    box-sizing:border-box;
+    padding-left:42px;
+    border-radius:14px;
 }
 
 .qbank-search i{
@@ -1075,11 +1083,6 @@
     top:50%;
     transform:translateY(-50%);
     color:#aaa;
-}
-
-.qbank-search .form-control{
-    padding-left:42px;
-    border-radius:14px;
 }
 
 .qbank-filter-pills{
