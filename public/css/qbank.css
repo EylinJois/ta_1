@@ -662,8 +662,6 @@ textarea.form-control{ min-height:140px; }
     .qbank-search,
     .qbank-filter-pills{
         flex:none;
-        width:100%;
-        max-width:100%;
     }
 
     /* attempts table -> cards */
