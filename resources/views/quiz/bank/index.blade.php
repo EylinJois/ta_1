@@ -57,12 +57,7 @@
 
         <a href="{{ route('questionbank.index', array_filter(['search' => $search, 'filter' => 'mine'])) }}"
             class="filter-pill {{ $filter === 'mine' ? 'active' : '' }}">
-            Me
-        </a>
-
-        <a href="{{ route('questionbank.index', array_filter(['search' => $search, 'filter' => 'others'])) }}"
-            class="filter-pill {{ $filter === 'others' ? 'active' : '' }}">
-            Others
+            Made by Me
         </a>
 
     </div>
