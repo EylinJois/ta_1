@@ -360,7 +360,7 @@ html, body{
     flex-wrap:wrap;
     gap:16px;
     align-items:center;
-    justify-content:space-between;
+    justify-content:flex-start;
     width:100%;
     max-width:100%;
     margin:0;
@@ -399,9 +399,10 @@ html, body{
 
 .qbank-filter-pills{
     display:flex;
+    justify-content:flex-start;
     gap:4px;
     padding:6px;
-    margin:0;
+    margin:0 auto 0 0;
     box-sizing:border-box;
     overflow-x:auto;
     white-space:nowrap;
@@ -655,14 +656,31 @@ textarea.form-control{ min-height:140px; }
     .qbank-actions{ margin-top:10px; }
 
     /* search and filter share the same width and left edge */
-  .qbank-toolbar{
-    justify-content:flex-start;
-}
+    .qbank-toolbar{
+        flex-direction:column;
+        align-items:stretch;
+    }
 
-.qbank-filter-pills{
-    justify-content:flex-start;
-    margin-right:auto;
-}
+    .qbank-search,
+    .qbank-filter-pills{
+        flex:none;
+        width:100%;
+        max-width:100%;
+        margin:0;
+    }
+
+    /* three pills fit on one row, sharing the width */
+    .qbank-filter-pills{
+        gap:2px;
+        padding:4px;
+    }
+
+    .filter-pill{
+        flex:1 1 auto;
+        text-align:center;
+        padding:8px 10px;
+        font-size:13px;
+    }
 
     /* attempts table -> cards */
     .attempts-table thead{ display:none; }
