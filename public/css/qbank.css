@@ -1114,6 +1114,37 @@
     color:#fff;
 }
 
+html, body {
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+.qbank-toolbar,
+.qbank-toolbar > * {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+}
+
+.qbank-toolbar {
+    width:100%;
+    margin:0;
+    padding:0;
+}
+
+.qbank-search {
+    flex:1 1 100%;
+    width:100%;
+    margin:0;
+}
+
+.qbank-filters {   /* your All / Made by Me / Made by Others wrapper */
+    display:flex;
+    width:100%;
+    margin:0;
+    overflow-x:auto;
+}
+
 /* =====================================
    SHARED TAG
 ===================================== */
