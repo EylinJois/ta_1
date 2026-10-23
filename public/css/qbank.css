@@ -655,14 +655,14 @@ textarea.form-control{ min-height:140px; }
     .qbank-actions{ margin-top:10px; }
 
     /* search and filter share the same width and left edge */
-    .qbank-toolbar{
-        flex-direction:column;
-        align-items:stretch;
-    }
-    .qbank-search,
-    .qbank-filter-pills{
-        flex:none;
-    }
+  .qbank-toolbar{
+    justify-content:flex-start;
+}
+
+.qbank-filter-pills{
+    justify-content:flex-start;
+    margin-right:auto;
+}
 
     /* attempts table -> cards */
     .attempts-table thead{ display:none; }
