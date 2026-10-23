@@ -1,5 +1,14 @@
 /* =====================================
-   HEADER
+   GLOBAL
+===================================== */
+
+html, body{
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+/* =====================================
+   HEADER & BUTTONS
 ===================================== */
 
 .courses-header{
@@ -9,124 +18,158 @@
     margin-bottom:2rem;
 }
 
-.courses-header h3{
-    font-weight:700;
-}
-
-.courses-header p{
-    color:#6c757d;
-}
+.courses-header h3{ font-weight:700; }
+.courses-header p{ color:#6c757d; }
 
 .btn-theme{
-    background: #D62828;
-    color: #fff8f5;
-    border-radius: 12px;
-    padding: 12px 24px;
-    border: none;
+    background:#D62828;
+    color:#fff8f5;
+    border-radius:12px;
+    padding:12px 24px;
+    border:none;
 }
+.btn-theme:hover{ background:#bb1f1f; color:#fff8f5; }
 
 .btn-theme-yellow{
-    background: #ffc107;
-    color: #fff8f5;
-    border-radius: 12px;
-    padding: 12px 24px;
-    border: none;
+    background:#ffc107;
+    color:#fff8f5;
+    border-radius:12px;
+    padding:12px 24px;
+    border:none;
 }
-
-.btn-theme:hover{
-    background: #bb1f1f;
-    color: #fff8f5;
-}
-
-.btn-theme-yellow:hover{
-    background: #e0a800;
-    color: #fff8f5;
-}
+.btn-theme-yellow:hover{ background:#e0a800; color:#fff8f5; }
 
 .btn-dark-custom{
-    background: #2B2D42;
-    color: white;
-    border-radius: 12px;
+    background:#2B2D42;
+    color:#fff;
+    border-radius:12px;
 }
+.btn-dark-custom:hover{ background:#1d1f31; color:#fff; }
 
-.btn-dark-custom:hover{
-    background: #1d1f31;
-    color: white;
+.btn-icon-plain{ background:transparent; color:#2B2D42; }
+.btn-icon-plain:hover{ background:transparent; color:#2B2D42; }
+
+.btn-secondary-custom{
+    background:#f1f1f1;
+    color:#2B2D42;
+    border-radius:14px;
+    padding:12px 24px;
 }
+.btn-secondary-custom:hover{ background:#ddd; }
+
+.btn-back{
+    color:#2B2D42;
+    border-radius:14px;
+    padding:12px 24px;
+}
+.btn-back:hover{ background:#ddd; }
+
+/* =====================================
+   COURSE / ASSIGNMENT META
+===================================== */
 
 .course-meta{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 30px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    margin-top:30px;
 }
 
 .meta-item{
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 500;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:500;
 }
 
 .course-badge{
-    display: inline-block;
-    background: rgba(255,255,255,0.15);
-    padding: 10px 18px;
-    border-radius: 50px;
-    margin-bottom: 20px;
-    font-size: 14px;
-}
-
-.question-bank-banner h2{
-    font-weight: 700;
-    margin-bottom: 20px;
+    display:inline-block;
+    background:rgba(255,255,255,.15);
+    padding:10px 18px;
+    border-radius:50px;
+    margin-bottom:20px;
+    font-size:14px;
 }
 
 .assignment-meta{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px 30px;
-    margin-top: 10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px 30px;
+    margin-top:10px;
 }
 
 .assignment-meta-item{
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+.assignment-meta-item span{ font-size:13px; opacity:.85; }
+.assignment-meta-item strong{ font-size:1.1rem; font-weight:700; }
+
+/* =====================================
+   BANNERS
+===================================== */
+
+.question-bank-banner{
+    background:linear-gradient(135deg,#D62828,#F77F00);
+    color:#fff;
+    padding:40px;
+    border-radius:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.question-bank-banner h2{ font-weight:700; margin-bottom:20px; }
+
+.quiz-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:2rem;
+    background:linear-gradient(135deg,#D62828,#F77F00);
+    color:#fff;
+    padding:35px;
+    border-radius:24px;
 }
 
-.assignment-meta-item span{
-    font-size: 13px;
-    opacity: .85;
+.quiz-badge{
+    display:inline-block;
+    background:rgba(255,255,255,.18);
+    padding:6px 14px;
+    border-radius:30px;
+    margin-bottom:15px;
+    font-size:14px;
 }
 
-.assignment-meta-item strong{
-    font-size: 1.1rem;
-    font-weight: 700;
+/* legacy banner (kept in case old markup uses it) */
+.qbank-banner{
+    height:200px;
+    background:linear-gradient(135deg,#D62828,#F77F00);
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
 }
-
-@media(max-width: 768px){
-    .assignment-meta{
-        gap: 14px 24px;
-    }
-
-    .assignment-meta-item span{
-        font-size: 11px;
-    }
-
-    .assignment-meta-item strong{
-        font-size: 1rem;
-    }
+.qbank-banner::before{
+    content:"";
+    position:absolute;
+    width:280px;
+    height:280px;
+    border-radius:50%;
+    background:rgba(255,255,255,.08);
+    top:-120px;
+    right:-70px;
 }
-
-.btn-icon-plain{
-    background: transparent;
-    color: #2B2D42;
-}
-
-.btn-icon-plain:hover{
-    background: transparent;
-    color: #2B2D42;
+.qbank-banner::after{
+    content:"";
+    position:absolute;
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    background:rgba(255,255,255,.05);
+    bottom:-80px;
+    left:-40px;
 }
 
 /* =====================================
@@ -137,283 +180,316 @@
     background:#fff;
     border-radius:24px;
     overflow:hidden;
-    height:100%;
+    border:1px solid #ececec;
     box-shadow:0 12px 35px rgba(0,0,0,.06);
-    transition:.3s;
-    border:1px solid #f2f2f2;
+    transition:all .3s ease;
+    height:100%;
+    display:flex;
+    flex-direction:column;
 }
-
 .qbank-card:hover{
     transform:translateY(-8px);
-    box-shadow:0 20px 40px rgba(0,0,0,.1);
+    box-shadow:0 18px 45px rgba(0,0,0,.12);
 }
 
-@media (max-width: 768px) {
-
-    .attempts-table thead {
-        display: none;
-    }
-
-    .attempts-table,
-    .attempts-table tbody,
-    .attempts-table tr,
-    .attempts-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .attempts-table tr {
-        border: 1px solid #eee;
-        border-radius: 16px;
-        padding: 8px 16px;
-        margin-bottom: 12px;
-        background: #fff;
-    }
-
-    .attempts-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        border: 0;
-        border-bottom: 1px dashed #f0f0f0;
-        text-align: right;
-    }
-
-    .attempts-table td:last-child {
-        border-bottom: 0;
-    }
-
-    .attempts-table td::before {
-        content: attr(data-label);
-        flex-shrink: 0;
-        font-weight: 600;
-        font-size: 13px;
-        color: #999;
-        text-align: left;
-    }
-
-    /* Full-width button at the bottom of each card */
-    .attempts-table td.attempt-action-cell {
-        display: block;
-        padding-top: 12px;
-    }
-
-    .attempts-table td.attempt-action-cell::before {
-        display: none;
-    }
-
-    .attempts-table td.attempt-action-cell .btn {
-        width: 100%;
-    }
-}
-
-/* =====================================
-   TOP BANNER
-===================================== */
-
-.qbank-banner{
-    height:200px;
-    background:linear-gradient(
-        135deg,
-        #D62828,
-        #F77F00
-    );
-
+.qbank-header{
     position:relative;
-
+    height:170px;
+    background:linear-gradient(135deg,#D62828,#F77F00);
     display:flex;
     justify-content:center;
     align-items:center;
-
     overflow:hidden;
 }
-
-.qbank-banner::before{
+.qbank-header::before{
     content:"";
     position:absolute;
-
-    width:280px;
-    height:280px;
-
+    width:240px;
+    height:240px;
     border-radius:50%;
-
     background:rgba(255,255,255,.08);
-
-    top:-120px;
-    right:-70px;
+    top:-110px;
+    right:-80px;
 }
-
-.qbank-banner::after{
+.qbank-header::after{
     content:"";
     position:absolute;
-
-    width:180px;
-    height:180px;
-
+    width:170px;
+    height:170px;
     border-radius:50%;
-
-    background:rgba(255,255,255,.05);
-
-    bottom:-80px;
-    left:-40px;
-}
-
-.icon-action-btn{
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 12px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    text-decoration: none;
-
-    transition: .3s;
-
-    font-size: 16px;
-}
-
-/* Edit */
-.edit-btn{
-    background: rgba(247,127,0,0.12);
-    color: #F77F00;
-}
-
-.edit-btn:hover{
-    background: #F77F00;
-    color: white;
-    transform: translateY(-2px);
-}
-
-/* Delete */
-.delete-btn{
-    background: rgba(214,40,40,0.12);
-    color: #D62828;
-}
-
-.delete-btn:hover{
-    background: #D62828;
-    color: white;
-    transform: translateY(-2px);
+    background:rgba(255,255,255,.06);
+    left:-60px;
+    bottom:-60px;
 }
 
 .qbank-icon{
-
-    width:95px;
-    height:95px;
-
-    border-radius:24px;
-
+    width:90px;
+    height:90px;
+    border-radius:22px;
     background:rgba(255,255,255,.18);
-
     backdrop-filter:blur(8px);
-
+    color:#fff;
     display:flex;
-    justify-content:center;
     align-items:center;
-
-    color:white;
-
+    justify-content:center;
     z-index:2;
 }
-
-.qbank-icon i{
-    font-size:42px;
-}
-
-/* =====================================
-   OVERLAY
-===================================== */
+.qbank-icon i{ font-size:40px; }
 
 .qbank-overlay{
     position:absolute;
     inset:0;
-
     display:flex;
     justify-content:center;
     align-items:center;
-
+    gap:12px;
     background:rgba(0,0,0,.45);
-
     opacity:0;
     transition:.3s;
+    z-index:3;
 }
+.qbank-card:hover .qbank-overlay{ opacity:1; }
 
-.qbank-card:hover .qbank-overlay{
-    opacity:1;
+.qbank-shared-tag{
+    position:absolute;
+    top:14px;
+    right:14px;
+    z-index:2;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,255,255,.9);
+    color:#D62828;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
 }
-
-/* =====================================
-   CONTENT
-===================================== */
 
 .qbank-content{
-    padding:25px;
+    padding:24px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
 }
-
-.qbank-content h4{
-    font-weight:700;
-    margin-bottom:12px;
-}
-
+.qbank-content h4{ font-weight:700; margin-bottom:12px; }
 .qbank-content p{
     color:#666;
     line-height:1.7;
-    margin-bottom:20px;
+    flex-grow:1;
+    margin-bottom:18px;
 }
 
-/* =====================================
-   BADGES
-===================================== */
+.qbank-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:18px;
+}
 
 .qbank-badge{
     display:inline-flex;
     align-items:center;
-    gap:8px;
-
-    background:#fff5ef;
-    color:#D62828;
-
-    padding:8px 16px;
-
+    gap:6px;
+    padding:7px 14px;
     border-radius:999px;
-
-    font-size:14px;
+    background:#fff3eb;
+    color:#D62828;
+    font-size:13px;
     font-weight:600;
 }
-
-.qbank-badge i{
-    font-size:15px;
-}
-
-/* =====================================
-   FOOTER
-===================================== */
+.qbank-badge i{ font-size:14px; }
 
 .qbank-footer{
-    margin-top:22px;
-
     display:flex;
     justify-content:space-between;
     align-items:center;
+    padding-top:18px;
+    margin-top:22px;
+    border-top:1px solid #f2f2f2;
 }
 
 .qbank-author{
-
     display:flex;
     align-items:center;
     gap:8px;
-
     color:#D62828;
     font-weight:600;
+    font-size:14px;
+}
+.qbank-author i{ font-size:16px; }
+
+.qbank-date{ color:#888; font-size:13px; }
+
+.qbank-actions{ display:flex; gap:8px; }
+.qbank-actions .icon-action-btn{
+    width:34px;
+    height:34px;
+    border-radius:10px;
 }
 
-.qbank-author i{
+/* =====================================
+   ICON ACTION BUTTONS
+===================================== */
+
+.icon-action-btn{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    transition:.25s;
     font-size:16px;
+}
+
+.edit-btn{ background:rgba(247,127,0,.12); color:#F77F00; }
+.edit-btn:hover{ background:#F77F00; color:#fff; transform:translateY(-2px); }
+
+.delete-btn{ background:rgba(214,40,40,.12); color:#D62828; }
+.delete-btn:hover{ background:#D62828; color:#fff; transform:translateY(-2px); }
+
+/* =====================================
+   TOOLBAR: SEARCH + FILTER
+===================================== */
+
+.qbank-toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    max-width:100%;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+.qbank-toolbar > *{
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+}
+
+.qbank-search{
+    position:relative;
+    flex:1 1 240px;
+    max-width:400px;
+    margin:0;
+}
+
+.qbank-search i{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#aaa;
+}
+
+.qbank-search .form-control{
+    width:100%;
+    box-sizing:border-box;
+    padding-left:42px;
+    padding-right:42px;
+    border-radius:14px;
+}
+
+.qbank-filter-pills{
+    display:flex;
+    gap:4px;
+    padding:6px;
+    margin:0;
+    box-sizing:border-box;
+    overflow-x:auto;
+    white-space:nowrap;
+    -webkit-overflow-scrolling:touch;
+}
+
+.filter-pill{
+    padding:8px 18px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:14px;
+    color:#666;
+    text-decoration:none;
+    transition:.25s;
+    white-space:nowrap;
+}
+.filter-pill:hover{ color:#D62828; }
+.filter-pill.active{ background:#D62828; color:#fff; }
+
+/* =====================================
+   TYPE FILTER PILLS
+===================================== */
+
+.type-filter-pills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.type-pill{
+    border:1px solid #eee;
+    background:#fff;
+    color:#666;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:14px;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    transition:.25s;
+}
+.type-pill:hover{ border-color:#D62828; color:#D62828; }
+.type-pill.active{ background:#D62828; border-color:#D62828; color:#fff; }
+
+.type-pill-count{
+    background:rgba(0,0,0,.08);
+    border-radius:999px;
+    padding:1px 8px;
+    font-size:12px;
+}
+.type-pill.active .type-pill-count{ background:rgba(255,255,255,.25); }
+
+/* =====================================
+   CODE SEARCH RESULTS
+===================================== */
+
+.qbank-code-results{
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    z-index:20;
+    background:#fff;
+    border:1px solid #eee;
+    border-radius:14px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    max-height:240px;
+    overflow-y:auto;
+    margin-top:6px;
+}
+
+.qbank-code-result-item{
+    padding:10px 16px;
+    cursor:pointer;
+    font-size:14px;
+    border-bottom:1px solid #f5f5f5;
+}
+.qbank-code-result-item:last-child{ border-bottom:none; }
+.qbank-code-result-item:hover,
+.qbank-code-result-item.active{ background:#fff8f5; }
+.qbank-code-result-item .code{ font-weight:700; color:#D62828; }
+
+.qbank-code-no-match{
+    padding:10px 16px;
+    color:#999;
+    font-size:14px;
 }
 
 /* =====================================
@@ -424,130 +500,107 @@
     text-align:center;
     padding:80px 20px;
 }
-
 .empty-state i{
     font-size:70px;
     color:#D62828;
     margin-bottom:20px;
 }
-
-.empty-state h5{
-    font-weight:700;
-    margin-bottom:10px;
-}
-
-.empty-state p{
-    color:#777;
-    max-width:500px;
-    margin:auto;
-}
-
-.btn-secondary-custom{
-    background: #f1f1f1;
-    color: #2B2D42;
-    border-radius: 14px;
-    padding: 12px 24px;
-}
-
-.btn-secondary-custom:hover{
-    background: #ddd;
-}
-
-.btn-back{
-    color: #2B2D42;
-    border-radius: 14px;
-    padding: 12px 24px;
-}
-
-.btn-back:hover{
-    background: #ddd;
-}
-
-.qbank-code-results{
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 20;
-
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 14px;
-    box-shadow: 0 10px 25px rgba(0,0,0,.08);
-
-    max-height: 240px;
-    overflow-y: auto;
-
-    margin-top: 6px;
-}
-
-.qbank-code-result-item{
-    padding: 10px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.qbank-code-result-item:last-child{
-    border-bottom: none;
-}
-
-.qbank-code-result-item:hover,
-.qbank-code-result-item.active{
-    background: #fff8f5;
-}
-
-.qbank-code-result-item .code{
-    font-weight: 700;
-    color: #D62828;
-}
-
-.qbank-code-no-match{
-    padding: 10px 16px;
-    color: #999;
-    font-size: 14px;
-}
+.empty-state h5{ font-weight:700; margin-bottom:10px; }
+.empty-state p{ color:#777; max-width:500px; margin:auto; }
 
 /* =====================================
-   RESPONSIVE
+   QUESTION LIST
 ===================================== */
 
-@media(max-width:768px){
+.stat-card{
+    background:#fff;
+    padding:25px;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,.05);
+}
+.stat-card h3{ color:#D62828; font-weight:700; }
 
-    .courses-header{
-        flex-direction:column;
-        align-items:flex-start;
-        gap:20px;
-    }
-
-    .courses-header .btn-theme{
-        width:100%;
-    }
-
-    .qbank-banner{
-        height:170px;
-    }
-
-    .qbank-icon{
-        width:80px;
-        height:80px;
-    }
-
-    .qbank-icon i{
-        font-size:36px;
-    }
-
-    .qbank-footer{
-        flex-direction:column;
-        align-items:flex-start;
-        gap:12px;
-    }
-
+.question-list{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
 }
 
-/* ==========================
+.question-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff;
+    border-radius:22px;
+    padding:20px 24px;
+    border:1px solid #eee;
+    transition:.3s;
+}
+.question-item:hover{ background:#fff8f5; }
+
+.question-left{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.drag-handle{
+    width:45px;
+    height:45px;
+    border-radius:12px;
+    background:#f5f5f5;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:grab;
+}
+
+.question-icon{
+    width:55px;
+    height:55px;
+    border-radius:18px;
+    background:rgba(214,40,40,.1);
+    color:#D62828;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.question-icon i{ font-size:24px; }
+
+.question-meta{ display:flex; gap:10px; margin-top:8px; }
+.question-actions{ display:flex; gap:10px; }
+
+.sortable-ghost{ opacity:.4; }
+.sortable-chosen{ transform:scale(1.02); }
+
+/* =====================================
+   FORMS & TABLE CARD
+===================================== */
+
+.table-card{
+    background:#fff;
+    border-radius:24px;
+    padding:35px;
+    box-shadow:0 10px 30px rgba(0,0,0,.06);
+}
+
+.form-label{ font-weight:600; }
+
+.form-control,
+.form-select{
+    border-radius:12px;
+    min-height:48px;
+}
+
+textarea.form-control{ min-height:140px; }
+
+.form-check-input{ cursor:pointer; }
+.form-check{ margin-bottom:15px; }
+
+/* =====================================
    SCROLLABLE MODAL FIX
-========================== */
+===================================== */
 
 .modal-dialog-scrollable .modal-content{
     display:flex;
@@ -568,293 +621,8 @@
     min-height:0;
 }
 
-.modal-footer{
-    flex-shrink:0;
-}
-
-.modal-header{
-    flex-shrink:0;
-}
-
-/* =====================================
-   QUESTION BANK CARD
-===================================== */
-
-.qbank-card{
-    background:#fff;
-    border-radius:24px;
-    overflow:hidden;
-    border:1px solid #ececec;
-
-    box-shadow:0 12px 35px rgba(0,0,0,.06);
-
-    transition:all .3s ease;
-
-    height:100%;
-
-    display:flex;
-    flex-direction:column;
-}
-
-.qbank-card:hover{
-    transform:translateY(-8px);
-    box-shadow:0 18px 45px rgba(0,0,0,.12);
-}
-
-/* =====================================
-   HEADER
-===================================== */
-
-.qbank-header{
-
-    position:relative;
-
-    height:170px;
-
-    background:linear-gradient(
-        135deg,
-        #D62828,
-        #F77F00
-    );
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    overflow:hidden;
-}
-
-.qbank-header::before{
-
-    content:"";
-
-    position:absolute;
-
-    width:240px;
-    height:240px;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,.08);
-
-    top:-110px;
-    right:-80px;
-}
-
-.qbank-header::after{
-
-    content:"";
-
-    position:absolute;
-
-    width:170px;
-    height:170px;
-
-    border-radius:50%;
-
-    background:rgba(255,255,255,.06);
-
-    left:-60px;
-    bottom:-60px;
-}
-
-.qbank-icon{
-
-    width:90px;
-    height:90px;
-
-    border-radius:22px;
-
-    background:rgba(255,255,255,.18);
-
-    backdrop-filter:blur(8px);
-
-    color:#fff;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    z-index:2;
-}
-
-.qbank-icon i{
-    font-size:40px;
-}
-
-/* =====================================
-   ACTION OVERLAY
-===================================== */
-
-.qbank-overlay{
-
-    position:absolute;
-    inset:0;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:12px;
-
-    background:rgba(0,0,0,.45);
-
-    opacity:0;
-
-    transition:.3s;
-
-    z-index:3;
-}
-
-.qbank-card:hover .qbank-overlay{
-    opacity:1;
-}
-
-/* =====================================
-   CONTENT
-===================================== */
-
-.qbank-content{
-
-    padding:24px;
-
-    flex:1;
-
-    display:flex;
-    flex-direction:column;
-}
-
-.qbank-content h4{
-
-    font-weight:700;
-
-    margin-bottom:12px;
-}
-
-.qbank-content p{
-
-    color:#666;
-
-    line-height:1.7;
-
-    flex-grow:1;
-
-    margin-bottom:18px;
-}
-
-/* =====================================
-   BADGES
-===================================== */
-
-.qbank-badges{
-
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-
-    margin-bottom:18px;
-}
-
-.qbank-badge{
-
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-
-    padding:7px 14px;
-
-    border-radius:999px;
-
-    background:#fff3eb;
-
-    color:#D62828;
-
-    font-size:13px;
-    font-weight:600;
-}
-
-.qbank-badge i{
-    font-size:14px;
-}
-
-/* =====================================
-   FOOTER
-===================================== */
-
-.qbank-footer{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    padding-top:18px;
-
-    border-top:1px solid #f2f2f2;
-}
-
-.qbank-author{
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-    color:#D62828;
-    font-weight:600;
-    font-size:14px;
-}
-
-.qbank-date{
-
-    color:#888;
-    font-size:13px;
-}
-
-/* =====================================
-   ACTION BUTTONS
-===================================== */
-
-.qbank-actions{
-
-    display:flex;
-    gap:8px;
-}
-
-.qbank-actions .icon-action-btn{
-
-    width:34px;
-    height:34px;
-
-    border-radius:10px;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    transition:.25s;
-}
-
-.edit-btn{
-
-    background:rgba(247,127,0,.12);
-    color:#F77F00;
-}
-
-.edit-btn:hover{
-
-    background:#F77F00;
-    color:#fff;
-}
-
-.delete-btn{
-
-    background:rgba(214,40,40,.12);
-    color:#D62828;
-}
-
-.delete-btn:hover{
-
-    background:#D62828;
-    color:#fff;
-}
+.modal-header,
+.modal-footer{ flex-shrink:0; }
 
 /* =====================================
    RESPONSIVE
@@ -862,456 +630,86 @@
 
 @media(max-width:768px){
 
-    .qbank-header{
-        height:150px;
+    .courses-header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
     }
+    .courses-header .btn-theme{ width:100%; }
 
-    .qbank-icon{
+    .assignment-meta{ gap:14px 24px; }
+    .assignment-meta-item span{ font-size:11px; }
+    .assignment-meta-item strong{ font-size:1rem; }
 
-        width:75px;
-        height:75px;
-    }
+    .qbank-banner{ height:170px; }
 
-    .qbank-icon i{
-        font-size:34px;
-    }
+    .qbank-header{ height:150px; }
+    .qbank-icon{ width:75px; height:75px; }
+    .qbank-icon i{ font-size:34px; }
 
     .qbank-footer{
-
         flex-direction:column;
         align-items:flex-start;
         gap:10px;
     }
+    .qbank-actions{ margin-top:10px; }
 
-    .qbank-actions{
-        margin-top:10px;
-    }
-
-}
-.question-bank-banner{
-
-    background:linear-gradient(135deg,#D62828,#F77F00);
-
-    color:white;
-
-    padding:40px;
-
-    border-radius:30px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-}
-
-.stat-card{
-
-    background:white;
-
-    padding:25px;
-
-    border-radius:20px;
-
-    text-align:center;
-
-    box-shadow:0 5px 20px rgba(0,0,0,.05);
-
-}
-
-.stat-card h3{
-
-    color:#D62828;
-
-    font-weight:700;
-
-}
-
-.question-list{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:18px;
-
-}
-
-.question-item{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    background:white;
-
-    border-radius:22px;
-
-    padding:20px 24px;
-
-    border:1px solid #eee;
-
-    transition:.3s;
-
-}
-
-.question-item:hover{
-
-    background:#fff8f5;
-
-}
-
-.question-left{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:18px;
-
-}
-
-.drag-handle{
-
-    width:45px;
-
-    height:45px;
-
-    border-radius:12px;
-
-    background:#f5f5f5;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    cursor:grab;
-
-}
-
-.question-icon{
-
-    width:55px;
-
-    height:55px;
-
-    border-radius:18px;
-
-    background:rgba(214,40,40,.1);
-
-    color:#D62828;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-}
-
-.question-icon i{
-
-    font-size:24px;
-
-}
-
-.question-meta{
-
-    display:flex;
-
-    gap:10px;
-
-    margin-top:8px;
-
-}
-
-.question-actions{
-
-    display:flex;
-
-    gap:10px;
-
-}
-
-.sortable-ghost{
-
-    opacity:.4;
-
-}
-
-.sortable-chosen{
-
-    transform:scale(1.02);
-
-}
-
-/* =====================================
-   TOOLBAR: SEARCH + FILTER
-===================================== */
-
-.qbank-toolbar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:16px;
-    width:100%;
-    max-width:100%;
-    box-sizing:border-box;
-}
-
-.qbank-search{
-    position:relative;
-    flex:1 1 100%;
-    min-width:0;
-    max-width:100%;
-}
-
-.qbank-search .form-control{
-    width:100%;
-    box-sizing:border-box;
-    padding-left:42px;
-    padding-right:42px;
-    border-radius:14px;
-}
-
-/* your "All / Made by Me / Made by Others" wrapper */
-.qbank-filter-pills{
-    max-width:100%;
-    min-width:0;
-    overflow-x:auto;
-    white-space:nowrap;
-    -webkit-overflow-scrolling:touch;
-}
-
-.qbank-search i{
-    position:absolute;
-    left:16px;
-    top:50%;
-    transform:translateY(-50%);
-    color:#aaa;
-}
-
-.filter-pill{
-    padding:8px 18px;
-    border-radius:999px;
-    font-weight:600;
-    font-size:14px;
-    color:#666;
-    text-decoration:none;
-    transition:.25s;
-    white-space:nowrap;
-}
-
-.filter-pill:hover{
-    color:#D62828;
-}
-
-.filter-pill.active{
-    background:#D62828;
-    color:#fff;
-}
-
-html, body {
-    max-width:100%;
-    overflow-x:hidden;
-}
-
-.qbank-toolbar,
-.qbank-toolbar > * {
-    box-sizing:border-box;
-    min-width:0;
-    max-width:100%;
-}
-
-.qbank-toolbar {
-    width:100%;
-    margin:0;
-    padding:0;
-}
-
-.qbank-search {
-    flex:1 1 100%;
-    width:100%;
-    margin:0;
-}
-
-.qbank-filters {   /* your All / Made by Me / Made by Others wrapper */
-    display:flex;
-    width:100%;
-    margin:0;
-    overflow-x:auto;
-}
-
-/* =====================================
-   SHARED TAG
-===================================== */
-
-.qbank-shared-tag{
-    position:absolute;
-    top:14px;
-    right:14px;
-    z-index:2;
-
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-
-    background:rgba(255,255,255,.9);
-    color:#D62828;
-
-    padding:6px 12px;
-    border-radius:999px;
-
-    font-size:12px;
-    font-weight:700;
-}
-
-@media(max-width:768px){
-
+    /* search and filter share the same width and left edge */
     .qbank-toolbar{
         flex-direction:column;
         align-items:stretch;
     }
-
-    .qbank-search{
-        max-width:none;
-    }
-
+    .qbank-search,
     .qbank-filter-pills{
-        justify-content:space-between;
+        flex:none;
+        width:100%;
+        max-width:100%;
     }
 
-}
-/* =====================================
-   TYPE FILTER PILLS
-===================================== */
+    /* attempts table -> cards */
+    .attempts-table thead{ display:none; }
 
-.type-filter-pills{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-}
+    .attempts-table,
+    .attempts-table tbody,
+    .attempts-table tr,
+    .attempts-table td{
+        display:block;
+        width:100%;
+    }
 
-.type-pill{
-    border:1px solid #eee;
-    background:#fff;
-    color:#666;
+    .attempts-table tr{
+        border:1px solid #eee;
+        border-radius:16px;
+        padding:8px 16px;
+        margin-bottom:12px;
+        background:#fff;
+    }
 
-    padding:8px 16px;
-    border-radius:999px;
+    .attempts-table td{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        padding:8px 0;
+        border:0;
+        border-bottom:1px dashed #f0f0f0;
+        text-align:right;
+    }
+    .attempts-table td:last-child{ border-bottom:0; }
 
-    font-size:14px;
-    font-weight:600;
+    .attempts-table td::before{
+        content:attr(data-label);
+        flex-shrink:0;
+        font-weight:600;
+        font-size:13px;
+        color:#999;
+        text-align:left;
+    }
 
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-
-    cursor:pointer;
-    transition:.25s;
-}
-
-.type-pill:hover{
-    border-color:#D62828;
-    color:#D62828;
-}
-
-.type-pill.active{
-    background:#D62828;
-    border-color:#D62828;
-    color:#fff;
-}
-
-.type-pill-count{
-    background:rgba(0,0,0,.08);
-    border-radius:999px;
-    padding:1px 8px;
-    font-size:12px;
-}
-
-.type-pill.active .type-pill-count{
-    background:rgba(255,255,255,.25);
-}
-
-.quiz-header{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    margin-bottom:2rem;
-
-    background:linear-gradient(135deg,#D62828,#F77F00);
-
-    color:white;
-
-    padding:35px;
-
-    border-radius:24px;
-
-}
-
-.quiz-badge{
-
-    display:inline-block;
-
-    background:rgba(255,255,255,.18);
-
-    padding:6px 14px;
-
-    border-radius:30px;
-
-    margin-bottom:15px;
-
-    font-size:14px;
-
-}
-
-.table-card{
-
-    background:white;
-
-    border-radius:24px;
-
-    padding:35px;
-
-    box-shadow:0 10px 30px rgba(0,0,0,.06);
-
-}
-
-.form-label{
-
-    font-weight:600;
-
-}
-
-.form-control,
-.form-select{
-
-    border-radius:12px;
-
-    min-height:48px;
-
-}
-
-textarea.form-control{
-
-    min-height:140px;
-
-}
-
-.form-check-input{
-
-    cursor:pointer;
-
-}
-
-.form-check{
-
-    margin-bottom:15px;
-
+    .attempts-table td.attempt-action-cell{
+        display:block;
+        padding-top:12px;
+    }
+    .attempts-table td.attempt-action-cell::before{ display:none; }
+    .attempts-table td.attempt-action-cell .btn{ width:100%; }
 }
