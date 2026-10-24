@@ -1,5 +1,5 @@
 {{-- Edit Point Override (works for both bank and quiz-only questions) --}}
-<div class="modal fade question-modal"
+<div class="modal fade"
     id="editPointModal{{ $question->id }}"
     tabindex="-1"
     aria-labelledby="editPointModalLabel{{ $question->id }}"

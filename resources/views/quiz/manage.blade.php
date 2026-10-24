@@ -183,7 +183,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
