@@ -22,7 +22,7 @@
     <div class="col-auto">
 
         <a href="{{ route('courses.create') }}"
-           class="btn btn-theme">
+           class="btn btn-theme btn-sm">
             <i class="bi bi-plus-circle"></i>
             Add Course
         </a>

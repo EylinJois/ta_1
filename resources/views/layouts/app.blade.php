@@ -160,11 +160,6 @@
                             Edit Profile
                         </a>
 
-                        <a href="#">
-                            <i class="bi bi-gear"></i>
-                            Settings
-                        </a>
-
                         <hr>
 
                         <form method="POST" action="{{ route('logout') }}">

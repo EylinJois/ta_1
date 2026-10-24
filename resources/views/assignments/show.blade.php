@@ -11,7 +11,7 @@
 @section('content')
 
 <div class="mb-4">
-    <a href="{{ route('sections.show', $assignment->section) }}" class="btn btn-secondary-custom">
+    <a href="{{ route('sections.show', $assignment->section) }}" class="btn btn-secondary-custom" style="background: transparent;">
         <i class="bi bi-arrow-left"></i>
     </a>
 </div>
@@ -186,7 +186,7 @@
 @endif
 
 @if($submission && $submission->status === 'graded')
-<div class="table-card mb-4">
+<div class="table-card student-submission-card">
     <h5 class="mb-3"><i class="bi bi-clipboard-check"></i> Grade</h5>
     <div class="d-flex align-items-center gap-3 mb-3">
         <h2 class="mb-0">{{ rtrim(rtrim(number_format($submission->score, 2), '0'), '.') }}</h2>
@@ -203,7 +203,7 @@
 <div class="table-card">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">
+        <h5 class="submission-header">
             <i class="bi bi-pencil-square"></i>
             Your Submission
         </h5>
@@ -211,7 +211,8 @@
         <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> Locked</span>
         @else
         @if($submission)
-        <span class="qbank-badge">Last edited at {{ $submission->updated_at->diffForHumans() }}</span>
+        <span class="qbank-badge">Last edit was
+            {{ $submission->updated_at->diffForHumans() }}</span>
         @endif
         @endif
     </div>
@@ -226,7 +227,7 @@
         @endif
 
         @if(in_array($assignment->submission_type, ['file', 'both']))
-        <div class="mb-4">
+        <div class="uploaded-file">
             <label class="form-label">
                 Attach Files
                 @if($assignment->max_size)
@@ -255,7 +256,7 @@
         @endif
 
         @if($canEdit)
-        <div class="d-flex gap-2 justify-content-end">
+        <div class="d-flex justify-content-end submit-button-wrapper">
             <div id="submitMessage" class="alert mb-0 py-2 d-none"></div>
             <button type="button" class="btn btn-theme" id="submitAssignmentBtn"
                 @if(!$canSubmitLate) disabled @endif>
@@ -282,7 +283,7 @@
             return;
         }
 
-        const assignmentId = {{$assignment->id}};
+        const assignmentId = {{$assignment -> id}};
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const canEdit = @json($canEdit);
 
@@ -306,6 +307,8 @@
             tinymce.init({
                 selector: '#submittedText',
                 height: 300,
+                width: '100%',
+                resize: false,
                 menubar: true,
                 plugins: 'lists link',
                 toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | link',

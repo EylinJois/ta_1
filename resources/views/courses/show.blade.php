@@ -115,7 +115,7 @@
             @if(!empty($course->imgMedia))
 
             @if($course->imgMedia)
-    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="course-image">
+    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="detail-course-image">
 @endif
 
             @else

@@ -117,9 +117,13 @@
                         </div>
                     </td>
 
-                    <td data-label="Email">{{ $participant->email ?? '-' }}</td>
+                    <td data-label="Email">
+                        <span class="participant-email">{{ $participant->email ?? '-' }}</span>
+                    </td>
 
-                    <td data-label="Class">{{ $class->name }}</td>
+                    <td data-label="Class">
+                        <span class="participant-email">{{ $class->name }}</span>
+                    </td>
 
                     <td data-label="Role">
                         <span class="badge bg-primary">{{ $participant->pivot->role ?? '-' }}</span>

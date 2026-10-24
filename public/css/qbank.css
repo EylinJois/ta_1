@@ -410,6 +410,7 @@ html, body{
 }
 
 .filter-pill{
+    flex:0 0 auto;
     padding:8px 18px;
     border-radius:999px;
     font-weight:600;
@@ -629,7 +630,7 @@ textarea.form-control{ min-height:140px; }
    RESPONSIVE
 ===================================== */
 
-@media(max-width:768px){
+@media(max-width:576px){
 
     .courses-header{
         flex-direction:column;
@@ -669,16 +670,16 @@ textarea.form-control{ min-height:140px; }
         margin:0;
     }
 
-    /* three pills fit on one row, sharing the width */
+    /* pills keep their natural size, aligned left */
     .qbank-filter-pills{
-        gap:2px;
+        justify-content:flex-start;
+        gap:4px;
         padding:4px;
     }
 
     .filter-pill{
-        flex:1 1 auto;
-        text-align:center;
-        padding:8px 10px;
+        flex:0 0 auto;
+        padding:8px 14px;
         font-size:13px;
     }
 
@@ -728,4 +729,118 @@ textarea.form-control{ min-height:140px; }
     }
     .attempts-table td.attempt-action-cell::before{ display:none; }
     .attempts-table td.attempt-action-cell .btn{ width:100%; }
+
+    .student-submission-card {
+        padding: 20px 16px;
+        font-size: 14px;
+    }
+
+    .student-submission-card h5 {
+        font-size: 1rem;
+    }
+
+    .student-submission-card .form-label {
+        font-size: 0.875rem;
+    }
+
+    .student-submission-card .form-control,
+    .student-submission-card .btn {
+        font-size: 0.875rem;
+    }
+
+    .student-submission-card .qbank-badge,
+    .student-submission-card .badge {
+        font-size: 0.7rem;
+    }
+
+    .student-submission-card .alert {
+        font-size: 0.875rem;
+    }
+
+    .student-submission-card {
+        padding: 20px 18px;
+        border-radius: 16px;
+    }
+
+    /* Header: submission title and edit status */
+    .student-submission-card .submission-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .student-submission-card h5 {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        margin-bottom: 0;
+    }
+
+    .student-submission-card .form-label {
+        display: block;
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+
+    /* File upload area */
+    .student-submission-card input[type="file"] {
+        width: 100%;
+        font-size: 0.75rem;
+        margin-bottom: 12px;
+    }
+
+    .student-submission-card .form-control {
+        font-size: 0.85rem;
+        padding: 8px 10px;
+    }
+
+    /* Uploaded file row */
+    .student-submission-card .uploaded-file {
+        margin-top: 10px;
+        padding: 10px;
+        gap: 8px;
+        font-size: 0.8rem;
+        overflow-wrap: anywhere;
+    }
+
+    /* Submit button */
+    .student-submission-card .btn {
+        font-size: 0.8rem;
+        padding: 9px 14px;
+    }
+
+    .student-submission-card .submit-button-wrapper {
+        margin-top: 16px;
+        text-align: right;
+    }
+
+    .tox-tinymce {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .tox .tox-editor-container,
+    .tox .tox-toolbar,
+    .tox .tox-toolbar__primary,
+    .tox .tox-toolbar__overflow,
+    .tox .tox-statusbar {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .tox .tox-toolbar__primary {
+        flex-wrap: wrap !important;
+    }
+
+    .tox .tox-edit-area iframe {
+        width: 100% !important;
+    }
+
+    /* Prevent the editor from exceeding its parent */
+    .student-submission-card,
+    .student-submission-card .tox-tinymce {
+        min-width: 0 !important;
+    }
 }

@@ -957,7 +957,7 @@ textarea.form-control{
     }
 }
 
-@media(max-width: 768px){
+@media(max-width: 576px){
 
     .courses-header.section-materials-header{
         flex-direction: row;
@@ -985,6 +985,106 @@ textarea.form-control{
 
     .section-header-actions .btn{
         padding: 12px 14px;
+    }
+
+    /* Keep participant content within its card */
+    .table-card .table tr.participant-row {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    /* Reduce profile picture size */
+    .participant-row .participant-user img {
+        width: 32px !important;
+        height: 32px !important;
+        flex: 0 0 32px;
+    }
+
+    /* Allow participant names to shrink and wrap */
+    .participant-row .participant-user {
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .participant-row .participant-user > div {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .participant-row .participant-user strong {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    /* Prevent long email addresses from overflowing */
+    .participant-row td[data-label="Email"] {
+        min-width: 0;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .participant-row .participant-email {
+        min-width: 0;
+        flex: 1;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        text-align: right;
+    }
+
+    .participant-row .participant-user {
+        justify-content: flex-end;
+        text-align: right;
+    }
+
+    .participant-row .participant-user > div {
+        text-align: right;
+    }
+
+    .material-display-card {
+        padding: 16px !important;
+    }
+
+    .material-display-card .material-display-icon {
+        font-size: 24px;
+    }
+
+    .material-display-card h5 {
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 8px;
+    }
+
+    .material-display-card p {
+        font-size: 13px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .material-display-card .material-type {
+        font-size: 11px;
+    }
+
+    .material-display-card .badge {
+        font-size: 10px;
+        padding: 5px 8px;
+    }
+
+    .material-display-card .material-card-actions .icon-action-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    .material-display-card .completed-pill {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+
+    .table-card .row.g-4 {
+        --bs-gutter-y: 1rem;
     }
 }
 

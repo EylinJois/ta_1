@@ -26,10 +26,10 @@
 
         <div class="col justify-content-end d-flex">
             <div class="">
-                <a href="{{ route('notes.create') }}" class="btn btn-theme">
-                    <i class="bi bi-file-earmark-plus"></i>
-                    New Note
-                </a>
+                <a href="{{ route('notes.create') }}" class="btn btn-theme btn-sm">
+    <i class="bi bi-file-earmark-plus"></i>
+    New Note
+</a>
             </div>
         </div>
 
