@@ -131,8 +131,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [QuizQuestionController::class, 'index'])->name('index');
         Route::get('/available', [QuizQuestionController::class, 'available'])->name('available');
         Route::post('/', [QuizQuestionController::class, 'store'])->name('store');
-        Route::post('/random', [QuizQuestionController::class, 'storeRandom'])->name('random');
-        Route::post('/new', [QuizQuestionController::class, 'storeNew'])->name('store-new');
         Route::post('/reorder', [QuizQuestionController::class, 'reorder'])->name('reorder');
         Route::patch('/{question}/point-override', [QuizQuestionController::class, 'updatePointOverride'])->name('point-override');
         Route::delete('/{question}', [QuizQuestionController::class, 'destroy'])->name('destroy');
