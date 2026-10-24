@@ -6,6 +6,7 @@ use App\Models\QuestionOption;
 use Illuminate\Http\Request;
 use App\Models\Question;
 use App\Models\QuestionAcceptedAnswer;
+use App\Models\Quiz;
 use Illuminate\Support\Facades\DB;
 
 class QuestionController extends Controller
@@ -33,6 +34,7 @@ class QuestionController extends Controller
     {
         $validated = $request->validate([
             'question_bank_id' => 'nullable|exists:question_banks,id',
+            'quiz_id' => 'nullable|integer|exists:quizzes,id',
             'question' => 'required|string',
             'type' => 'required|in:choice,multiple_select,written,short_answer,file,both',
             'point' => 'nullable|numeric|min:0',
@@ -53,6 +55,21 @@ class QuestionController extends Controller
             'max_file_size' => 'nullable|integer|min:1|max:1024',
             'max_files' => 'nullable|integer|min:1|max:255',
         ]);
+
+        if (!empty($validated['quiz_id']) && !empty($validated['question_bank_id'])) {
+            return back()
+                ->withErrors(['quiz_id' => 'Questions in a question bank cannot be assigned directly to a quiz.'])
+                ->withInput();
+        }
+
+        $quiz = null;
+        if (!empty($validated['quiz_id'])) {
+            $quiz = Quiz::findOrFail($validated['quiz_id']);
+            abort_unless(
+                $request->user()->isManagerInCourse($quiz->section->course->id),
+                403
+            );
+        }
 
         //Multiple choice/select
         if (in_array($validated['type'], ['choice', 'multiple_select'])) {
@@ -81,6 +98,15 @@ class QuestionController extends Controller
                     ->withErrors(['score_percent' => 'The total score of all options must be between -100% and 100%.'])
                     ->withInput();
             }
+
+            if (
+                $validated['type'] === 'choice'
+                && count(array_filter($scorePercentages, fn ($value) => $value === 100)) !== 1
+            ) {
+                return back()
+                    ->withErrors(['score_percent' => 'Multiple choice questions need exactly one correct option.'])
+                    ->withInput();
+            }
         }
 
         $bankId = $validated['question_bank_id'] ?? null;
@@ -90,7 +116,7 @@ class QuestionController extends Controller
             'order_idx' => $order_idx + 1
         ]);
 
-        $question = DB::transaction(function () use ($request, $validated) {
+        $question = DB::transaction(function () use ($request, $validated, $quiz) {
 
             $fileConfig = $this->extractFileConfig($request, $validated['type']);
 
@@ -113,6 +139,11 @@ class QuestionController extends Controller
                 case 'short_answer':
                     $this->storeAcceptedAnswers($question, $request);
                     break;
+            }
+
+            if ($quiz) {
+                $nextOrder = (int) $quiz->questions()->max('quiz_questions.order_index') + 1;
+                $quiz->questions()->attach($question->id, ['order_index' => $nextOrder]);
             }
 
             return $question;

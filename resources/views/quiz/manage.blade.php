@@ -9,6 +9,13 @@
 @endpush
 
 @section('content')
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
+
 <div class="d-flex justify-content-between align-items-start mb-4">
 
     <div class="d-flex align-items-center gap-3">
@@ -177,7 +184,7 @@
 @foreach($quiz->questions->filter(fn ($q) => $q->question_bank_id) as $question)
     @include('quiz.edit-point', ['quiz' => $quiz, 'question' => $question])
 @endforeach
-@include('quiz.questions.modal', ['modalId'=>'createQuestionModal', 'question' => null, 'questionBank' => null])
+@include('quiz.questions.modal', ['modalId'=>'createQuestionModal', 'question' => null, 'questionBank' => null, 'quiz' => $quiz])
 @include('quiz.edit-quiz')
 
 @endsection

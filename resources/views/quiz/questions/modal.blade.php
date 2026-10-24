@@ -1,6 +1,7 @@
 @php
     $question     = $question ?? null;
     $questionBank = $questionBank ?? null;
+    $quiz         = $quiz ?? null;
     $isEdit       = (bool) $question;
 
     $modalId = $modalId ?? ($isEdit ? 'editQuestionModal' . $question->id : 'createQuestionModal');
@@ -15,6 +16,29 @@
             'answer' => $a->answer, 'ignore_case' => $a->ignore_case, 'ignore_space' => $a->ignore_space,
         ])->values()
         : [];
+    if (!$isEdit && is_array(old('option_text'))) {
+        $oldScores = old('score_percent', []);
+        $oldScores = is_array($oldScores) ? $oldScores : [];
+        $seedOptions = collect(old('option_text'))
+            ->map(fn ($text, $index) => [
+                'text' => $text,
+                'score_percent' => $oldScores[$index] ?? 0,
+            ])
+            ->values();
+    }
+    if (!$isEdit && is_array(old('accepted_answers'))) {
+        $oldIgnoreCase = old('ignore_case', []);
+        $oldIgnoreSpace = old('ignore_space', []);
+        $oldIgnoreCase = is_array($oldIgnoreCase) ? $oldIgnoreCase : [];
+        $oldIgnoreSpace = is_array($oldIgnoreSpace) ? $oldIgnoreSpace : [];
+        $seedAnswers = collect(old('accepted_answers'))
+            ->map(fn ($answer, $index) => [
+                'answer' => $answer,
+                'ignore_case' => (bool) ($oldIgnoreCase[$index] ?? true),
+                'ignore_space' => (bool) ($oldIgnoreSpace[$index] ?? true),
+            ])
+            ->values();
+    }
     $seedFileConfig = $isEdit
         ? [
             'allowed'       => (array) ($question->file_allowed ?? []),
@@ -31,6 +55,7 @@
     tabindex="-1"
     aria-labelledby="{{ $modalId }}Label"
     aria-hidden="true"
+    data-has-validation-errors="{{ !$isEdit && old('question') !== null && $errors->any() ? '1' : '0' }}"
     data-seed-options="{{ json_encode($seedOptions) }}"
     data-seed-answers="{{ json_encode($seedAnswers) }}"
     data-seed-file-config="{{ json_encode($seedFileConfig) }}">
@@ -45,6 +70,9 @@
                 @if(!$isEdit && $bankId)
                 <input type="hidden" name="question_bank_id" value="{{ $bankId }}">
                 @endif
+                @if(!$isEdit && $quiz)
+                <input type="hidden" name="quiz_id" value="{{ $quiz->id }}">
+                @endif
 
                 <div class="modal-header">
                     <h5 class="modal-title" id="{{ $modalId }}Label">
@@ -56,10 +84,21 @@
 
                 <div class="modal-body">
 
+                    @if(!$isEdit && old('question') !== null && $errors->any())
+                    <div class="alert alert-danger" role="alert">
+                        <strong>The question could not be saved:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
                     <div class="mb-4">
                         <label class="form-label">Question</label>
                         <textarea name="question" class="form-control" rows="5"
-                            placeholder="Type your question..." required>{{ $question->question ?? '' }}</textarea>
+                            placeholder="Type your question..." required>{{ old('question', $question->question ?? '') }}</textarea>
                     </div>
 
                     <div class="row">
@@ -82,7 +121,7 @@
                         <div class="col-md-6 mb-4">
                             <label class="form-label">Points</label>
                             <input type="number" step="0.01" min="0" name="point" class="form-control"
-                                placeholder="Enter points..." value="{{ $question->point ?? '' }}">
+                                placeholder="Enter points..." value="{{ old('point', $question->point ?? '') }}">
                         </div>
                     </div>
 
@@ -472,6 +511,10 @@
             refreshSections();
         }
         document.querySelectorAll('.question-modal').forEach(initQuestionModal);
+
+        document.querySelectorAll('.question-modal[data-has-validation-errors="1"]').forEach(function(modal) {
+            bootstrap.Modal.getOrCreateInstance(modal).show();
+        });
     });
 </script>
 @endpush
