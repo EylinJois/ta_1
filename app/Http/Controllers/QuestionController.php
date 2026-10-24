@@ -95,7 +95,7 @@ class QuestionController extends Controller
             $fileConfig = $this->extractFileConfig($request, $validated['type']);
 
             $question = Question::create([
-                'question_bank_id' => $validated['question_bank_id'],
+                'question_bank_id' => $validated['question_bank_id'] ?? null,
                 'question' => $validated['question'],
                 'type' => $validated['type'],
                 'point' => $validated['point'] ?? 0,
@@ -119,9 +119,13 @@ class QuestionController extends Controller
         });
 
 
-        return redirect()
-            ->route('questionbank.show', $validated['question_bank_id'])
-            ->with('success', 'Question added.');
+        if ($question->question_bank_id) {
+            return redirect()
+                ->route('questionbank.show', $question->question_bank_id)
+                ->with('success', 'Question added.');
+        }
+
+        return back()->with('success', 'Question added.');
     }
 
     private function storeOptions(Question $question, Request $request)
