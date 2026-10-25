@@ -793,3 +793,33 @@ body {
         font-size: 26px;
     }
 }
+
+/* =========================
+   FIXED NAVBAR OVERLAP
+========================= */
+
+:root {
+    --navbar-height: 85px;
+}
+
+.hero-section {
+    padding-top: calc(var(--navbar-height) + 25px);
+}
+
+@media (max-width: 991.98px) {
+    :root {
+        --navbar-height: 75px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    :root {
+        --navbar-height: 105px;
+    }
+}
+
+@media (max-width: 380px) {
+    :root {
+        --navbar-height: 100px;
+    }
+}
