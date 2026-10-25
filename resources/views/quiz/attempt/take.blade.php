@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
 <link rel="stylesheet" href="{{ asset('css/quiz.css') }}">
 <style>
-    
+
 </style>
 @endpush
 
@@ -208,315 +208,376 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
-    const attemptId = {{ $attempt->id }};
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    const remainingSecondsInitial = @json($remainingSeconds);
+        const attemptId = {{$attempt->id}};
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const remainingSecondsInitial = @json($remainingSeconds);
 
-    const panels = Array.from(document.querySelectorAll('.attempt-question-panel'));
-    const navButtons = Array.from(document.querySelectorAll('.question-nav-btn'));
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const autosaveIndicator = document.getElementById('autosaveIndicator');
-    const answeredCountText = document.getElementById('answeredCountText');
+        const panels = Array.from(document.querySelectorAll('.attempt-question-panel'));
+        const navButtons = Array.from(document.querySelectorAll('.question-nav-btn'));
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const autosaveIndicator = document.getElementById('autosaveIndicator');
+        const answeredCountText = document.getElementById('answeredCountText');
 
-    let currentIndex = 0;
+        let currentIndex = 0;
 
-    /* ===================== TINYMCE for written/both ===================== */
+        /* ===================== TINYMCE for written/both ===================== */
 
-    tinymce.init({
-        selector: '.tinymce-editor',
-        height: 250,
-        menubar: true,
-        plugins: 'lists link',
-        toolbar: 'bold italic underline | bullist numlist | link',
-        setup: function (editor) {
-            editor.on('change keyup', function () {
-                editor.save();
-                scheduleAutosave(editor.getElement().closest('.attempt-question-panel'));
-            });
-        },
-    });
+        tinymce.init({
+            selector: '.tinymce-editor',
+            height: 250,
+            menubar: true,
+            plugins: 'lists link',
+            toolbar: 'bold italic underline | bullist numlist | link',
+            setup: function(editor) {
+                editor.on('change keyup input', function() {
+                    editor.save();
 
-    /* ===================== NAVIGATION ===================== */
+                    const panel = editor.getElement().closest('.attempt-question-panel');
 
-    function showPanel(index) {
-        panels.forEach(function (p) {
-            p.classList.toggle('active', parseInt(p.dataset.index) === index);
-        });
-        navButtons.forEach(function (b) {
-            b.classList.toggle('current', parseInt(b.dataset.index) === index);
-        });
-        prevBtn.disabled = index === 0;
-        if (index === panels.length - 1) {
-            nextBtn.innerHTML = 'Finish <i class="bi bi-flag"></i>';
-        } else {
-            nextBtn.innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
-        }
-        currentIndex = index;
-    }
-
-    navButtons.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            showPanel(parseInt(btn.dataset.index));
-        });
-    });
-
-    prevBtn.addEventListener('click', function () {
-        if (currentIndex > 0) {
-            showPanel(currentIndex - 1);
-        }
-    });
-
-    nextBtn.addEventListener('click', function () {
-        if (currentIndex < panels.length - 1) {
-            showPanel(currentIndex + 1);
-        } else {
-            new bootstrap.Modal(document.getElementById('confirmSubmitModal')).show();
-        }
-    });
-
-    /* ===================== OPTION SELECTION (choice / multiple_select) ===================== */
-
-    panels.forEach(function (panel) {
-
-        const type = panel.dataset.type;
-
-        if (type === 'choice') {
-            panel.querySelectorAll('.option-row-select').forEach(function (row) {
-                row.addEventListener('click', function () {
-                    panel.querySelectorAll('.option-row-select').forEach(function (r) {
-                        r.classList.remove('selected');
-                        r.querySelector('input').checked = false;
-                    });
-                    row.classList.add('selected');
-                    row.querySelector('input').checked = true;
-                    markAnswered(panel);
-                    scheduleAutosave(panel);
-                });
-            });
-        }
-
-        if (type === 'multiple_select') {
-            panel.querySelectorAll('.option-row-select').forEach(function (row) {
-                row.addEventListener('click', function (e) {
-                    if (e.target.tagName !== 'INPUT') {
-                        row.querySelector('input').checked = !row.querySelector('input').checked;
+                    if (panel) {
+                        markAnswered(panel);
+                        scheduleAutosave(panel);
                     }
-                    row.classList.toggle('selected', row.querySelector('input').checked);
-                    markAnswered(panel);
+                });
+            },
+        });
+
+        /* ===================== NAVIGATION ===================== */
+
+        function showPanel(index) {
+            panels.forEach(function(p) {
+                p.classList.toggle('active', parseInt(p.dataset.index) === index);
+            });
+            navButtons.forEach(function(b) {
+                b.classList.toggle('current', parseInt(b.dataset.index) === index);
+            });
+            prevBtn.disabled = index === 0;
+            if (index === panels.length - 1) {
+                nextBtn.innerHTML = 'Finish <i class="bi bi-flag"></i>';
+            } else {
+                nextBtn.innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
+            }
+            currentIndex = index;
+        }
+
+        navButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                showPanel(parseInt(btn.dataset.index));
+            });
+        });
+
+        prevBtn.addEventListener('click', function() {
+            if (currentIndex > 0) {
+                showPanel(currentIndex - 1);
+            }
+        });
+
+        nextBtn.addEventListener('click', function() {
+            if (currentIndex < panels.length - 1) {
+                showPanel(currentIndex + 1);
+            } else {
+                new bootstrap.Modal(document.getElementById('confirmSubmitModal')).show();
+            }
+        });
+
+        /* ===================== OPTION SELECTION (choice / multiple_select) ===================== */
+
+        panels.forEach(function(panel) {
+
+            const type = panel.dataset.type;
+
+            if (type === 'choice') {
+                panel.querySelectorAll('.option-row-select').forEach(function(row) {
+                    row.addEventListener('click', function() {
+                        panel.querySelectorAll('.option-row-select').forEach(function(r) {
+                            r.classList.remove('selected');
+                            r.querySelector('input').checked = false;
+                        });
+                        row.classList.add('selected');
+                        row.querySelector('input').checked = true;
+                        markAnswered(panel);
+                        scheduleAutosave(panel);
+                    });
+                });
+            }
+
+            if (type === 'multiple_select') {
+                panel.querySelectorAll('.option-row-select').forEach(function(row) {
+                    row.addEventListener('click', function(e) {
+                        if (e.target.tagName !== 'INPUT') {
+                            row.querySelector('input').checked = !row.querySelector('input').checked;
+                        }
+                        row.classList.toggle('selected', row.querySelector('input').checked);
+                        markAnswered(panel);
+                        scheduleAutosave(panel);
+                    });
+                });
+            }
+
+            const shortAnswerInput = panel.querySelector('.short-answer-input');
+
+            if (shortAnswerInput) {
+                shortAnswerInput.addEventListener('input', function() {
+                    if (shortAnswerInput.value.trim() !== '') {
+                        markAnswered(panel);
+                    } else {
+                        updateQuestionStatus(panel);
+                    }
+
                     scheduleAutosave(panel);
                 });
-            });
+            }
+
+            const fileInput = panel.querySelector('.file-answer-input');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    uploadFile(panel);
+                });
+            }
+
+        });
+
+        function markAnswered(panel) {
+            const index = parseInt(panel.dataset.index);
+            navButtons[index].classList.add('answered');
+            updateAnsweredCount();
         }
 
-        const shortAnswerInput = panel.querySelector('.short-answer-input');
-        if (shortAnswerInput) {
-            shortAnswerInput.addEventListener('input', function () {
-                markAnswered(panel);
-                scheduleAutosave(panel);
-            });
+        function updateQuestionStatus(panel) {
+            const index = parseInt(panel.dataset.index);
+            const type = panel.dataset.type;
+            let answered = false;
+
+            if (type === 'choice') {
+                answered = !!panel.querySelector('input[type="radio"]:checked');
+            } else if (type === 'multiple_select') {
+                answered = panel.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+            } else if (type === 'short_answer') {
+                const input = panel.querySelector('.short-answer-input');
+                answered = !!input && input.value.trim() !== '';
+            } else if (type === 'written' || type === 'both') {
+                const editor = panel.querySelector('.tinymce-editor');
+                const editorInstance = editor ? tinymce.get(editor.id) : null;
+                answered = !!editorInstance && editorInstance.getContent({
+                    format: 'text'
+                }).trim() !== '';
+            }
+
+            if (type === 'file' || type === 'both') {
+                const fileList = panel.querySelector('[id^="fileList"]');
+                answered = answered || !!(fileList && fileList.querySelector('li'));
+            }
+
+            navButtons[index].classList.toggle('answered', answered);
+            updateAnsweredCount();
         }
 
-        const fileInput = panel.querySelector('.file-answer-input');
-        if (fileInput) {
-            fileInput.addEventListener('change', function () {
-                uploadFile(panel);
-            });
+        /* ===================== AUTOSAVE ===================== */
+
+        const autosaveTimers = {};
+
+        function scheduleAutosave(panel) {
+            const quizQuestionId = panel.dataset.quizQuestionId;
+            clearTimeout(autosaveTimers[quizQuestionId]);
+            autosaveTimers[quizQuestionId] = setTimeout(function() {
+                saveAnswer(panel);
+            }, 800);
         }
 
-    });
+        function collectPayload(panel) {
+            const type = panel.dataset.type;
+            const payload = {
+                quiz_question_id: panel.dataset.quizQuestionId
+            };
 
-    function markAnswered(panel) {
-        const index = parseInt(panel.dataset.index);
-        navButtons[index].classList.add('answered');
-        updateAnsweredCount();
-    }
+            if (type === 'choice') {
+                const checked = panel.querySelector('input[type="radio"]:checked');
+                payload.select_option_id = checked ? checked.value : null;
+            }
 
-    function updateAnsweredCount() {
-        answeredCountText.textContent = document.querySelectorAll('.question-nav-btn.answered').length;
-    }
-    updateAnsweredCount();
+            if (type === 'multiple_select') {
+                payload.option_ids = Array.from(
+                    panel.querySelectorAll('input[type="checkbox"]:checked')
+                ).map(function(cb) {
+                    return cb.value;
+                });
+            }
 
-    /* ===================== AUTOSAVE ===================== */
+            if (type === 'short_answer') {
+                const el = panel.querySelector('.short-answer-input');
+                payload.answer = el ? el.value : '';
+            }
 
-    const autosaveTimers = {};
+            if (type === 'written' || type === 'both') {
+                const el = panel.querySelector('.tinymce-editor');
+                payload.answer = el ? el.value : '';
+            }
 
-    function scheduleAutosave(panel) {
-        const quizQuestionId = panel.dataset.quizQuestionId;
-        clearTimeout(autosaveTimers[quizQuestionId]);
-        autosaveTimers[quizQuestionId] = setTimeout(function () {
-            saveAnswer(panel);
-        }, 800);
-    }
-
-    function collectPayload(panel) {
-        const type = panel.dataset.type;
-        const payload = { quiz_question_id: panel.dataset.quizQuestionId };
-
-        if (type === 'choice') {
-            const checked = panel.querySelector('input[type="radio"]:checked');
-            payload.select_option_id = checked ? checked.value : null;
+            return payload;
         }
 
-        if (type === 'multiple_select') {
-            payload.option_ids = Array.from(
-                panel.querySelectorAll('input[type="checkbox"]:checked')
-            ).map(function (cb) { return cb.value; });
-        }
-
-        if (type === 'short_answer') {
-            const el = panel.querySelector('.short-answer-input');
-            payload.answer = el ? el.value : '';
-        }
-
-        if (type === 'written' || type === 'both') {
-            const el = panel.querySelector('.tinymce-editor');
-            payload.answer = el ? el.value : '';
-        }
-
-        return payload;
-    }
-
-    function saveAnswer(panel) {
-        const type = panel.dataset.type;
-        if (type === 'file') {
-            return;
-        }
-
-        autosaveIndicator.textContent = 'Saving...';
-        autosaveIndicator.className = 'autosave-indicator saving';
-
-        fetch('/attempts/' + attemptId + '/answer', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-            },
-            body: JSON.stringify(collectPayload(panel)),
-        })
-            .then(function (r) {
-                return r.ok ? r.json() : Promise.reject();
-            })
-            .then(function () {
-                autosaveIndicator.textContent = 'All changes saved';
-                autosaveIndicator.className = 'autosave-indicator saved';
-            })
-            .catch(function () {
-                autosaveIndicator.textContent = 'Failed to save — retrying...';
-                autosaveIndicator.className = 'autosave-indicator';
-            });
-    }
-
-    function uploadFile(panel) {
-        const fileInput = panel.querySelector('.file-answer-input');
-        const file = fileInput.files[0];
-        if (!file) {
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('quiz_question_id', panel.dataset.quizQuestionId);
-        formData.append('file', file);
-
-        const listEl = panel.querySelector('[id^="fileList"]');
-
-        fetch('/attempts/' + attemptId + '/answer/file', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            body: formData,
-        })
-            .then(async function (r) {
-                const body = await r.json();
-                if (!r.ok) {
-                    throw new Error(body.message || 'Upload failed');
-                }
-
-                const li = document.createElement('li');
-                li.className = 'd-flex align-items-center justify-content-between border rounded-3 px-3 py-2 mb-2';
-                li.dataset.mediaId = body.media_asset_id;
-                li.innerHTML =
-                    '<span><i class="bi bi-file-earmark-check text-success me-1"></i> ' + body.file_name + '</span>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger remove-file-btn" data-media-id="' + body.media_asset_id + '">' +
-                    '<i class="bi bi-trash"></i>' +
-                    '</button>';
-                listEl.appendChild(li);
-
-                markAnswered(panel);
-                fileInput.value = '';
-            })
-            .catch(function (err) {
-                alert(err.message);
-                fileInput.value = '';
-            });
-    }
-
-    document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.remove-file-btn');
-        if (!btn) {
-            return;
-        }
-
-        const mediaId = btn.dataset.mediaId;
-
-        fetch('/attempts/' + attemptId + '/answer/file/' + mediaId, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-        })
-            .then(function (r) {
-                if (r.ok) {
-                    btn.closest('li').remove();
-                }
-            });
-    });
-
-    // Periodic safety-net autosave of the currently visible question.
-    setInterval(function () {
-        const activePanel = panels[currentIndex];
-        if (activePanel && activePanel.dataset.type !== 'file') {
-            saveAnswer(activePanel);
-        }
-    }, 20000);
-
-    /* ===================== TIMER ===================== */
-
-    if (remainingSecondsInitial !== null) {
-
-        let remaining = remainingSecondsInitial;
-        const timerValue = document.getElementById('timerValue');
-        const timerBox = document.getElementById('timerBox');
-
-        function formatTime(seconds) {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = seconds % 60;
-            return [h, m, s].map(function (v) {
-                return String(v).padStart(2, '0');
-            }).join(':');
-        }
-
-        timerValue.textContent = formatTime(remaining);
-
-        const timerInterval = setInterval(function () {
-            remaining--;
-
-            if (remaining <= 0) {
-                clearInterval(timerInterval);
-                timerValue.textContent = '00:00:00';
-                autosaveIndicator.textContent = 'Time is up — submitting...';
-                document.getElementById('finalSubmitForm').submit();
+        function saveAnswer(panel) {
+            const type = panel.dataset.type;
+            if (type === 'file') {
                 return;
             }
 
-            if (remaining <= 60) {
-                timerBox.classList.add('warning');
+            autosaveIndicator.textContent = 'Saving...';
+            autosaveIndicator.className = 'autosave-indicator saving';
+
+            fetch('/attempts/' + attemptId + '/answer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify(collectPayload(panel)),
+                })
+                .then(function(r) {
+                    return r.ok ? r.json() : Promise.reject();
+                })
+                .then(function() {
+                    autosaveIndicator.textContent = 'All changes saved';
+                    autosaveIndicator.className = 'autosave-indicator saved';
+                })
+                .catch(function() {
+                    autosaveIndicator.textContent = 'Failed to save — retrying...';
+                    autosaveIndicator.className = 'autosave-indicator';
+                });
+        }
+
+        function uploadFile(panel) {
+            const fileInput = panel.querySelector('.file-answer-input');
+            const file = fileInput.files[0];
+            if (!file) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('quiz_question_id', panel.dataset.quizQuestionId);
+            formData.append('file', file);
+
+            const listEl = panel.querySelector('[id^="fileList"]');
+
+            fetch('/attempts/' + attemptId + '/answer/file', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: formData,
+                })
+                .then(async function(r) {
+                    const body = await r.json();
+                    if (!r.ok) {
+                        throw new Error(body.message || 'Upload failed');
+                    }
+
+                    const li = document.createElement('li');
+                    li.className = 'd-flex align-items-center justify-content-between border rounded-3 px-3 py-2 mb-2';
+                    li.dataset.mediaId = body.media_asset_id;
+                    li.innerHTML =
+                        '<span><i class="bi bi-file-earmark-check text-success me-1"></i> ' + body.file_name + '</span>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger remove-file-btn" data-media-id="' + body.media_asset_id + '">' +
+                        '<i class="bi bi-trash"></i>' +
+                        '</button>';
+                    listEl.appendChild(li);
+
+                    updateQuestionStatus(panel);
+                    fileInput.value = '';
+                })
+                .catch(function(err) {
+                    alert(err.message);
+                    fileInput.value = '';
+                });
+        }
+
+        function updateAnsweredCount() {
+            const total = document.querySelectorAll('.attempt-question-panel').length;
+            const answered = document.querySelectorAll('.question-nav-btn.answered').length;
+
+            const counter = document.getElementById('answeredCountText');
+
+            if (counter) {
+                counter.textContent = `${answered} out of ${total} questions answered`;
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.remove-file-btn');
+            if (!btn) {
+                return;
+            }
+
+            const mediaId = btn.dataset.mediaId;
+
+            fetch('/attempts/' + attemptId + '/answer/file/' + mediaId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                })
+                .then(function(r) {
+                    if (r.ok) {
+                        const panel = btn.closest('.attempt-question-panel');
+
+                        btn.closest('li').remove();
+
+                        if (panel) {
+                            updateQuestionStatus(panel);
+                        }
+                    }
+                });
+        });
+
+        // Periodic safety-net autosave of the currently visible question.
+        setInterval(function() {
+            const activePanel = panels[currentIndex];
+            if (activePanel && activePanel.dataset.type !== 'file') {
+                saveAnswer(activePanel);
+            }
+        }, 20000);
+
+        /* ===================== TIMER ===================== */
+
+        if (remainingSecondsInitial !== null) {
+
+            let remaining = remainingSecondsInitial;
+            const timerValue = document.getElementById('timerValue');
+            const timerBox = document.getElementById('timerBox');
+
+            function formatTime(seconds) {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                return [h, m, s].map(function(v) {
+                    return String(v).padStart(2, '0');
+                }).join(':');
             }
 
             timerValue.textContent = formatTime(remaining);
-        }, 1000);
-    }
 
-});
+            const timerInterval = setInterval(function() {
+                remaining--;
+
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerValue.textContent = '00:00:00';
+                    autosaveIndicator.textContent = 'Time is up — submitting...';
+                    document.getElementById('finalSubmitForm').submit();
+                    return;
+                }
+
+                if (remaining <= 60) {
+                    timerBox.classList.add('warning');
+                }
+
+                timerValue.textContent = formatTime(remaining);
+            }, 1000);
+        }
+
+    });
 </script>
 @endpush

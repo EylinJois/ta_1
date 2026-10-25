@@ -189,6 +189,69 @@
     .attempt-pager {
         gap: 8px;
     }
+
+    /* Make question text smaller */
+    .table-card h5 {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    /* Remove grey backgrounds from answer options */
+    .readonly-answer-block {
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Make each individual answer row full width */
+    .readonly-option-row {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        background: transparent !important;
+    }
+
+    /* Keep selected/correct answers free of grey backgrounds */
+    .readonly-option-row.was-selected,
+    .readonly-option-row.is-correct {
+        background: transparent !important;
+    }
+
+    /* Keep answer text and badges from overflowing */
+    .readonly-option-row {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .readonly-option-row .badge {
+        white-space: normal;
+        display: inline-block;
+        font-size: 10px;
+        margin-top: 4px;
+    }
+
+    /* Feedback field uses full available width */
+    .readonly-answer-block,
+    .flex-grow-1 {
+        min-width: 0 !important;
+        width: 100%;
+    }
+
+    /* Stack feedback and score neatly on mobile */
+    .d-flex.justify-content-between.align-items-start.flex-wrap.gap-3,
+    .d-flex.justify-content-between.align-items-end.flex-wrap.gap-3 {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .grade-score-box,
+    .grade-score-display {
+        width: fit-content;
+    }
 }
 
 .grade-score-display {
@@ -241,3 +304,30 @@
         border-color: #2e7d32;
         background: rgba(46, 125, 50, .06);
     }
+
+/* Keep uploaded filenames inside the question panel */
+#fileList,
+[id^="fileList"] {
+    max-width: 100%;
+    padding-left: 0;
+    list-style: none;
+}
+
+[id^="fileList"] li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+[id^="fileList"] li span,
+[id^="fileList"] li a {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}

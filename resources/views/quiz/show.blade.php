@@ -107,7 +107,7 @@
             {{ $quiz->due_at }}.
             @endif
         </p>
-        <button type="button" class="btn btn-secondary-custom btn-lg px-5" disabled>
+        <button type="button" class="btn btn-secondary-custom btn-md" disabled>
             <i class="bi bi-slash-circle"></i>
             Unable to Attempt
         </button>
@@ -119,7 +119,7 @@
         </p>
         <form action="{{ route('quizzes.attempts.store', $quiz) }}" method="POST" class="d-inline">
             @csrf
-            <button type="submit" class="btn btn-theme btn-lg px-5">
+            <button type="submit" class="btn btn-theme btn-md">
                 <i class="bi bi-arrow-right-circle"></i>
                 Resume Attempt
             </button>
@@ -136,7 +136,7 @@
         <form action="{{ route('quizzes.attempts.store', $quiz) }}" method="POST" class="d-inline"
             onsubmit="return confirm('Start this quiz now? Make sure you\'re ready before beginning.')">
             @csrf
-            <button type="submit" class="btn btn-theme btn-lg px-5">
+            <button type="submit" class="btn btn-theme btn-md">
                 <i class="bi bi-play-circle"></i>
                 Start Attempt
             </button>
@@ -147,7 +147,7 @@
             <i class="bi bi-lock-fill"></i>
             You have used all {{ $quiz->max_attempt }} of your allowed attempts.
         </p>
-        <button type="button" class="btn btn-secondary-custom btn-lg px-5" disabled>
+        <button type="button" class="btn-secondary-custom btn-md" disabled>
             No Attempts Remaining
         </button>
         @endif

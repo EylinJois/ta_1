@@ -141,13 +141,13 @@
                 <div class="d-flex justify-content-end gap-3">
 
                     <a href="{{ back()->getTargetUrl() }}"
-                        class="btn btn-secondary-custom">
+                        class="btn btn-secondary-custom btn-sm">
                         Cancel
                     </a>
 
                     <button type="submit"
                         class="btn btn-theme">
-                        <i class="bi bi-check-circle"></i>
+                        <i class="bi bi-check-circle btn-sm"></i>
                         Save Changes
                     </button>
 
