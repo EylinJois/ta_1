@@ -1184,3 +1184,21 @@ textarea.form-control{
     flex: 1;
     height: auto;
 }
+
+@media (max-width: 576px) {
+    .courses-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .section-title {
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .add-section-btn {
+        max-width: 100%;
+        white-space: normal;
+    }
+}
