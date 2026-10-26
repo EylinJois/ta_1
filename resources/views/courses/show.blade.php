@@ -115,8 +115,8 @@
             @if(!empty($course->imgMedia))
 
             @if($course->imgMedia)
-    <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="detail-course-image">
-@endif
+            <img src="{{ Storage::disk($course->imgMedia->storage_disk)->url($course->imgMedia->file_path) }}" class="detail-course-image">
+            @endif
 
             @else
 
@@ -156,21 +156,6 @@
 <div id="sectionsContainer">
     @foreach($course->sections as $section)
     @if(Auth::user()->isManagerInCourse($course->id) || $section->visibility)
-    {{--
-        NOTE: this used to be an <a> wrapping the whole card, with the
-        Edit button and Delete form nested inside it. Nesting interactive
-        elements (buttons/forms) inside an <a> is invalid HTML and the
-        browser's own "follow this link" behavior for the <a> isn't
-        cancelable via event.stopPropagation() on a child - only
-        event.preventDefault() cancels it, and calling that indiscriminately
-        would also cancel the Delete button's own form-submit action.
-
-        Instead: no <a>, no stopPropagation/preventDefault anywhere. A single
-        click handler on the card itself decides whether to navigate, based
-        on whether the click landed inside the actions area or drag handle.
-        Bootstrap's modal trigger and the delete form's submit both keep
-        working exactly as the browser expects.
-    --}}
     <div class="section-item section-link-wrapper"
         data-id="{{ $section->id }}"
         role="link"
@@ -187,12 +172,11 @@
                     <i class="bi bi-grip-vertical"></i>
                 </div>
                 @endif
-                <div class="section-icon">
+                <div class="section-icon-wrapper {{ Auth::user()->isManagerInCourse($course->id) ? 'course-manager' : '' }}">
                     <i class="bi bi-journal-text"></i>
                 </div>
 
                 <div>
-
                     <h5 class="mb-1">
                         {{ $section->name ?? '-' }}
                     </h5>
