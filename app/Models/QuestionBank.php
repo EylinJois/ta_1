@@ -13,6 +13,10 @@ class QuestionBank extends Model
 
     protected $fillable = ['course_id', 'created_by', 'name', 'description', 'is_public'];
 
+    protected $casts = [
+        'is_public' => 'boolean',
+    ];
+
     public function created_by()
     {
         return $this->belongsTo(User::class);

@@ -182,7 +182,7 @@
 </div>
 
 @foreach($quiz->questions->filter(fn ($q) => $q->question_bank_id) as $question)
-    @include('quiz.edit-point', ['quiz' => $quiz, 'question' => $question])
+@include('quiz.edit-point', ['quiz' => $quiz, 'question' => $question])
 @endforeach
 @include('quiz.questions.modal', ['modalId'=>'createQuestionModal', 'question' => null, 'questionBank' => null, 'quiz' => $quiz])
 @include('quiz.edit-quiz')
@@ -205,27 +205,25 @@
         let selectedIds = new Set();
 
         function loadAvailable() {
-
-    const manualBankId = document.getElementById('manualBankCodeSelectedId')?.value;
-
-    if (!manualBankId) {
-        availableList.innerHTML = '<p class="text-muted text-center py-3">Select a question bank above to see its questions.</p>';
-        return;
-    }
-
-    const params = new URLSearchParams();
-    params.set('question_bank_id', manualBankId);
-
-    fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
-        .then(r => r.json())
-        .then(questions => {
-
-            if (questions.length === 0) {
-                availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
+            const manualBankId = document.getElementById('manualBankCodeSelectedId')?.value;
+            if (!manualBankId) {
+                availableList.innerHTML = '<p class="text-muted text-center py-3">Select a question bank above to see its questions.</p>';
                 return;
             }
 
-            availableList.innerHTML = questions.map(q => `
+            const params = new URLSearchParams();
+            params.set('question_bank_id', manualBankId);
+
+            fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
+                .then(r => r.json())
+                .then(questions => {
+
+                    if (questions.length === 0) {
+                        availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
+                        return;
+                    }
+
+                    availableList.innerHTML = questions.map(q => `
                 <div class="form-check border-bottom py-2">
                     <input
                         class="form-check-input available-question-checkbox"
@@ -239,8 +237,8 @@
                     </label>
                 </div>
             `).join('');
-        });
-}
+                });
+        }
 
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -285,7 +283,7 @@
 
             if (!confirm('Remove this question from the quiz?')) return;
 
-            btn.disabled = true; // prevent a second click while the request is in flight
+            btn.disabled = true;
 
             const row = btn.closest('.quiz-question-row');
             const questionId = row.dataset.questionId;
@@ -353,9 +351,13 @@
 
         const questionBanksData = [
             @foreach($questionBanks as $bank) {
-                id: {{$bank->id}},
+                id: {
+                    {
+                        $bank - > id
+                    }
+                },
                 code: 'QB{{ $bank->id }}',
-                name: @json($bank->name)
+                name: @json($bank - > name)
             },
             @endforeach
         ];

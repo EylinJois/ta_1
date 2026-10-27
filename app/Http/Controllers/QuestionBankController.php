@@ -19,10 +19,10 @@ class QuestionBankController extends Controller
         $search = $request->input('search');
 
         $questionBanks = QuestionBank::with([
-        'creator',
-        'course' => fn ($q) => $q->withTrashed(),
-    ])
-    ->withCount('questions')
+            'creator',
+            'course' => fn($q) => $q->withTrashed(),
+        ])
+            ->withCount('questions')
             ->where(function ($q) use ($user) {
                 $q->where('created_by', $user->id)
                     ->orWhere('is_public', 1);
@@ -42,7 +42,7 @@ class QuestionBankController extends Controller
             ->orderBy('name')
             ->get();
 
-        $courses = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', auth()->id()))
+        $courses = Course::whereHas('classes.users', fn($query) => $query->where('users.id', auth()->id()))
             ->with('classes.users')
             ->get();
 
@@ -64,7 +64,7 @@ class QuestionBankController extends Controller
             'created_by' => auth()->id(),
             'is_public' => $request->is_public,
         ]);
-        
+
         return redirect()->route('questionbank.index')->with('success', 'Question Bank created successfully.');
     }
 
@@ -88,9 +88,17 @@ class QuestionBankController extends Controller
     public function show($id)
     {
         $questionBank = QuestionBank::findOrFail($id);
+
+        if (
+            !$questionBank->is_public &&
+            $questionBank->created_by !== Auth::id()
+        ) {
+            abort(403);
+        }
+
         $questionBank->load('questions');
         $user = User::findOrFail(Auth::user()->id);
-        $courses = Course::whereHas('classes.users', fn ($query) => $query->where('users.id', $user->id))
+        $courses = Course::whereHas('classes.users', fn($query) => $query->where('users.id', $user->id))
             ->with('classes.users')
             ->get();
 

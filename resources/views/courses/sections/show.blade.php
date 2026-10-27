@@ -80,7 +80,7 @@
 
     <div class="courses-header mb-4">
         <h4 class="section-title mb-0">
-            {{ $section->name }}
+            Materials
         </h4>
         @if(Auth::user()->isManagerInCourse($course->id))
         <div class="d-flex gap-2 section-header-actions">
