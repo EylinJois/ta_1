@@ -12,13 +12,13 @@
 @section('content')
 <div class="table-card">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="participants-page-header d-flex justify-content-between align-items-center mb-4">
         <a href="{{ route('courses.show', $course->id) }}" class="btn btn-secondary-custom btn-icon-plain">
             <i class="bi bi-arrow-left"></i>
         </a>
         <h4 class="section-title mb-0">{{ $course->name }} Participants</h4>
         @can('manageParticipants', $course)
-        <div class="d-flex gap-2">
+        <div class="participants-header-actions d-flex gap-2">
             @can('manageClasses', $course)
             <button class="btn btn-secondary-custom" data-bs-toggle="modal" data-bs-target="#classModal">
                 <i class="bi bi-diagram-3"></i>
@@ -276,7 +276,7 @@
 
                 </div>
 
-                <div class="modal-footer border-0">
+                <div class="modal-footer participant-modal-footer border-0">
 
                     <button type="button"
                         class="btn btn-secondary-custom"
@@ -329,7 +329,7 @@
                     @enderror
                 </div>
 
-                <div class="modal-footer border-0">
+                <div class="modal-footer class-modal-footer border-0">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-theme">
                         <i class="bi bi-check-circle"></i>

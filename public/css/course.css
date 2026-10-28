@@ -814,6 +814,35 @@ textarea.form-control {
     .table-card > .d-flex.justify-content-between.mb-4 > div .btn {
         width: 100%;
     }
+
+    .table-card > .participants-page-header > .participants-header-actions {
+        flex: 1 0 100%;
+        justify-content: flex-end;
+    }
+
+    .participants-header-actions .btn {
+        width: auto !important;
+        padding: 8px 10px;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .participant-modal-footer,
+    .class-modal-footer {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .participant-modal-footer .btn,
+    .class-modal-footer .btn {
+        flex: 0 1 auto;
+        margin: 0;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        border-radius: 9px;
+        white-space: nowrap;
+    }
 }
 
 @media (max-width: 991.98px) {
