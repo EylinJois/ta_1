@@ -350,14 +350,11 @@
         /* ===================== BANK CODE SEARCH (Pick Manually panel only) ===================== */
 
         const questionBanksData = [
-            @foreach($questionBanks as $bank) {
-                id: {
-                    {
-                        $bank - > id
-                    }
-                },
-                code: 'QB{{ $bank->id }}',
-                name: @json($bank - > name)
+            @foreach($questionBanks as $bank)
+            {
+                id: @json($bank->id),
+                code: @json('QB' . $bank->id),
+                name: @json($bank->name)
             },
             @endforeach
         ];
