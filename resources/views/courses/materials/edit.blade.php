@@ -19,7 +19,7 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
 
 <div class="container-fluid">
 
-    <div class="table-card">
+    <div class="table-card material-create-page">
 
         <form action="{{ route('materials.update', $material) }}"
             method="POST"
@@ -35,16 +35,14 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
             {{-- =========================
                      HEADER
                 ========================= --}}
-            <div class="mb-4 d-flex gap-3">
+            <div class="courses-header material-create-header mb-4">
 
-            <div class="">
                 <a href="{{ route('sections.show', $section) }}"
-                    class="btn btn-secondary-custom">
+                    class="btn btn-secondary-custom material-create-back">
                     <i class="bi bi-arrow-left"></i>
                 </a>
-            </div>
 
-                <div class="">
+                <div>
 
                     <h4 class="mb-0">
                         Edit Material
@@ -436,7 +434,7 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
                      FOOTER
                 ========================= --}}
 
-            <div class="d-flex justify-content-end gap-2 mt-4">
+            <div class="d-flex justify-content-end gap-2 mt-4 material-create-actions">
 
                 <a href="{{ route('sections.show', $section) }}"
                     class="btn btn-secondary-custom">

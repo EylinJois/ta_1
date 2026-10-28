@@ -108,70 +108,70 @@
         @forelse($visibleMaterials as $material)
 
         <div class="col-lg-4">
-            <a href="{{ route('materials.show',$material) }}"
-                class="text-decoration-none text-dark">
-                <div class="material-display-card h-100">
-                    <div class="material-card-header">
-                        <div class="material-display-icon">
-                            @switch($material->type)
-                            @case('Youtube Video')
-                            <i class="bi bi-youtube"></i>
-                            @break
-                            @case('PDF')
-                            <i class="bi bi-file-earmark-pdf-fill"></i>
-                            @break
-                            @case('EPUB')
-                            <i class="bi bi-book-fill"></i>
-                            @break
-                            @case('Page')
-                            <i class="bi bi-file-earmark-richtext-fill"></i>
-                            @break
-                            @case('Link')
-                            <i class="bi bi-link-45deg"></i>
-                            @break
-                            @default
-                            <i class="bi bi-file-earmark-fill"></i>
-                            @endswitch
-                        </div>
-
-                        @can('manage', $section)
-                        <div class="material-card-actions">
-                            <a class="icon-action-btn edit-btn"
-                                href="{{ route('materials.edit', $material) }}">
-                                <i class="bi bi-pencil-fill"></i>
-                            </a>
-                            <form action="{{ route('materials.destroy', $material) }}"
-                                method="POST"
-                                onsubmit="return confirm('Delete this material?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="icon-action-btn delete-btn">
-                                    <i class="bi bi-trash-fill"></i>
-                                </button>
-                            </form>
-                        </div>
-                        @elseif($completedMaterialIds->contains($material->id))
-                        <span class="completed-pill">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Completed
-                        </span>
-                        @endcan
+            <div class="material-display-card h-100">
+                <a href="{{ route('materials.show', $material) }}"
+                    class="material-display-card-link"
+                    aria-label="Open material: {{ $material->name }}"></a>
+                <div class="material-card-header">
+                    <div class="material-display-icon">
+                        @switch($material->type)
+                        @case('Youtube Video')
+                        <i class="bi bi-youtube"></i>
+                        @break
+                        @case('PDF')
+                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                        @break
+                        @case('EPUB')
+                        <i class="bi bi-book-fill"></i>
+                        @break
+                        @case('Page')
+                        <i class="bi bi-file-earmark-richtext-fill"></i>
+                        @break
+                        @case('Link')
+                        <i class="bi bi-link-45deg"></i>
+                        @break
+                        @default
+                        <i class="bi bi-file-earmark-fill"></i>
+                        @endswitch
                     </div>
 
-                    <h5>
-                        {{ $material->name }}
-                    </h5>
-
-                    <span class="material-type">
-                        {{ $material->type }}
+                    @can('manage', $section)
+                    <div class="material-card-actions">
+                        <a class="icon-action-btn edit-btn"
+                            href="{{ route('materials.edit', $material) }}">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <form action="{{ route('materials.destroy', $material) }}"
+                            method="POST"
+                            onsubmit="return confirm('Delete this material?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="icon-action-btn delete-btn">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </form>
+                    </div>
+                    @elseif($completedMaterialIds->contains($material->id))
+                    <span class="completed-pill">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Completed
                     </span>
-
-                    <p>
-                        {{ Str::limit($material->description, 120) }}
-                    </p>
-
+                    @endcan
                 </div>
-            </a>
+
+                <h5>
+                    {{ $material->name }}
+                </h5>
+
+                <span class="material-type">
+                    {{ $material->type }}
+                </span>
+
+                <p>
+                    {{ Str::limit($material->description, 120) }}
+                </p>
+
+            </div>
         </div>
 
         @empty
@@ -216,12 +216,10 @@
         @forelse($visibleActivities as $activity)
 
         <div class="col-lg-4">
-
-            <a
-                href="{{ $activity->activity_kind === 'quiz' ? route('quizzes.show', $activity) : route('assignments.show', $activity) }}"
-                class="text-decoration-none text-dark">
-
-                <div class="material-display-card h-100">
+            <div class="material-display-card h-100">
+                <a href="{{ $activity->activity_kind === 'quiz' ? route('quizzes.show', $activity) : route('assignments.show', $activity) }}"
+                    class="material-display-card-link"
+                    aria-label="Open {{ $activity->activity_kind }}: {{ $activity->name }}"></a>
 
                     <div class="material-card-header">
 
@@ -310,8 +308,6 @@
                     </div>
 
                 </div>
-
-            </a>
 
         </div>
 
