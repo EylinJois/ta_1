@@ -97,7 +97,7 @@
         @endif
     </div>
 
-    <div class="qbank-filter-pills">
+    <div class="qbank-filter-pills attempt-status-pills">
 
         <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'class_id' => $classId !== 'all' ? $classId : null])) }}"
             class="filter-pill {{ $status === 'all' ? 'active' : '' }}">
@@ -124,7 +124,7 @@
 </form>
 
 @if($classes->isNotEmpty())
-<div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+<div class="class-filter-row mb-4">
     <span class="fw-semibold text-muted">Class:</span>
     <div class="qbank-filter-pills">
         <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'status' => $status !== 'all' ? $status : null])) }}"

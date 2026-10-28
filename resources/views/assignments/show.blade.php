@@ -98,7 +98,7 @@
     </div>
 
     @if($classes->isNotEmpty())
-    <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+    <div class="class-filter-row mb-3">
         <span class="fw-semibold text-muted">Class:</span>
         <div class="qbank-filter-pills">
             <a href="{{ route('assignments.show', $assignment) }}"

@@ -409,6 +409,19 @@ html, body{
     -webkit-overflow-scrolling:touch;
 }
 
+.class-filter-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+}
+
+.class-filter-row .qbank-filter-pills{
+    flex:1 1 0;
+    min-width:0;
+    max-width:100%;
+}
+
 .filter-pill{
     flex:0 0 auto;
     padding:8px 18px;
@@ -681,6 +694,25 @@ textarea.form-control{ min-height:140px; }
         flex:0 0 auto;
         padding:8px 14px;
         font-size:13px;
+    }
+
+    .class-filter-row{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .class-filter-row .qbank-filter-pills{
+        flex:0 1 auto;
+        width:100%;
+        flex-wrap:wrap;
+        overflow-x:visible;
+        white-space:normal;
+    }
+
+    .attempt-status-pills{
+        flex-wrap:wrap;
+        overflow-x:visible;
+        white-space:normal;
     }
 
     /* attempts table -> cards */
