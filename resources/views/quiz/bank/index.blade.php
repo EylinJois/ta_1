@@ -132,7 +132,7 @@
 
                         <div class="qbank-author">
                             <i class="bi bi-person-fill"></i>
-                            {{ $isOwner ? 'You' : $questionBank->creator->name }}
+                            {{ $questionBank->created_by == auth()->id() ? 'You' : $questionBank->creator->name }}
                         </div>
 
                         <div class="qbank-date">
