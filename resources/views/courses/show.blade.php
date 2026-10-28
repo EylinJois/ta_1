@@ -363,7 +363,7 @@
             <div class="modal-header border-0">
 
                 <h4 class="modal-title">
-                    Add New Section
+                    Add Section
                 </h4>
 
                 <button type="button"
@@ -424,7 +424,7 @@
 
                 </div>
 
-                <div class="modal-footer border-0">
+                <div class="modal-footer section-modal-footer border-0">
 
                     <button type="button"
                         class="btn btn-secondary-custom"

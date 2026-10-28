@@ -72,14 +72,6 @@
 
             <div class="modal-footer border-0">
 
-                <button type="button"
-                    class="btn btn-secondary-custom"
-                    data-bs-dismiss="modal">
-
-                    Cancel
-
-                </button>
-
             </div>
 
         </div>

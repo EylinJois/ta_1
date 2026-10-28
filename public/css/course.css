@@ -827,15 +827,23 @@ textarea.form-control {
         white-space: nowrap;
     }
 
+    .add-section-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
     .participant-modal-footer,
-    .class-modal-footer {
+    .class-modal-footer,
+    .section-modal-footer {
         flex-wrap: nowrap;
         justify-content: flex-end;
         gap: 10px;
     }
 
     .participant-modal-footer .btn,
-    .class-modal-footer .btn {
+    .class-modal-footer .btn,
+    .section-modal-footer .btn {
         flex: 0 1 auto;
         margin: 0;
         padding: 6px 10px;
@@ -999,6 +1007,43 @@ textarea.form-control {
 }
 
 @media (max-width: 576px) {
+    .material-create-header {
+        justify-content: flex-start;
+    }
+
+    .material-create-back {
+        display: none;
+    }
+
+    .material-create-page .card-header h5 {
+        font-size: 0.95rem;
+    }
+
+    .material-create-page .card-body h5 {
+        font-size: 0.95rem;
+    }
+
+    .material-create-page .card-body,
+    .material-create-page .form-label,
+    .material-create-page .form-text,
+    .material-create-page .form-check-label {
+        font-size: 0.85rem;
+    }
+
+    .material-create-page .form-control,
+    .material-create-page .form-select {
+        font-size: 0.85rem;
+    }
+
+    .material-create-page .btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    .material-create-actions {
+        gap: 8px !important;
+    }
+
     .courses-header.section-materials-header {
         flex-direction: row;
         flex-wrap: wrap;

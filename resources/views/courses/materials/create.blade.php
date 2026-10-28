@@ -12,7 +12,7 @@
 
 <div class="container-fluid">
 
-    <div class="table-card">
+    <div class="table-card material-create-page">
 
         <form action="{{ route('materials.store') }}"
             method="POST"
@@ -27,9 +27,9 @@
             {{-- =========================
                      HEADER
                 ========================= --}}
-            <div class="courses-header mb-4">
+            <div class="courses-header material-create-header mb-4">
                 <a href="{{ route('sections.show',  ['section' => $section->id]) }}"
-                    class="btn btn-secondary-custom">
+                    class="btn btn-secondary-custom material-create-back">
                     <i class="bi bi-arrow-left"></i>
                 </a>
 
@@ -424,7 +424,7 @@
                      FOOTER
                 ========================= --}}
 
-            <div class="d-flex justify-content-end gap-2 mt-4">
+            <div class="d-flex justify-content-end gap-2 mt-4 material-create-actions">
 
                 <a href="{{ route('sections.show', $section) }}"
                     class="btn btn-secondary-custom">
