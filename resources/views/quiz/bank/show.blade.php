@@ -51,7 +51,7 @@
 
         <div class="d-flex flex-wrap gap-3 mt-4 align-items-center">
 
-            @if(auth()->id() == $questionBank->created_by)
+            @can('update', $questionBank)
 
             <button class="btn btn-light"
                 data-bs-toggle="modal"
@@ -77,7 +77,7 @@
 
             </form>
 
-            @endif
+            @endcan
 
         </div>
 
@@ -148,6 +148,7 @@
     <h4 class="section-title mb-0">
         Question List
     </h4>
+    @can('manageQuestions', $questionBank)
     <button class="btn btn-theme add-section-btn"
         data-bs-toggle="modal"
         data-bs-target="#createQuestionModal">
@@ -156,6 +157,7 @@
         Add Question
 
     </button>
+    @endcan
 </div>
 
 {{-- Questions --}}
@@ -169,9 +171,11 @@
 
         <div class="question-left">
 
+            @can('manageQuestions', $questionBank)
             <div class="drag-handle">
                 <i class="bi bi-list"></i>
             </div>
+            @endcan
 
             <div class="question-icon">
 
@@ -228,6 +232,7 @@
 
         </div>
 
+        @can('manageQuestions', $questionBank)
         <div class="question-actions">
 
             <button
@@ -253,11 +258,14 @@
             </form>
 
         </div>
+        @endcan
 
     </div>
 
     {{-- Render this question's own edit modal right here, once per row --}}
+    @can('manageQuestions', $questionBank)
     @include('quiz.questions.modal', ['questionBank' => $questionBank, 'question' => $question])
+    @endcan
 
     @empty
 
@@ -291,8 +299,10 @@
 
 </div>
 
+@can('manageQuestions', $questionBank)
 @include('quiz.questions.modal', ['questionBank' => $questionBank, 'question' => null])
 @include('quiz.bank.edit')
+@endcan
 @endsection
 
 
@@ -334,6 +344,7 @@
 
         /* ========== DRAG TO REORDER (order_index) ========== */
 
+        @can('manageQuestions', $questionBank)
         if (questionList && typeof Sortable !== 'undefined') {
 
             Sortable.create(questionList, {
@@ -374,6 +385,7 @@
             });
 
         }
+        @endcan
     });
 </script>
 @endpush

@@ -12,6 +12,7 @@ class MaterialProgressController extends Controller
 {
     public function update(Request $request, Material $material)
     {
+        $this->authorize('complete', $material);
         $user = $request->user();
 
         DB::transaction(function () use ($user, $material) {

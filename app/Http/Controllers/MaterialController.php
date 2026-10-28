@@ -30,7 +30,7 @@ class MaterialController extends Controller
      */
     public function create(Section $section)
     {
-        $this->authorizeManage($section);
+        $this->authorize('create', [Material::class, $section]);
         $materials = $section->materials()->get();
 
         return view('courses.materials.create', [
@@ -61,7 +61,7 @@ class MaterialController extends Controller
         ]);
 
         $section = Section::findOrFail($validated['section_id']);
-        $this->authorizeManage($section);
+        $this->authorize('create', [Material::class, $section]);
 
         DB::transaction(function () use ($request) {
 
@@ -161,6 +161,29 @@ class MaterialController extends Controller
 
     public function download(MediaAsset $asset)
     {
+        $materialAsset = MaterialAsset::with('material.section')
+            ->where('media_asset_id', $asset->id)
+            ->first();
+
+        if ($materialAsset) {
+            $this->authorize('download', $materialAsset->material);
+        } else {
+            $submission = \App\Models\Submission::with('assignment.section')
+                ->whereHas('mediaAssets', fn($query) => $query->whereKey($asset->id))
+                ->first();
+
+            if ($submission) {
+                $this->authorize('view', $submission);
+            } else {
+                $attempt = \App\Models\Attempt::with('quiz.section')
+                    ->whereHas('answers.mediaAssets', fn($query) => $query->whereKey($asset->id))
+                    ->first();
+
+                abort_unless($attempt, 404);
+                $this->authorize('view', $attempt);
+            }
+        }
+
         $path = Storage::disk($asset->storage_disk)->path($asset->file_path);
 
         return response()->download(
@@ -220,6 +243,8 @@ class MaterialController extends Controller
      */
     public function show(Material $material)
     {
+        $this->authorize('view', $material);
+
         $material->load([
             'section.course',
             'materialYoutube',
@@ -269,7 +294,7 @@ class MaterialController extends Controller
         ])->findOrFail($id);
 
         $section = Section::findOrFail($material->section_id);
-        $this->authorizeManage($section);
+        $this->authorize('update', $material);
         $materials = $section->materials()->get();
 
         return view('courses.materials.edit', [
@@ -294,7 +319,7 @@ class MaterialController extends Controller
     public function update(Request $request, string $id)
     {
         $material = Material::findOrFail($id);
-        $this->authorizeManage($material->section);
+        $this->authorize('update', $material);
 
         $validated = $request->validate([
             'name' => 'required|max:255',
@@ -310,7 +335,7 @@ class MaterialController extends Controller
             'epub_file' => 'nullable|mimes:epub|max:51200',
         ]);
 
-        $this->authorizeManage(Section::findOrFail($validated['section_id']));
+        $this->authorize('update', [$material, (int) $validated['section_id']]);
 
         DB::transaction(function () use ($request, $material) {
 
@@ -436,7 +461,7 @@ class MaterialController extends Controller
     public function destroy(string $id)
     {
         $material = Material::with('section')->findOrFail($id);
-        $this->authorizeManage($material->section);
+        $this->authorize('delete', $material);
 
         DB::transaction(function () use ($material) {
 
@@ -457,8 +482,4 @@ class MaterialController extends Controller
         );
     }
 
-    private function authorizeManage(Section $section): void
-    {
-        abort_unless(auth()->user()->isManagerInCourse($section->course_id), 403);
-    }
 }

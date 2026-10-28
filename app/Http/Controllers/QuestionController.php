@@ -6,6 +6,7 @@ use App\Models\QuestionOption;
 use Illuminate\Http\Request;
 use App\Models\Question;
 use App\Models\QuestionAcceptedAnswer;
+use App\Models\QuestionBank;
 use App\Models\Quiz;
 use Illuminate\Support\Facades\DB;
 
@@ -62,13 +63,15 @@ class QuestionController extends Controller
                 ->withInput();
         }
 
+        if (!empty($validated['question_bank_id'])) {
+            $questionBank = QuestionBank::findOrFail($validated['question_bank_id']);
+            $this->authorize('manageQuestions', $questionBank);
+        }
+
         $quiz = null;
         if (!empty($validated['quiz_id'])) {
             $quiz = Quiz::findOrFail($validated['quiz_id']);
-            abort_unless(
-                $request->user()->isManagerInCourse($quiz->section->course->id),
-                403
-            );
+            $this->authorize('update', $quiz);
         }
 
         //Multiple choice/select
@@ -226,6 +229,10 @@ class QuestionController extends Controller
      */
     public function update(Request $request, Question $question)
     {
+        if ($question->question_bank_id) {
+            $this->authorize('manageQuestions', $question->questionBank);
+        }
+
         $validated = $request->validate([
             'question_bank_id' => 'nullable|exists:question_banks,id',
             'question' => 'required|string',
@@ -321,6 +328,10 @@ class QuestionController extends Controller
 
     public function destroy(Question $question)
     {
+        if ($question->question_bank_id) {
+            $this->authorize('manageQuestions', $question->questionBank);
+        }
+
         $questionBankId = $question->question_bank_id;
 
         DB::transaction(function () use ($question) {

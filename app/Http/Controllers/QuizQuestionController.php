@@ -8,16 +8,12 @@ use App\Models\QuestionBank;
 use App\Models\QuizQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class QuizQuestionController extends Controller
 {
     private function authorizeManage(Quiz $quiz)
     {
-        $course = $this->courseFor($quiz);
-        $user = Auth::user();
-
-        abort_unless($user->isManagerInCourse($course->id), 403);
+        $this->authorize('update', $quiz);
     }
 
     // ASSUMPTION: adjust this if Quiz reaches Course a different way.

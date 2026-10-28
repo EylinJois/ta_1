@@ -82,7 +82,7 @@
         <h4 class="section-title mb-0">
             Materials
         </h4>
-        @if(Auth::user()->isManagerInCourse($course->id))
+        @can('manage', $section)
         <div class="d-flex gap-2 section-header-actions">
 
             <a href="{{ route('materials.create', $section) }}"
@@ -100,7 +100,7 @@
             </button>
 
         </div>
-        @endif
+        @endcan
     </div>
 
     <div class="row g-4">
@@ -134,7 +134,7 @@
                             @endswitch
                         </div>
 
-                        @if(Auth::user()->isManagerInCourse($course->id))
+                        @can('manage', $section)
                         <div class="material-card-actions">
                             <a class="icon-action-btn edit-btn"
                                 href="{{ route('materials.edit', $material) }}">
@@ -155,7 +155,7 @@
                             <i class="bi bi-check-circle-fill"></i>
                             Completed
                         </span>
-                        @endif
+                        @endcan
                     </div>
 
                     <h5>
@@ -233,7 +233,7 @@
                             @endif
                         </div>
 
-                        @if(Auth::user()->isManagerInCourse($course->id))
+                        @can('manage', $section)
                         <div class="material-card-actions">
 
                             <a
@@ -254,7 +254,7 @@
                             </form>
 
                         </div>
-                        @endif
+                        @endcan
 
                     </div>
                     <h5>

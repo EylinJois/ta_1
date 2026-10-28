@@ -15,12 +15,12 @@
         <i class="bi bi-arrow-left"></i>
     </a>
 
-    @if($isManager)
+    @can('viewAttempts', $quiz)
     <a href="{{ route('quizzes.attempts.index', $quiz) }}" class="btn btn-warning text-white">
         <i class="bi bi-clipboard-data"></i>
         View All Attempts
     </a>
-    @endif
+    @endcan
 
 </div>
 
@@ -30,9 +30,11 @@
 
         <span class="badge bg-light text-dark mb-3">
             Quiz
-            @if($isManager && !$quiz->visibility)
+            @can('update', $quiz)
+            @if(!$quiz->visibility)
             <span class="text-danger">— Hidden from students</span>
             @endif
+            @endcan
         </span>
 
         <h2>{{ $quiz->name }}</h2>

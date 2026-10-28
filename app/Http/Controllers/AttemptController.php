@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Attempt;
 use App\Models\Quiz;
+use App\Models\Question;
 use App\Models\AttemptAnswer;
 use Illuminate\Support\Facades\DB;
 use App\Models\MediaAsset;
@@ -34,6 +35,17 @@ class AttemptController extends Controller
     public function store(Quiz $quiz)
     {
         $user = auth()->user();
+        $this->authorize('create', [Attempt::class, $quiz]);
+        $isManager = $user->isManagerInCourse($quiz->section->course_id);
+
+        if (!$isManager) {
+            if ($quiz->opened_at && now()->lt($quiz->opened_at)) {
+                return back()->with('error', 'This quiz is not open yet.');
+            }
+            if ($quiz->due_at && now()->gt($quiz->due_at)) {
+                return back()->with('error', 'This quiz is closed.');
+            }
+        }
 
         $existingInProgress = Attempt::where('quiz_id', $quiz->id)
             ->where('user_id', $user->id)
@@ -97,18 +109,58 @@ class AttemptController extends Controller
         //
     }
 
-    private function authorizeOwner(Attempt $attempt)
+    /*
+    |--------------------------------------------------------------------------
+    | Authorization helpers
+    |--------------------------------------------------------------------------
+    */
+
+    // True once the quiz timer or due date has passed (30s grace for network lag)
+    private function attemptExpired(Attempt $attempt): bool
     {
-        abort_unless($attempt->user_id === auth()->id(), 403);
+        $quiz = $attempt->quiz;
+        $grace = 30;
+
+        if ($quiz->duration && $attempt->started_at->copy()->addSeconds($quiz->duration + $grace)->isPast()) {
+            return true;
+        }
+
+        return $quiz->due_at && $quiz->due_at->copy()->addSeconds($grace)->isPast();
     }
+
+    // The quiz_question must belong to this attempt's quiz
+    private function assertQuestionInQuiz(Attempt $attempt, int $quizQuestionId): void
+    {
+        abort_unless(
+            DB::table('quiz_questions')
+                ->where('id', $quizQuestionId)
+                ->where('quiz_id', $attempt->quiz_id)
+                ->exists(),
+            422
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Taking an attempt
+    |--------------------------------------------------------------------------
+    */
 
     public function take(Attempt $attempt)
     {
-        $this->authorizeOwner($attempt);
+        $this->authorize('update', $attempt);
 
         if ($attempt->status !== 'in_progress') {
             return redirect()->route('quizzes.show', $attempt->quiz_id)
                 ->with('error', 'This attempt has already been submitted.');
+        }
+
+        // Time ran out while the student was away: submit what they saved.
+        if ($this->attemptExpired($attempt)) {
+            $this->finalizeAttempt($attempt);
+
+            return redirect()->route('quizzes.show', $attempt->quiz_id)
+                ->with('error', 'Time ran out. Your saved answers were submitted automatically.');
         }
 
         $quiz = $attempt->quiz;
@@ -120,7 +172,7 @@ class AttemptController extends Controller
 
         $questionIds = $quizQuestions->pluck('question_id');
 
-        $questions = \App\Models\Question::with(['options', 'acceptedAnswers'])
+        $questions = Question::with(['options', 'acceptedAnswers'])
             ->whereIn('id', $questionIds)
             ->get()
             ->keyBy('id');
@@ -180,7 +232,7 @@ class AttemptController extends Controller
      */
     public function saveAnswer(Request $request, Attempt $attempt)
     {
-        $this->authorizeOwner($attempt);
+        $this->authorize('update', $attempt);
         abort_unless($attempt->status === 'in_progress', 422);
 
         $validated = $request->validate([
@@ -190,6 +242,23 @@ class AttemptController extends Controller
             'option_ids' => 'nullable|array',
             'option_ids.*' => 'integer|exists:question_options,id',
         ]);
+
+        abort_if($this->attemptExpired($attempt), 422, 'Time is up.');
+        $this->assertQuestionInQuiz($attempt, $validated['quiz_question_id']);
+
+        // Submitted options must belong to this question (they carry score_percent)
+        $questionId = DB::table('quiz_questions')
+            ->where('id', $validated['quiz_question_id'])
+            ->value('question_id');
+
+        $validOptionIds = Question::findOrFail($questionId)->options()->pluck('id');
+
+        $submittedOptionIds = collect($validated['option_ids'] ?? []);
+        if (!empty($validated['select_option_id'])) {
+            $submittedOptionIds->push($validated['select_option_id']);
+        }
+
+        abort_if($submittedOptionIds->diff($validOptionIds)->isNotEmpty(), 422);
 
         DB::transaction(function () use ($validated, $attempt) {
 
@@ -215,16 +284,21 @@ class AttemptController extends Controller
 
     public function uploadAnswerFile(Request $request, Attempt $attempt)
     {
-        $this->authorizeOwner($attempt);
+        $this->authorize('update', $attempt);
         abort_unless($attempt->status === 'in_progress', 422);
 
         $validated = $request->validate([
             'quiz_question_id' => 'required|integer|exists:quiz_questions,id',
-            'file' => 'file',
+            'file' => 'required|file',
         ]);
 
+        abort_if($this->attemptExpired($attempt), 422, 'Time is up.');
+        $this->assertQuestionInQuiz($attempt, $validated['quiz_question_id']);
+
+        $file = $request->file('file');
+
         $quizQuestion = DB::table('quiz_questions')->find($validated['quiz_question_id']);
-        $question = \App\Models\Question::find($quizQuestion->question_id);
+        $question = Question::find($quizQuestion->question_id);
 
         $answer = AttemptAnswer::firstOrCreate(
             ['attempt_id' => $attempt->id, 'quiz_question_id' => $validated['quiz_question_id']]
@@ -241,26 +315,28 @@ class AttemptController extends Controller
 
         if ($question->max_file_size) {
             $maxBytes = $question->max_file_size * 1024 * 1024;
-            if ($request->file('file')->getSize() > $maxBytes) {
+            if ($file->getSize() > $maxBytes) {
                 return response()->json(['message' => "File exceeds the {$question->max_file_size}MB limit."], 422);
             }
         }
 
         if ($question->file_allowed) {
-            $ext = strtolower($request->file('file')->getClientOriginalExtension());
+            // Extension guessed from the file's real MIME type, falling back
+            // to the client-supplied one if it can't be guessed.
+            $ext = strtolower($file->extension() ?: $file->getClientOriginalExtension());
             if (!in_array($ext, $question->file_allowed)) {
                 return response()->json(['message' => 'File type not allowed for this question.'], 422);
             }
         }
 
-        $path = $request->file('file')->store('attempt-answers', 'public');
+        $path = $file->store('attempt-answers', 'public');
 
         $mediaAsset = MediaAsset::create([
             'file_path' => $path,
-            'original_name' => $request->file('file')->getClientOriginalName(),
+            'original_name' => $file->getClientOriginalName(),
             'uploaded_by' => auth()->id(),
-            'mime' => $request->file('file')->getMimeType(),
-            'size' => $request->file('file')->getSize(),
+            'mime' => $file->getMimeType(),
+            'size' => $file->getSize(),
         ]);
 
         $answer->mediaAssets()->attach($mediaAsset->id);
@@ -274,9 +350,9 @@ class AttemptController extends Controller
         ]);
     }
 
-    public function deleteAnswerFile(Attempt $attempt, \App\Models\MediaAsset $mediaAsset)
+    public function deleteAnswerFile(Attempt $attempt, MediaAsset $mediaAsset)
     {
-        $this->authorizeOwner($attempt);
+        $this->authorize('update', $attempt);
         abort_unless($attempt->status === 'in_progress', 422);
 
         $answer = AttemptAnswer::where('attempt_id', $attempt->id)
@@ -292,11 +368,28 @@ class AttemptController extends Controller
 
         return response()->json(['status' => 'ok']);
     }
+
+    /**
+     * Not blocked when expired on purpose, so the timer's auto-submit works.
+     * Answers saved after expiry are already rejected in saveAnswer/upload.
+     */
     public function submit(Attempt $attempt)
     {
-        $this->authorizeOwner($attempt);
+        $this->authorize('update', $attempt);
         abort_unless($attempt->status === 'in_progress', 422);
 
+        $this->finalizeAttempt($attempt);
+
+        return redirect()->route('quizzes.show', $attempt->quiz_id)
+            ->with('success', 'Quiz submitted.');
+    }
+
+    /**
+     * Auto-grade what can be auto-graded and close the attempt.
+     * Shared by submit() and the expired-timer path in take().
+     */
+    private function finalizeAttempt(Attempt $attempt): void
+    {
         DB::transaction(function () use ($attempt) {
 
             $needsManualGrading = false;
@@ -365,63 +458,38 @@ class AttemptController extends Controller
                 'status' => $needsManualGrading ? 'submitted' : 'graded',
             ]);
         });
-
-        return redirect()->route('quizzes.show', $attempt->quiz_id)
-            ->with('success', 'Quiz submitted.');
     }
 
-
-    private function authorizeGrade(Attempt $attempt)
-    {
-        $course = $attempt->quiz->section->course;
-        abort_unless(
-            auth()->user()->isManagerInCourse($course->id),
-            403
-        );
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | Grading / review
+    |--------------------------------------------------------------------------
+    */
 
     public function grade(Attempt $attempt)
     {
-        $this->authorizeGrade($attempt);
+        $this->authorize('grade', $attempt);
 
         abort_if($attempt->status === 'in_progress', 422, 'This attempt is still in progress and cannot be graded yet.');
 
-        $quiz = $attempt->quiz;
-
-        $quizQuestions = DB::table('quiz_questions')
-            ->where('quiz_id', $quiz->id)
-            ->orderBy('order_index')
-            ->get();
-
-        $questions = \App\Models\Question::with(['options', 'acceptedAnswers'])
-            ->whereIn('id', $quizQuestions->pluck('question_id'))
-            ->get()
-            ->keyBy('id');
-
-        $orderedQuestions = $quizQuestions->map(function ($qq) use ($questions) {
-            $question = $questions->get($qq->question_id);
-            if (!$question) return null;
-            $question->quiz_question_id = $qq->id;
-            $question->effective_point = $qq->point_override ?? $question->point;
-            return $question;
-        })->filter()->values();
-
-        $answers = AttemptAnswer::where('attempt_id', $attempt->id)
-            ->with(['selectedOptions', 'mediaAssets', 'selectedOption'])
-            ->get()
-            ->keyBy('quiz_question_id');
-
-        $courseId = $quiz->section->course_id;
-        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers', 'courseId'));
+        return $this->renderReview($attempt);
     }
 
     public function review(Attempt $attempt)
     {
+        $this->authorize('view', $attempt);
+
         if ($attempt->status === 'in_progress') {
-            return redirect()->route('attempts.index', $attempt)
+            return redirect()->route('quizzes.show', $attempt->quiz_id)
                 ->with('error', 'This attempt is still in progress and cannot be reviewed yet.');
         }
 
+        return $this->renderReview($attempt);
+    }
+
+    // grade() and review() render the same view with the same data.
+    private function renderReview(Attempt $attempt)
+    {
         $quiz = $attempt->quiz;
 
         $quizQuestions = DB::table('quiz_questions')
@@ -429,7 +497,7 @@ class AttemptController extends Controller
             ->orderBy('order_index')
             ->get();
 
-        $questions = \App\Models\Question::with(['options', 'acceptedAnswers'])
+        $questions = Question::with(['options', 'acceptedAnswers'])
             ->whereIn('id', $quizQuestions->pluck('question_id'))
             ->get()
             ->keyBy('id');
@@ -447,13 +515,12 @@ class AttemptController extends Controller
             ->get()
             ->keyBy('quiz_question_id');
 
-        $courseId = $quiz->section->course_id;
-
-        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers', 'courseId'));
+        return view('quiz.attempt.review', compact('attempt', 'quiz', 'orderedQuestions', 'answers'));
     }
+
     public function saveGrade(Request $request, Attempt $attempt)
     {
-        $this->authorizeGrade($attempt);
+        $this->authorize('grade', $attempt);
 
         // Build per-question max-point rules dynamically, since each question
         // has its own point value (with quiz_questions.point_override taking
@@ -477,6 +544,12 @@ class AttemptController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Only accept scores for questions that belong to this quiz
+        $validIds = $maxPoints->keys()->map(fn($id) => (string) $id);
+        abort_if(
+            collect(array_keys($validated['scores']))->map(fn($id) => (string) $id)->diff($validIds)->isNotEmpty(),
+            422
+        );
 
         DB::transaction(function () use ($validated, $attempt) {
 

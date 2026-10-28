@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\QuestionBank;
-use App\Models\User;
-use Auth;
 use App\Models\Question;
 use App\Models\Course;
 
@@ -51,18 +49,21 @@ class QuestionBankController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'course_id' => 'nullable|exists:courses,id',
             'is_public' => 'required|boolean',
         ]);
+
+        $this->authorize('create', [QuestionBank::class, isset($validated['course_id']) ? (int) $validated['course_id'] : null]);
+
         QuestionBank::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'course_id' => $request->course_id,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'course_id' => $validated['course_id'] ?? null,
             'created_by' => auth()->id(),
-            'is_public' => $request->is_public,
+            'is_public' => $validated['is_public'],
         ]);
 
         return redirect()->route('questionbank.index')->with('success', 'Question Bank created successfully.');
@@ -70,6 +71,8 @@ class QuestionBankController extends Controller
 
     public function reorder(Request $request, QuestionBank $questionBank)
     {
+        $this->authorize('manageQuestions', $questionBank);
+
         $request->validate([
             'questions' => 'required|array',
             'questions.*.id' => 'required|exists:questions,id',
@@ -88,16 +91,10 @@ class QuestionBankController extends Controller
     public function show($id)
     {
         $questionBank = QuestionBank::findOrFail($id);
-
-        if (
-            !$questionBank->is_public &&
-            $questionBank->created_by !== Auth::id()
-        ) {
-            abort(403);
-        }
+        $this->authorize('view', $questionBank);
 
         $questionBank->load('questions');
-        $user = User::findOrFail(Auth::user()->id);
+        $user = auth()->user();
         $courses = Course::whereHas('classes.users', fn($query) => $query->where('users.id', $user->id))
             ->with('classes.users')
             ->get();
@@ -107,20 +104,24 @@ class QuestionBankController extends Controller
 
     public function update($id, Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'course_id' => 'nullable|exists:courses,id',
-            'is_public' => 'required|boolean',
+            'visibility' => 'required_without:is_public|boolean',
+            'is_public' => 'required_without:visibility|boolean',
         ]);
 
         $questionBank = QuestionBank::findOrFail($id);
+        $courseId = isset($validated['course_id']) ? (int) $validated['course_id'] : null;
+        $this->authorize('update', [$questionBank, $courseId]);
 
+        $isPublic = $validated['is_public'] ?? $validated['visibility'] ?? null;
         $questionBank->update([
-            'name' => $request->name,
-            'description' => $request->description,
-            'course_id' => $request->course_id,
-            'is_public' => $request->is_public,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'course_id' => $validated['course_id'] ?? null,
+            'is_public' => $isPublic,
         ]);
 
         return redirect()->route('questionbank.index')->with('success', 'Question Bank updated successfully.');
@@ -129,6 +130,7 @@ class QuestionBankController extends Controller
     public function destroy($id)
     {
         $questionBank = QuestionBank::findOrFail($id);
+        $this->authorize('delete', $questionBank);
         $questionBank->delete();
         return redirect()->route('questionbank.index')->with('success', 'Question Bank deleted successfully.');
     }

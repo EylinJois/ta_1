@@ -17,19 +17,21 @@
             <i class="bi bi-arrow-left"></i>
         </a>
         <h4 class="section-title mb-0">{{ $course->name }} Participants</h4>
-        @if($isAdmin)
+        @can('manageParticipants', $course)
         <div class="d-flex gap-2">
+            @can('manageClasses', $course)
             <button class="btn btn-secondary-custom" data-bs-toggle="modal" data-bs-target="#classModal">
                 <i class="bi bi-diagram-3"></i>
                 Add Class
             </button>
+            @endcan
 
             <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#participantModal">
                 <i class="bi bi-plus-circle"></i>
                 Add Participant
             </button>
         </div>
-        @endif
+        @endcan
     </div>
 
     <div class="table-responsive">
@@ -59,7 +61,7 @@
                                 <span class="badge bg-secondary ms-2">{{ $class->users->count() }}</span>
                             </span>
 
-                            @if($isAdmin)
+                            @can('manageParticipants', $course)
                             <span class="d-flex gap-1">
                                 {{-- Rename --}}
                                 <button type="button"
@@ -85,7 +87,7 @@
                                     </button>
                                 </form>
                             </span>
-                            @endif
+                            @endcan
                         </div>
                     </td>
                 </tr>
@@ -131,7 +133,7 @@
 
                     @if($canManage)
                     <td class="text-center actions-cell">
-                        @if($isAdmin)
+                        @can('manageParticipants', $course)
                         <button data-bs-toggle="modal"
                             data-bs-target="#editParticipantModal{{ $class->id }}-{{ $participant->id }}"
                             class="icon-action-btn edit-btn" title="Edit Participant">
@@ -150,7 +152,7 @@
                                 <i class="bi bi-trash-fill"></i>
                             </button>
                         </form>
-                        @endif
+                        @endcan
 
                         <a href="{{ route('progress.course', ['courseId' => $course->id, 'studentId' => $participant->id, 'fromCourse' => true]) }}"
                             class="icon-action-btn edit-btn" title="View Progress">
@@ -182,6 +184,7 @@
 </div>
 
 {{-- Add Participant Modal --}}
+@can('manageParticipants', $course)
 <div class="modal fade"
     id="participantModal"
     tabindex="-1">
@@ -291,9 +294,10 @@
         </div>
     </div>
 </div>
+@endcan
 
 {{-- Add Class Modal --}}
-@if($isAdmin)
+@can('manageClasses', $course)
 <div class="modal fade" id="classModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal">
@@ -337,10 +341,10 @@
         </div>
     </div>
 </div>
-@endif
+@endcan
 
 {{-- Rename Edit Class Modal --}}
-@if($isAdmin)
+@can('manageClasses', $course)
 @foreach($classes as $class)
 @php $hasRenameError = $errors->renameClass->any() && (int) old('rename_class_id') === $class->id; @endphp
 <div class="modal fade" id="renameClassModal{{ $class->id }}" tabindex="-1" aria-hidden="true">
@@ -386,9 +390,9 @@
     </div>
 </div>
 @endforeach
-@endif
+@endcan
 
-@if($isAdmin)
+@can('manageParticipants', $course)
 @foreach($classes as $class)
 @foreach($class->users as $participant)
 <div class="modal fade" id="editParticipantModal{{ $class->id }}-{{ $participant->id }}" tabindex="-1" aria-hidden="true">
@@ -448,7 +452,7 @@
 </div>
 @endforeach
 @endforeach
-@endif
+@endcan
 
 @push('scripts')
 @if($errors->has('name'))

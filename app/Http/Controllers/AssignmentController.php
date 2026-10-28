@@ -28,10 +28,8 @@ class AssignmentController extends Controller
     {
         $user = auth()->user();
         $course = $assignment->section->course;
+        $this->authorize('view', $assignment);
         $isManager = $user->isManagerInCourse($course->id);
-
-        $isVisible = $isManager || $user->id === $assignment->created_by || $assignment->visibility;
-        abort_unless($isVisible, 404);
 
         $isOpen = !$assignment->opened_at || now()->gte($assignment->opened_at);
         abort_unless($isManager || $isOpen, 404, 'This assignment is not open yet.');
@@ -106,28 +104,16 @@ class AssignmentController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    private function authorizeManage($section)
-    {
-        $course = $section->course;
-
-        abort_if(is_null($course), 500, 'Section is not linked to a valid course.');
-
-        abort_unless(
-            auth()->user()->isManagerInCourse($course->id),
-            403
-        );
-    }
-
     public function create(Section $section)
     {
-        $this->authorizeManage($section);
+        $this->authorize('create', [Assignment::class, $section]);
 
         return view('assignments.create', compact('section'));
     }
 
     public function store(Request $request, Section $section)
     {
-        $this->authorizeManage($section);
+        $this->authorize('create', [Assignment::class, $section]);
 
         $validated = $this->validateAssignment($request);
 
@@ -187,14 +173,14 @@ class AssignmentController extends Controller
 
     public function edit(Assignment $assignment)
     {
-        $this->authorizeManage($assignment->section);
+        $this->authorize('update', $assignment);
 
         return view('assignments.edit', compact('assignment'));
     }
 
     public function update(Request $request, Assignment $assignment)
     {
-        $this->authorizeManage($assignment->section);
+        $this->authorize('update', $assignment);
 
         $validated = $this->validateAssignment($request);
 
@@ -283,7 +269,7 @@ class AssignmentController extends Controller
     public function destroy(string $id)
     {
         $assignment = Assignment::findOrFail($id);
-        $this->authorizeManage($assignment->section);
+        $this->authorize('delete', $assignment);
 
         DB::transaction(function () use ($assignment) {
 

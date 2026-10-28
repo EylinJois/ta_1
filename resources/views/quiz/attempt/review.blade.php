@@ -121,7 +121,7 @@
 
             </div>
 
-            @if(auth()->user()->isManagerInCourse($courseId))
+            @can('grade', $attempt)
             {{-- SCORE INPUT (managers) --}}
             <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
 
@@ -164,7 +164,7 @@
                 </div>
 
             </div>
-            @endif
+            @endcan
 
         </div>
 
@@ -172,7 +172,7 @@
 
     </div>
 
-    @if(auth()->user()->isManagerInCourse($courseId))
+    @can('grade', $attempt)
     <div class="d-flex justify-content-end">
         <button type="submit" class="btn btn-theme btn-lg px-5">
             <i class="bi bi-check-circle"></i> Save Grade
@@ -185,7 +185,7 @@
             Finish Review
         </a>
     </div>
-    @endif
+    @endcan
 </form>
 
 @endsection

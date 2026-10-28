@@ -29,6 +29,7 @@ class SubmissionController extends Controller
 
     public function store(Request $request, Assignment $assignment)
     {
+        $this->authorize('create', [Submission::class, $assignment]);
         $user = auth()->user();
 
         $validated = $request->validate([
@@ -92,6 +93,7 @@ class SubmissionController extends Controller
 
     public function uploadFile(Request $request, Assignment $assignment)
     {
+        $this->authorize('create', [Submission::class, $assignment]);
         $user = auth()->user();
 
         $existingSubmission = Submission::where('assignment_id', $assignment->id)
@@ -152,6 +154,8 @@ class SubmissionController extends Controller
         $submission = Submission::where('assignment_id', $assignment->id)
             ->where('user_id', $user->id)
             ->firstOrFail();
+        $this->authorize('update', $submission);
+        abort_unless($submission->mediaAssets()->whereKey($mediaAsset->id)->exists(), 404);
 
         $this->editableGuard($assignment, $submission);
 
@@ -162,15 +166,9 @@ class SubmissionController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    private function authorizeManage($section)
-    {
-        $course = $section->course;
-        abort_unless(auth()->user()->isManagerInCourse($course->id), 403);
-    }
-
     public function index(Assignment $assignment)
     {
-        $this->authorizeManage($assignment->section);
+        $this->authorize('viewAny', [Submission::class, $assignment]);
 
         $submissions = Submission::with('user')
             ->where('assignment_id', $assignment->id)
@@ -184,7 +182,7 @@ class SubmissionController extends Controller
 
     public function edit(Submission $submission)
     {
-        $this->authorizeManage($submission->assignment->section);
+        $this->authorize('grade', $submission);
 
         $submission->load(['user', 'mediaAssets', 'assignment']);
         $assignment = $submission->assignment;
@@ -194,7 +192,7 @@ class SubmissionController extends Controller
 
     public function gradeUpdate(Request $request, Submission $submission)
     {
-        $this->authorizeManage($submission->assignment->section);
+        $this->authorize('grade', $submission);
 
         $validated = $request->validate([
             'score' => 'required|numeric|min:0',

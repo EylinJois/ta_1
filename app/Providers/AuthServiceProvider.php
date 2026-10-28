@@ -2,7 +2,22 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Models\Assignment;
+use App\Models\Attempt;
+use App\Models\Course;
+use App\Models\Material;
+use App\Models\Quiz;
+use App\Models\QuestionBank;
+use App\Models\Section;
+use App\Models\Submission;
+use App\Policies\AssignmentPolicy;
+use App\Policies\AttemptPolicy;
+use App\Policies\CoursePolicy;
+use App\Policies\MaterialPolicy;
+use App\Policies\QuizPolicy;
+use App\Policies\QuestionBankPolicy;
+use App\Policies\SectionPolicy;
+use App\Policies\SubmissionPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -13,7 +28,14 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+        Section::class => SectionPolicy::class,
+        Course::class => CoursePolicy::class,
+        Material::class => MaterialPolicy::class,
+        Quiz::class => QuizPolicy::class,
+        QuestionBank::class => QuestionBankPolicy::class,
+        Attempt::class => AttemptPolicy::class,
+        Assignment::class => AssignmentPolicy::class,
+        Submission::class => SubmissionPolicy::class,
     ];
 
     /**
@@ -22,7 +44,5 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
-
-        //
     }
 }

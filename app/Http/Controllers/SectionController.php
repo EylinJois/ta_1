@@ -34,7 +34,7 @@ class SectionController extends Controller
             'course_id' => 'required|exists:courses,id',
         ]);
 
-        abort_unless(auth()->user()->isManagerInCourse((int) $validated['course_id']), 403);
+        $this->authorize('create', [Section::class, (int) $validated['course_id']]);
 
         $lastOrderIdx = Section::where('course_id', $validated['course_id'])
             ->max('order_idx');
@@ -66,7 +66,7 @@ class SectionController extends Controller
 
         $sections = collect($validated['sections'])->map(function ($section) {
             $record = Section::findOrFail($section['id']);
-            abort_unless(auth()->user()->isManagerInCourse($record->course_id), 403);
+            $this->authorize('update', $record);
             return [$record, $section['order_idx']];
         });
 
@@ -89,6 +89,7 @@ class SectionController extends Controller
         'quizzes',
         'assignments',
     ])->findOrFail($id);
+    $this->authorize('view', $section);
 
     $course = $section->course;
 
@@ -174,7 +175,7 @@ class SectionController extends Controller
     public function update(Request $request, string $id)
     {
         $section = Section::findOrFail($id);
-        abort_unless(auth()->user()->isManagerInCourse($section->course_id), 403);
+        $this->authorize('update', $section);
 
         $request->validate([
             'name' => 'required',
@@ -197,7 +198,7 @@ class SectionController extends Controller
     public function destroy(string $id)
     {
         $section = Section::findOrFail($id);
-        abort_unless(auth()->user()->isManagerInCourse($section->course_id), 403);
+        $this->authorize('delete', $section);
         $section->delete();
 
         return back()->with(

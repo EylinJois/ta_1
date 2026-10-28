@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Section;
-use App\Models\Course;
 use App\Models\Quiz;
 use App\Models\QuestionBank;
 use App\Models\Attempt;
 use App\Models\Activity;
-use Auth;
 
 class QuizController extends Controller
 {
@@ -128,25 +126,17 @@ class QuizController extends Controller
 
     private function authorizeManage(Quiz $quiz)
     {
-        $this->authorizeManageSection($quiz->section);
+        $this->authorize('update', $quiz);
     }
 
     private function authorizeManageSection(Section $section)
     {
-        $course = $section->course;
-        $user = Auth::user();
-
-        abort_unless($user->isManagerInCourse($course->id), 403);
+        $this->authorize('create', [Quiz::class, $section]);
     }
 
     public function attempts(Request $request, Quiz $quiz)
     {
-        $course = $quiz->section->course;
-
-        abort_unless(
-            auth()->user()->isManagerInCourse($course->id),
-            403
-        );
+        $this->authorize('viewAttempts', $quiz);
 
         $status = $request->input('status', 'all'); // all | in_progress | submitted | graded
         $search = $request->input('search');
@@ -195,11 +185,10 @@ class QuizController extends Controller
     {
         $user = auth()->user();
         $course = $quiz->section->course;
-        $isManager = $user->isManagerInCourse($course->id);
 
-        // Hidden quizzes are only visible to managers, same rule as the
-        // section listing.
-        abort_unless($isManager || $quiz->visibility, 404);
+        $this->authorize('view', $quiz);
+
+        $isManager = $user->isManagerInCourse($course->id);
 
         $attempts = Attempt::where('quiz_id', $quiz->id)
             ->where('user_id', $user->id)
@@ -270,11 +259,7 @@ class QuizController extends Controller
      */
     public function update(Request $request, Quiz $quiz)
     {
-        $course = $quiz->section->course;
-        abort_unless(
-            auth()->user()->isManagerInCourse($course->id),
-            403
-        );
+        $this->authorize('update', $quiz);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

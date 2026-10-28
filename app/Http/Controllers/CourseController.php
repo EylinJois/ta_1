@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Clas;
 use App\Models\MediaAsset;
 use Illuminate\Validation\Rule;
-use Auth;
 
 class CourseController extends Controller
 {
@@ -28,11 +27,15 @@ class CourseController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Course::class);
+
         return view('courses.create');
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Course::class);
+
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'img'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // KB
@@ -92,7 +95,7 @@ class CourseController extends Controller
     public function destroy($id)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('delete', $course);
 
         if ($course->imgMedia) {
             Storage::delete('public/' . $course->imgMedia);
@@ -106,14 +109,14 @@ class CourseController extends Controller
     public function edit($id)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('update', $course);
         return view('courses.edit', compact('course'));
     }
 
     public function update(Request $request, $id)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('update', $course);
 
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
@@ -172,6 +175,7 @@ class CourseController extends Controller
     public function show($id)
     {
         $course = Course::findOrFail($id);
+        $this->authorize('view', $course);
         $user   = auth()->user();
 
 
@@ -180,8 +184,6 @@ class CourseController extends Controller
             ->with('users')
             ->orderBy('name')
             ->get();
-
-        abort_if($classes->isEmpty(), 403);
 
         $users = User::whereNotIn('id', $classes->flatMap->users->pluck('id')->unique())->get();
 
@@ -200,11 +202,11 @@ class CourseController extends Controller
     public function indexParticipants($id)
     {
         $course  = Course::findOrFail($id);
+        $this->authorize('view', $course);
         $classes = $course->classes()->with('users')->orderBy('name')->get();
         $users   = User::orderBy('name')->get();
 
         $authUser  = auth()->user();
-        $isAdmin   = $authUser->isAdminInCourse($course->id);
         $canManage = $authUser->isManagerInCourse($course->id);
         $colspan   = $canManage ? 5 : 4;
 
@@ -215,7 +217,6 @@ class CourseController extends Controller
             'course',
             'classes',
             'users',
-            'isAdmin',
             'canManage',
             'colspan',
             'total',
@@ -225,7 +226,7 @@ class CourseController extends Controller
     public function addParticipant(Request $request, $id)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('manageParticipants', $course);
 
         $validated = $request->validate([
             'class_id' => 'required|exists:classes,id',
@@ -255,7 +256,7 @@ class CourseController extends Controller
     public function updateParticipantRole(Request $request, $id, $participantId)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('manageParticipants', $course);
 
         $validated = $request->validate([
             'old_class_id' => 'required|exists:classes,id',
@@ -294,7 +295,7 @@ class CourseController extends Controller
     public function removeParticipant(Request $request, $id, $participantId)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('manageParticipants', $course);
         $validated = $request->validate(['class_id' => 'required|exists:classes,id']);
 
         $class = $course->classes()->findOrFail($validated['class_id']);
@@ -306,7 +307,7 @@ class CourseController extends Controller
     public function storeClass(Request $request, $id)
     {
         $course = Course::findOrFail($id);
-        $this->authorizeCourseAdmin($course);
+        $this->authorize('manageClasses', $course);
 
         $validated = $request->validate([
             'name' => [
@@ -331,9 +332,8 @@ class CourseController extends Controller
     public function updateClass(Request $request, $id, $classId)
     {
         $course = Course::findOrFail($id);
-        abort_unless(auth()->user()->isAdmin($classId), 403);
-
         $class = $course->classes()->findOrFail($classId);
+        $this->authorize('manageClasses', $course);
 
         // named error bag so these errors don't trigger the "Add Class" modal
         $validated = $request->validateWithBag('renameClass', [
@@ -356,9 +356,8 @@ class CourseController extends Controller
     public function destroyClass($id, $classId)
     {
         $course = Course::findOrFail($id);
-        abort_unless(auth()->user()->isAdmin($classId), 403);
-
         $class = $course->classes()->findOrFail($classId);
+        $this->authorize('manageClasses', $course);
 
         // Remove every class_user_role row for this class (members leave the class
         // and therefore the course), then delete the class itself.
@@ -366,10 +365,5 @@ class CourseController extends Controller
         $class->delete();
 
         return back()->with('success', 'Class deleted and its participants were removed.');
-    }
-
-    private function authorizeCourseAdmin(Course $course): void
-    {
-        abort_unless(auth()->user()->isAdminInCourse($course->id), 403);
     }
 }

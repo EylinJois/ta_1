@@ -20,9 +20,11 @@
     <div>
         <span class="badge bg-light text-dark mb-3">
             Assignment
-            @if($isManager && !$assignment->visibility)
+            @can('update', $assignment)
+            @if(!$assignment->visibility)
             <span class="text-danger">— Hidden from students</span>
             @endif
+            @endcan
         </span>
         <h2>{{ $assignment->name }}</h2>
         <p class="mb-3">{!! nl2br(e($assignment->description)) !!}</p>
@@ -40,7 +42,7 @@
                 </strong>
             </div>
 
-            @if($isManager)
+            @can('viewAny', [\App\Models\Submission::class, $assignment])
             <div class="assignment-meta-item">
                 <span>Total submissions</span>
                 <strong>{{ $submissions->count() }}</strong>
@@ -71,7 +73,7 @@
                     @endif
                 </strong>
             </div>
-            @endif
+            @endcan
 
             <div class="assignment-meta-item">
                 <span>Due on</span>
@@ -82,7 +84,7 @@
     </div>
 </div>
 
-@if($isManager)
+@can('viewAny', [\App\Models\Submission::class, $assignment])
 
 {{-- ===================== MANAGER VIEW: SUBMISSIONS LIST ===================== --}}
 
@@ -165,7 +167,7 @@
         <p class="text-muted">No students have submitted this assignment yet.</p>
     </div>
 
-    @endif
+    @endcan
 
 </div>
 
@@ -278,7 +280,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        const isManager = @json($isManager);
+        const isManager = @json(auth()->user()->can('viewAny', [\App\Models\Submission::class, $assignment]));
         if (isManager) {
             return;
         }

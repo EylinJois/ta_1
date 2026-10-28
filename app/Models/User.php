@@ -126,6 +126,11 @@ class User extends Authenticatable
             ->exists();
     }
 
+    public function isEnrolledInCourse(int $courseId): bool
+    {
+        return $this->hasRoleInCourse($courseId, ['admin', 'teacher', 'student']);
+    }
+
     public function isAdminInCourse(int $courseId): bool
     {
         return $this->hasRoleInCourse($courseId, 'admin');

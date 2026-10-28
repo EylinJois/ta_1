@@ -70,8 +70,6 @@
 
     @foreach($questionBanks as $questionBank)
 
-        @php $isOwner = $questionBank->created_by === auth()->id(); @endphp
-
         <div class="col-lg-4 col-md-6">
 
             <div class="qbank-card">
@@ -82,12 +80,12 @@
                         <i class="bi bi-journal-text"></i>
                     </div>
 
-                    @if(!$isOwner)
+                    @cannot('manageQuestions', $questionBank)
                     <span class="qbank-shared-tag">
                         <i class="bi bi-people-fill"></i>
                         Shared
                     </span>
-                    @endif
+                    @endcannot
 
                     <div class="qbank-overlay">
                         <a href="{{ route('questionbank.show', $questionBank->id) }}" class="btn btn-light btn-sm">View</a>

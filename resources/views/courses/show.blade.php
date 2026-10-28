@@ -137,7 +137,7 @@
     <h4 class="section-title mb-0">
         Course Sections
     </h4>
-    @if(Auth::user()->isAdminInCourse($course->id))
+    @can('create', [\App\Models\Section::class, $course->id])
     <button class="btn btn-theme add-section-btn"
         data-bs-toggle="modal"
         data-bs-target="#addSectionModal">
@@ -146,7 +146,7 @@
         Add Section
 
     </button>
-    @endif
+    @endcan
 </div>
 
 
@@ -155,7 +155,7 @@
 
 <div id="sectionsContainer">
     @foreach($course->sections as $section)
-    @if(Auth::user()->isManagerInCourse($course->id) || $section->visibility)
+    @can('view', $section)
     <div class="section-item section-link-wrapper"
         data-id="{{ $section->id }}"
         role="link"
@@ -167,12 +167,12 @@
         <div class="section-top">
 
             <div class="section-left">
-                @if(Auth::user()->isManagerInCourse($course->id))
+                @can('manage', $section)
                 <div class="drag-handle">
                     <i class="bi bi-grip-vertical"></i>
                 </div>
-                @endif
-                <div class="section-icon-wrapper {{ Auth::user()->isManagerInCourse($course->id) ? 'course-manager' : '' }}">
+                @endcan
+                <div class="section-icon-wrapper @can('manage', $section) course-manager @endcan">
                     <i class="bi bi-journal-text"></i>
                 </div>
 
@@ -180,7 +180,7 @@
                     <h5 class="mb-1">
                         {{ $section->name ?? '-' }}
                     </h5>
-                    @if(Auth::user()->isManagerInCourse($course->id))
+                    @can('manage', $section)
                     @if(isset($section->visibility) && $section->visibility)
                     <span class="badge bg-success">
                         Visible
@@ -192,11 +192,11 @@
                         Hidden
                     </span>
 
-                    @endif
+                    @endcan
                     @endif
                 </div>
             </div>
-            @if(Auth::user()->isManagerInCourse($course->id))
+            @can('manage', $section)
             <div class="section-actions">
 
 
@@ -228,7 +228,7 @@
                 </form>
 
             </div>
-            @endif
+            @endcan
         </div>
 
     </div>
@@ -340,7 +340,7 @@
         </div>
 
     </div>
-    @endif
+    @endcan
     @endforeach
 </div>
 @else
