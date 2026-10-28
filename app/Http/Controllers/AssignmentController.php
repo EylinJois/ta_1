@@ -24,7 +24,7 @@ class AssignmentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Assignment $assignment)
+    public function show(Request $request, Assignment $assignment)
     {
         $user = auth()->user();
         $course = $assignment->section->course;
@@ -58,9 +58,26 @@ class AssignmentController extends Controller
 
         $canSubmitLate = !$isPastDue || $assignment->allow_late_submission;
 
+        $classes = $isManager
+            ? $course->classes()->orderBy('name')->get()
+            : collect();
+        $classId = $request->input('class_id', 'all');
+        if ($classId !== 'all') {
+            $selectedClass = $classes->first(
+                fn ($class) => is_scalar($classId) && (string) $class->id === (string) $classId
+            );
+            $classId = $selectedClass?->id ?? 'all';
+        }
+
         $submissions = $isManager
             ? Submission::with('user')
             ->where('assignment_id', $assignment->id)
+            ->when($classId !== 'all', function ($q) use ($classId) {
+                $q->whereHas('user.classes', function ($classQuery) use ($classId) {
+                    $classQuery->where('classes.id', $classId)
+                        ->where('class_user_role.role', 'student');
+                });
+            })
             ->orderByRaw("FIELD(status, 'submitted', 'late', 'graded', 'draft')")
             ->orderByDesc('submitted_at')
             ->get()
@@ -74,7 +91,9 @@ class AssignmentController extends Controller
             'canEdit',
             'canSubmitLate',
             'isManager',
-            'submissions'
+            'submissions',
+            'classes',
+            'classId'
         ));
     }
 

@@ -89,26 +89,32 @@
             class="form-control"
             placeholder="Search by student name or email..."
             onchange="this.form.submit()">
+        @if($status !== 'all')
+        <input type="hidden" name="status" value="{{ $status }}">
+        @endif
+        @if($classId !== 'all')
+        <input type="hidden" name="class_id" value="{{ $classId }}">
+        @endif
     </div>
 
     <div class="qbank-filter-pills">
 
-        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search])) }}"
+        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'class_id' => $classId !== 'all' ? $classId : null])) }}"
             class="filter-pill {{ $status === 'all' ? 'active' : '' }}">
             All
         </a>
 
-        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'status' => 'in_progress'])) }}"
+        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'class_id' => $classId !== 'all' ? $classId : null, 'status' => 'in_progress'])) }}"
             class="filter-pill {{ $status === 'in_progress' ? 'active' : '' }}">
             In Progress
         </a>
 
-        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'status' => 'submitted'])) }}"
+        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'class_id' => $classId !== 'all' ? $classId : null, 'status' => 'submitted'])) }}"
             class="filter-pill {{ $status === 'submitted' ? 'active' : '' }}">
             Submitted
         </a>
 
-        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'status' => 'graded'])) }}"
+        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'class_id' => $classId !== 'all' ? $classId : null, 'status' => 'graded'])) }}"
             class="filter-pill {{ $status === 'graded' ? 'active' : '' }}">
             Graded
         </a>
@@ -116,6 +122,24 @@
     </div>
 
 </form>
+
+@if($classes->isNotEmpty())
+<div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+    <span class="fw-semibold text-muted">Class:</span>
+    <div class="qbank-filter-pills">
+        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'status' => $status !== 'all' ? $status : null])) }}"
+            class="filter-pill {{ $classId === 'all' ? 'active' : '' }}">
+            All classes
+        </a>
+        @foreach($classes as $class)
+        <a href="{{ route('quizzes.attempts.index', array_filter(['quiz' => $quiz->id, 'search' => $search, 'status' => $status !== 'all' ? $status : null, 'class_id' => $class->id])) }}"
+            class="filter-pill {{ (string) $classId === (string) $class->id ? 'active' : '' }}">
+            {{ $class->name }}
+        </a>
+        @endforeach
+    </div>
+</div>
+@endif
 
 <div class="table-card">
 
@@ -201,7 +225,7 @@
         <i class="bi bi-clock-history"></i>
         <h5>No Attempts Found</h5>
         <p class="text-muted">
-            @if($search || $status !== 'all')
+            @if($search || $status !== 'all' || $classId !== 'all')
             No attempts match your search or filter.
             @else
             No students have attempted this quiz yet.

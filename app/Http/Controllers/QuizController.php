@@ -140,9 +140,23 @@ class QuizController extends Controller
 
         $status = $request->input('status', 'all'); // all | in_progress | submitted | graded
         $search = $request->input('search');
+        $classes = $quiz->section->course->classes()->orderBy('name')->get();
+        $classId = $request->input('class_id', 'all');
+        if ($classId !== 'all') {
+            $selectedClass = $classes->first(
+                fn ($class) => is_scalar($classId) && (string) $class->id === (string) $classId
+            );
+            $classId = $selectedClass?->id ?? 'all';
+        }
 
         $attempts = Attempt::with('user')
             ->where('quiz_id', $quiz->id)
+            ->when($classId !== 'all', function ($q) use ($classId) {
+                $q->whereHas('user.classes', function ($classQuery) use ($classId) {
+                    $classQuery->where('classes.id', $classId)
+                        ->where('class_user_role.role', 'student');
+                });
+            })
             ->when($status !== 'all', function ($q) use ($status) {
                 $q->where('status', $status);
             })
@@ -157,7 +171,7 @@ class QuizController extends Controller
 
         // Summary stats across ALL attempts for this quiz, unaffected by the
         // status/search filters above — these describe the quiz as a whole.
-        $allAttempts = $status === 'all' && !$search
+        $allAttempts = $status === 'all' && !$search && $classId === 'all'
             ? $attempts
             : Attempt::where('quiz_id', $quiz->id)->get();
 
@@ -172,6 +186,8 @@ class QuizController extends Controller
         return view('quiz.stats', compact(
             'quiz',
             'attempts',
+            'classes',
+            'classId',
             'status',
             'search',
             'totalAttempts',

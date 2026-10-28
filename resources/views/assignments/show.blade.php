@@ -97,6 +97,24 @@
         </h5>
     </div>
 
+    @if($classes->isNotEmpty())
+    <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+        <span class="fw-semibold text-muted">Class:</span>
+        <div class="qbank-filter-pills">
+            <a href="{{ route('assignments.show', $assignment) }}"
+                class="filter-pill {{ $classId === 'all' ? 'active' : '' }}">
+                All classes
+            </a>
+            @foreach($classes as $class)
+            <a href="{{ route('assignments.show', ['assignment' => $assignment, 'class_id' => $class->id]) }}"
+                class="filter-pill {{ (string) $classId === (string) $class->id ? 'active' : '' }}">
+                {{ $class->name }}
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     @if($submissions->isNotEmpty())
 
     <div class="table-responsive">
