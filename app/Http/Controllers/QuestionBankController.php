@@ -93,7 +93,7 @@ class QuestionBankController extends Controller
         $questionBank = QuestionBank::findOrFail($id);
         $this->authorize('view', $questionBank);
 
-        $questionBank->load('questions');
+        $questionBank->load('questions.options', 'questions.acceptedAnswers');
         $user = auth()->user();
         $courses = Course::whereHas('classes.users', fn($query) => $query->where('users.id', $user->id))
             ->with('classes.users')

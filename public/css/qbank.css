@@ -542,7 +542,32 @@ html, body{
     gap:18px;
 }
 
+.question-view-trigger{
+    position:absolute;
+    inset:0;
+    z-index:1;
+    padding:0;
+    border:0;
+    border-radius:inherit;
+    background:transparent;
+    cursor:pointer;
+}
+
+.question-view-trigger:focus-visible{
+    outline:3px solid #D62828;
+    outline-offset:2px;
+}
+
+.quiz-question-row .drag-handle,
+.quiz-question-row .icon-action-btn,
+.question-item .drag-handle,
+.question-item .question-actions{
+    position:relative;
+    z-index:2;
+}
+
 .question-item{
+    position:relative;
     display:flex;
     justify-content:space-between;
     align-items:center;

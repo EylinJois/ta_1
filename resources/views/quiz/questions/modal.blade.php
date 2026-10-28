@@ -2,6 +2,7 @@
     $question     = $question ?? null;
     $questionBank = $questionBank ?? null;
     $quiz         = $quiz ?? null;
+    $readOnly     = $readOnly ?? false;
     $isEdit       = (bool) $question;
 
     $modalId = $modalId ?? ($isEdit ? 'editQuestionModal' . $question->id : 'createQuestionModal');
@@ -50,6 +51,96 @@
     $currentType = old('type', $question->type ?? 'choice');
 @endphp
 
+@if($readOnly)
+<div class="modal fade"
+    id="{{ $modalId }}"
+    tabindex="-1"
+    aria-labelledby="{{ $modalId }}Label"
+    aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ $modalId }}Label">
+                    <i class="bi bi-eye me-2"></i>
+                    View Question
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6 class="form-label">Question</h6>
+                    <div class="p-3 bg-light rounded text-break" style="white-space: pre-wrap;">{{ $question->question }}</div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <span class="form-label d-block">Question Type</span>
+                        <span>{{ ucfirst(str_replace('_', ' ', $question->type)) }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="form-label d-block">Points</span>
+                        <span>{{ $question->pivot->point_override ?? $question->point }} pt</span>
+                    </div>
+                </div>
+
+                @if(in_array($question->type, ['choice', 'multiple_select'], true))
+                <div class="mb-4">
+                    <h6 class="form-label">Answer Options</h6>
+                    <div class="d-grid gap-2">
+                        @forelse($question->options->sortBy('order_index') as $option)
+                        <div class="d-flex justify-content-between align-items-center gap-3 p-3 border rounded">
+                            <span class="text-break">{{ $option->text }}</span>
+                            <span class="badge bg-light text-dark">{{ $option->score_percent }}%</span>
+                        </div>
+                        @empty
+                        <p class="text-muted mb-0">No answer options.</p>
+                        @endforelse
+                    </div>
+                </div>
+                @endif
+
+                @if($question->type === 'short_answer')
+                <div class="mb-4">
+                    <h6 class="form-label">Accepted Answers</h6>
+                    <div class="d-grid gap-2">
+                        @forelse($question->acceptedAnswers as $acceptedAnswer)
+                        <div class="p-3 border rounded">
+                            <div class="text-break">{{ $acceptedAnswer->answer }}</div>
+                            <small class="text-muted">
+                                {{ $acceptedAnswer->ignore_case ? 'Ignore case' : 'Case-sensitive' }}
+                                &middot;
+                                {{ $acceptedAnswer->ignore_space ? 'Ignore spaces' : 'Spaces matter' }}
+                            </small>
+                        </div>
+                        @empty
+                        <p class="text-muted mb-0">No accepted answers.</p>
+                        @endforelse
+                    </div>
+                </div>
+                @endif
+
+                @if(in_array($question->type, ['file', 'both'], true))
+                <div>
+                    <h6 class="form-label">File Upload Settings</h6>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Allowed file types</dt>
+                        <dd class="col-sm-8">
+                            {{ $question->file_allowed ? implode(', ', $question->file_allowed) : 'Any file type' }}
+                        </dd>
+                        <dt class="col-sm-4">Maximum file size</dt>
+                        <dd class="col-sm-8">{{ $question->max_file_size ? $question->max_file_size . ' MB' : 'Default' }}</dd>
+                        <dt class="col-sm-4">Maximum number of files</dt>
+                        <dd class="col-sm-8">{{ $question->max_files ?? 'Default' }}</dd>
+                    </dl>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+@else
 <div class="modal fade question-modal"
     id="{{ $modalId }}"
     tabindex="-1"
@@ -519,3 +610,4 @@
 </script>
 @endpush
 @endonce
+@endif

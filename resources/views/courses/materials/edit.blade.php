@@ -37,11 +37,6 @@ $currentAsset = optional($material->materialAsset)->mediaAsset;
                 ========================= --}}
             <div class="courses-header material-create-header mb-4">
 
-                <a href="{{ route('sections.show', $section) }}"
-                    class="btn btn-secondary-custom material-create-back">
-                    <i class="bi bi-arrow-left"></i>
-                </a>
-
                 <div>
 
                     <h4 class="mb-0">

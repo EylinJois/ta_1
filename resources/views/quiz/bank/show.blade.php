@@ -169,6 +169,12 @@
         data-id="{{ $question->id }}"
         data-type="{{ $question->type }}">
 
+        <button type="button"
+            class="question-view-trigger"
+            data-bs-toggle="modal"
+            data-bs-target="#viewQuestionModal{{ $question->id }}"
+            aria-label="View question: {{ Str::limit($question->question, 120) }}"></button>
+
         <div class="question-left">
 
             @can('manageQuestions', $questionBank)
@@ -298,6 +304,14 @@
     </div>
 
 </div>
+
+@foreach($questionBank->questions->sortBy('order_index') as $question)
+@include('quiz.questions.modal', [
+    'question' => $question,
+    'modalId' => 'viewQuestionModal'.$question->id,
+    'readOnly' => true,
+])
+@endforeach
 
 @can('manageQuestions', $questionBank)
 @include('quiz.questions.modal', ['questionBank' => $questionBank, 'question' => null])

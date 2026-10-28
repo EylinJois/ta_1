@@ -105,7 +105,12 @@
             <div id="quizQuestionList">
                 @forelse($quiz->questions as $question)
                 <div class="quiz-question-row card mb-2" data-question-id="{{ $question->id }}">
-                    <div class="card-body d-flex align-items-center gap-3 py-2">
+                    <div class="card-body d-flex align-items-center gap-3 py-2 position-relative">
+                        <button type="button"
+                            class="question-view-trigger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewQuestionModal{{ $question->id }}"
+                            aria-label="View question: {{ Str::limit($question->question, 120) }}"></button>
 
                         <div class="drag-handle">
                             <i class="bi bi-list"></i>
@@ -176,6 +181,14 @@
             </div>
 
         </div>
+
+        @foreach($quiz->questions as $question)
+        @include('quiz.questions.modal', [
+            'question' => $question,
+            'modalId' => 'viewQuestionModal'.$question->id,
+            'readOnly' => true,
+        ])
+        @endforeach
 
     </div>
 
