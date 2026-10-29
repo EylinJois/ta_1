@@ -161,6 +161,9 @@
 
                 <h5>
                     {{ $material->name }}
+                    @if(!$material->visibility)
+                    <span class="badge bg-secondary">Hidden</span>
+                    @endif
                 </h5>
 
                 <span class="material-type">

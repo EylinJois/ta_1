@@ -101,7 +101,7 @@ class SectionController extends Controller
 
 
     $visibleMaterials = $materials->filter(function ($material) use ($user, $isManager) {
-        if ($isManager || auth()->id() == $material->created_by) {
+        if ($isManager) {
             return true;
         }
         if (!$material->visibility) {

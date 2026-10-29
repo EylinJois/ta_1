@@ -15,18 +15,9 @@ class Material extends Model
         'name',
         'description',
         'type',
-        'created_by',
         'visibility',
         'section_id'
     ];
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(
-            User::class,
-            'created_by'
-        );
-    }
 
     public function section(): BelongsTo
     {

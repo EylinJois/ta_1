@@ -15,7 +15,6 @@ class MaterialPolicy
         return $user->isEnrolledInCourse($courseId)
             && (
                 $material->visibility
-                || $material->created_by === $user->id
                 || $user->isManagerInCourse($courseId)
             );
     }

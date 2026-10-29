@@ -69,7 +69,6 @@ class MaterialController extends Controller
                 'name' => $request->name,
                 'description' => $request->description,
                 'type' => $request->type,
-                'created_by' => auth()->id(),
                 'visibility' => $request->visibility,
                 'section_id' => $request->section_id
             ]);
