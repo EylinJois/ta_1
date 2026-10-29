@@ -18,7 +18,6 @@ class ProgressReport extends Model
         'start_period',
         'end_period',
         'progress',
-        'avg_all_score',
         'comment',
         'created_by',
         'origin_name',

@@ -63,7 +63,6 @@
                     <th>Title</th>
 <th style="width: 15%; white-space: nowrap;">Period</th>
 <th>Progress</th>
-<th>Avg Scores</th>
 <th>Comment</th>
 <th>Last Updated</th>
                 </tr>
@@ -87,15 +86,12 @@
                             <span class="small text-muted" style="line-height: 1;">{{ $report->progress }}%</span>
                         </div>
                     </td>
-                    <td>
-                        {{ !is_null($report->avg_all_score) ? rtrim(rtrim(number_format($report->avg_all_score, 2), '0'), '.') : '—' }}%
-                    </td>
                     <td>{{ $report->comment ?: '—' }}</td>
                     <td>{{ $report->updated_at->format('d M Y') }}</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center py-5">
+                    <td colspan="5" class="text-center py-5">
                         No progress reports yet.
                     </td>
                 </tr>
@@ -238,15 +234,9 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-6 mb-2">
-                            <label class="form-label fw-semibold">Progress (%)</label>
-                            <input type="number" name="progress" class="form-control progress-input" min="0" max="100" placeholder="Auto-calculated if left blank">
-                        </div>
-                        <div class="col-6 mb-2">
-                            <label class="form-label fw-semibold">Avg. All Scores</label>
-                            <input type="number" step="0.01" name="avg_all_score" class="form-control quiz-score-input" min="0" placeholder="Auto-calculated if left blank">
-                        </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold">Progress (%)</label>
+                        <input type="number" name="progress" class="form-control progress-input" min="0" max="100" placeholder="Auto-calculated if left blank">
                     </div>
 
                     <button type="button" class="btn btn-secondary-custom btn-sm mb-4 calculate-btn" data-student-id="{{ $student->id }}">
@@ -290,7 +280,6 @@
                 const studentId = btn.dataset.studentId;
                 const modalBody = btn.closest('.modal-body');
                 const progressInput = modalBody.querySelector('.progress-input');
-                const scoreInput = modalBody.querySelector('.quiz-score-input');
 
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Calculating...';
@@ -307,7 +296,6 @@
                     })
                     .then(function(data) {
                         progressInput.value = data.progress;
-                        scoreInput.value = data.avg_all_score ?? data.avg_quiz_score ?? '';
                     })
                     .catch(function() {
                         alert('Failed to calculate progress.');

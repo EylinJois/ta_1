@@ -128,17 +128,14 @@ class ProgressController extends Controller
             'start_period' => 'nullable|date',
             'end_period' => 'nullable|date|after_or_equal:start_period',
             'progress' => 'nullable|integer|min:0|max:100',
-            'avg_all_score' => 'nullable|numeric|min:0',
             'comment' => 'nullable|string',
         ]);
 
         $student = User::findOrFail($validated['user_id']);
 
-        if (is_null($validated['progress']) || is_null($validated['avg_all_score'])) {
+        if (is_null($validated['progress'])) {
             $calculated = $calculator->calculate($student, $course);
-
             $validated['progress'] = $validated['progress'] ?? $calculated['progress'];
-            $validated['avg_all_score'] = $validated['avg_all_score'] ?? $calculated['avg_quiz_score'];
         }
 
         $className = $student->classes()

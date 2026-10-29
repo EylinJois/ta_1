@@ -2,58 +2,44 @@
 
 namespace App\Services;
 
-use App\Models\Attempt;
 use App\Models\Course;
-use App\Models\Submission;
+use App\Models\Material;
+use App\Models\MaterialCompletion;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class ProgressCalculationService
 {
     public function calculate(User $user, Course $course): array
     {
-        $quizIds = DB::table('quizzes')
-            ->join('sections', 'sections.id', '=', 'quizzes.section_id')
-            ->where('sections.course_id', $course->id)
-            ->pluck('quizzes.id');
+        $visibleMaterialIds = $this->getVisibleMaterialIds($user, $course);
 
-        $assignmentIds = DB::table('assignments')
-            ->join('sections', 'sections.id', '=', 'assignments.section_id')
-            ->where('sections.course_id', $course->id)
-            ->pluck('assignments.id');
+        $totalVisibleMaterials = $visibleMaterialIds->count();
+        $completedVisibleMaterials = $totalVisibleMaterials > 0
+            ? MaterialCompletion::where('user_id', $user->id)
+                ->whereIn('material_id', $visibleMaterialIds)
+                ->distinct()
+                ->count('material_id')
+            : 0;
 
-        // Best graded score per quiz
-        $bestQuizScores = Attempt::where('user_id', $user->id)
-            ->whereIn('quiz_id', $quizIds)
-            ->where('status', 'graded')
-            ->selectRaw('quiz_id, MAX(score) as best_score')
-            ->groupBy('quiz_id')
-            ->pluck('best_score');
+        $progress = $totalVisibleMaterials > 0
+            ? (int) round($completedVisibleMaterials / $totalVisibleMaterials * 100)
+            : 0;
 
-        // Best scored submission per assignment
-        $bestAssignmentScores = Submission::where('user_id', $user->id)
-            ->whereIn('assignment_id', $assignmentIds)
-            ->whereNotNull('score')
-            ->selectRaw('assignment_id, MAX(score) as best_score')
-            ->groupBy('assignment_id')
-            ->pluck('best_score');
+        return ['progress' => $progress];
+    }
 
-        // Combined average across quizzes and assignments
-        $allScores = $bestQuizScores->concat($bestAssignmentScores);
+    private function getVisibleMaterialIds(User $user, Course $course)
+    {
+        $isManager = $user->isManagerInCourse($course->id);
 
-        $avgScore = $allScores->isNotEmpty()
-            ? round($allScores->avg(), 2)
-            : null;
-
-        $total = $quizIds->count() + $assignmentIds->count();
-        $completed = $bestQuizScores->count() + $bestAssignmentScores->count();
-        $progress = $total > 0 ? (int) round($completed / $total * 100) : 0;
-
-        return [
-            'progress'             => $progress,
-            'avg_quiz_score'       => $avgScore, 
-            'avg_quiz_only'        => $bestQuizScores->isNotEmpty() ? round($bestQuizScores->avg(), 2) : null,
-            'avg_assignment_only'  => $bestAssignmentScores->isNotEmpty() ? round($bestAssignmentScores->avg(), 2) : null,
-        ];
+        return Material::query()
+            ->whereHas('section', fn ($query) => $query->where('course_id', $course->id))
+            ->when(!$isManager, function ($query) use ($user) {
+                $query->where(function ($query) use ($user) {
+                    $query->where('visibility', true)
+                        ->orWhere('created_by', $user->id);
+                });
+            })
+            ->pluck('id');
     }
 }
