@@ -18,7 +18,7 @@
 
                     <h5 class="modal-title" id="editQuizModalLabel">
                         <i class="bi bi-patch-question-fill me-2"></i>
-                        Edit Quiz
+                        {{ $hasAttempts ? 'Edit Quiz Visibility' : 'Edit Quiz' }}
                     </h5>
 
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -26,6 +26,16 @@
                 </div>
 
                 <div class="modal-body">
+
+                    @if($hasAttempts)
+                    <div class="mb-4">
+                        <label class="form-label">Visibility</label>
+                        <select name="visibility" class="form-select">
+                            <option value="1" @selected($quiz->visibility == 1)>Visible</option>
+                            <option value="0" @selected($quiz->visibility == 0)>Hidden</option>
+                        </select>
+                    </div>
+                    @else
 
                     <div class="mb-4">
                         <label class="form-label">Quiz Name</label>
@@ -146,6 +156,8 @@
 
                     </div>
 
+                    @endif
+
                 </div>
 
                 <div class="modal-footer">
@@ -156,7 +168,7 @@
 
                     <button type="submit" class="btn btn-theme">
                         <i class="bi bi-check-circle me-1"></i>
-                        Save Changes
+                        {{ $hasAttempts ? 'Save Visibility' : 'Save Changes' }}
                     </button>
 
                 </div>

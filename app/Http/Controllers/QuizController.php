@@ -253,6 +253,7 @@ class QuizController extends Controller
     {
         $quiz = Quiz::findOrFail($id);
         $this->authorizeManage($quiz);
+        $hasAttempts = $quiz->attempts()->exists();
 
         $course = $this->courseFor($quiz);
 
@@ -267,7 +268,7 @@ class QuizController extends Controller
             ->withCount('questions')
             ->get();
 
-        return view('quiz.manage', compact('quiz', 'questionBanks'));
+        return view('quiz.manage', compact('quiz', 'questionBanks', 'hasAttempts'));
     }
 
     /**
@@ -275,7 +276,19 @@ class QuizController extends Controller
      */
     public function update(Request $request, Quiz $quiz)
     {
-        $this->authorize('update', $quiz);
+        if ($quiz->attempts()->exists()) {
+            $this->authorize('updateVisibility', $quiz);
+
+            $validated = $request->validate([
+                'visibility' => 'required|boolean',
+            ]);
+
+            $quiz->update(['visibility' => $validated['visibility']]);
+
+            return back()->with('success', 'Quiz visibility updated.');
+        }
+
+        $this->authorize('edit', $quiz);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

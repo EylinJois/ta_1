@@ -74,7 +74,7 @@ class QuizQuestionController extends Controller
 
     public function store(Request $request, Quiz $quiz)
     {
-        $this->authorizeManage($quiz);
+        $this->authorize('edit', $quiz);
 
         $validated = $request->validate([
             'question_ids' => 'required|array|min:1',
@@ -100,7 +100,7 @@ class QuizQuestionController extends Controller
 
     public function destroy(Quiz $quiz, Question $question)
     {
-        $this->authorizeManage($quiz);
+        $this->authorize('edit', $quiz);
 
         $quizQuestion = QuizQuestion::where('quiz_id', $quiz->id)
             ->where('question_id', $question->id)
@@ -127,7 +127,7 @@ class QuizQuestionController extends Controller
 
     public function reorder(Request $request, Quiz $quiz)
     {
-        $this->authorizeManage($quiz);
+        $this->authorize('edit', $quiz);
 
         $validated = $request->validate([
             'question_ids' => 'required|array',
@@ -148,7 +148,7 @@ class QuizQuestionController extends Controller
 
     public function updatePointOverride(Request $request, Quiz $quiz, Question $question)
     {
-        $this->authorizeManage($quiz);
+        $this->authorize('edit', $quiz);
 
         $validated = $request->validate([
             'point_override' => 'nullable|numeric|min:0',

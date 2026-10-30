@@ -32,6 +32,24 @@ class QuizPolicy
         return $user->isManagerInCourse($quiz->section->course_id);
     }
 
+    public function edit(User $user, Quiz $quiz): Response
+    {
+        if (!$this->update($user, $quiz)) {
+            return Response::deny();
+        }
+
+        if ($quiz->attempts()->exists()) {
+            return Response::deny('This quiz can no longer be edited because an attempt has been made.');
+        }
+
+        return Response::allow();
+    }
+
+    public function updateVisibility(User $user, Quiz $quiz): bool
+    {
+        return $this->update($user, $quiz);
+    }
+
     public function delete(User $user, Quiz $quiz): bool
     {
         return $this->update($user, $quiz);

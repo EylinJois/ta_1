@@ -71,7 +71,7 @@ class QuestionController extends Controller
         $quiz = null;
         if (!empty($validated['quiz_id'])) {
             $quiz = Quiz::findOrFail($validated['quiz_id']);
-            $this->authorize('update', $quiz);
+            $this->authorize('edit', $quiz);
         }
 
         //Multiple choice/select
@@ -229,6 +229,8 @@ class QuestionController extends Controller
      */
     public function update(Request $request, Question $question)
     {
+        $this->ensureQuestionIsEditable($question);
+
         if ($question->question_bank_id) {
             $this->authorize('manageQuestions', $question->questionBank);
         }
@@ -328,6 +330,8 @@ class QuestionController extends Controller
 
     public function destroy(Question $question)
     {
+        $this->ensureQuestionIsEditable($question);
+
         if ($question->question_bank_id) {
             $this->authorize('manageQuestions', $question->questionBank);
         }
@@ -343,5 +347,16 @@ class QuestionController extends Controller
         return redirect()
             ->route('questionbank.show', $questionBankId)
             ->with('success', 'Question deleted.');
+    }
+
+    private function ensureQuestionIsEditable(Question $question): void
+    {
+        if (is_null($question->question_bank_id)) {
+            $attemptedQuiz = $question->quizzes()->whereHas('attempts')->first();
+
+            if ($attemptedQuiz) {
+                $this->authorize('edit', $attemptedQuiz);
+            }
+        }
     }
 }

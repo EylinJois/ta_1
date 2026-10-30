@@ -16,6 +16,12 @@
 </div>
 @endif
 
+@if($hasAttempts)
+<div class="alert alert-info" role="status">
+    This quiz has an attempt. Its questions, points, order, and other settings are locked; visibility can still be changed.
+</div>
+@endif
+
 <div class="d-flex justify-content-between align-items-start mb-4">
 
     <div class="d-flex align-items-center gap-3">
@@ -26,7 +32,9 @@
 
         <div>
             <h2 class="mb-0">{{ $quiz->name }}</h2>
-            <p class="text-muted mb-0">Add and order the questions this quiz will use.</p>
+            <p class="text-muted mb-0">
+                {{ $hasAttempts ? 'Review the questions used by this quiz.' : 'Add and order the questions this quiz will use.' }}
+            </p>
         </div>
 
     </div>
@@ -36,7 +44,7 @@
         data-bs-toggle="modal"
         data-bs-target="#editQuizModal">
         <i class="bi bi-pencil-fill"></i>
-        Edit Quiz
+        {{ $hasAttempts ? 'Edit Visibility' : 'Edit Quiz' }}
     </button>
 
 </div>
@@ -44,6 +52,7 @@
 <div class="row g-4">
 
     {{-- LEFT: pick questions --}}
+    @unless($hasAttempts)
     <div class="col-lg-6">
 
         <div class="table-card">
@@ -88,9 +97,10 @@
         </div>
 
     </div>
+    @endunless
 
     {{-- RIGHT: current quiz questions --}}
-    <div class="col-lg-6">
+    <div class="{{ $hasAttempts ? 'col-12' : 'col-lg-6' }}">
 
         <div class="table-card">
 
@@ -101,6 +111,7 @@
                     Quiz Questions (<span id="quizQuestionCount">{{ $quiz->questions->count() }}</span>)
                 </h5>
 
+                @unless($hasAttempts)
                 <button type="button"
                     class="btn btn-theme btn-sm"
                     data-bs-toggle="modal"
@@ -108,6 +119,7 @@
                     <i class="bi bi-plus-circle"></i>
                     Add Question
                 </button>
+                @endunless
 
             </div>
 
@@ -155,6 +167,7 @@
                             </span>
                         </div>
 
+                        @unless($hasAttempts)
                         @if(is_null($question->question_bank_id))
                         <button type="button"
                             class="icon-action-btn edit-btn"
@@ -174,11 +187,12 @@
                         <button type="button" class="icon-action-btn delete-btn remove-question-btn">
                             <i class="bi bi-trash-fill"></i>
                         </button>
+                        @endunless
 
                     </div>
                 </div>
 
-                @if(is_null($question->question_bank_id))
+                @if(!$hasAttempts && is_null($question->question_bank_id))
                 @include('quiz.questions.modal', ['question' => $question, 'modalId' => 'editQuestionModal'.$question->id])
                 @endif
 
@@ -203,10 +217,12 @@
 
 </div>
 
+@if(!$hasAttempts)
 @foreach($quiz->questions->filter(fn ($q) => $q->question_bank_id) as $question)
 @include('quiz.edit-point', ['quiz' => $quiz, 'question' => $question])
 @endforeach
 @include('quiz.questions.modal', ['modalId'=>'createQuestionModal', 'question' => null, 'questionBank' => null, 'quiz' => $quiz])
+@endif
 @include('quiz.edit-quiz')
 
 @endsection
@@ -214,6 +230,7 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        if (@json($hasAttempts)) return;
 
         /* ===================== QUIZ QUESTION MANAGEMENT ===================== */
 
