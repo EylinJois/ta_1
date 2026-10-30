@@ -30,7 +30,7 @@
             @if($fromCourse)
             <div class="text-muted small">{{ $student->email }} · {{ $course->name}}</div>
             @else
-            <div class="text-muted small">{{ $reports->first()->origin_name }}</div>
+            <div class="text-muted small">{{ $reports->first()?->origin_name ?: ($course?->name ?? 'Unknown course') }}</div>
             @endif
         </div>
 

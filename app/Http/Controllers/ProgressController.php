@@ -20,11 +20,31 @@ class ProgressController extends Controller
     {
         $user = auth()->user();
 
-        $groups = ProgressReport::where('user_id', $user->id)
-            ->with(['course' => fn($q) => $q->withTrashed()])
+        $reports = ProgressReport::where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get()
             ->groupBy('course_id');
+
+        $enrolledCourseIds = $user->classes()
+            ->wherePivotIn('role', ['admin', 'teacher', 'student'])
+            ->pluck('classes.course_id');
+
+        $courseIds = $reports->keys()
+            ->merge($enrolledCourseIds)
+            ->unique()
+            ->values();
+
+        $courses = Course::withTrashed()
+            ->whereIn('id', $courseIds)
+            ->get()
+            ->keyBy('id');
+
+        $groups = $courseIds->mapWithKeys(function ($courseId) use ($courses, $reports) {
+            return [$courseId => [
+                'course' => $courses->get($courseId),
+                'reports' => $reports->get($courseId, collect()),
+            ]];
+        });
 
         return view('progress.index-student', compact('groups'));
     }
@@ -47,8 +67,8 @@ class ProgressController extends Controller
             }
         } else {
             $isManager = false;
-            $course = null;
             abort_unless($user->id === $student->id, 403);
+            $course = Course::withTrashed()->findOrFail($courseId);
         }
 
         $reports = ProgressReport::where('course_id', $courseId)

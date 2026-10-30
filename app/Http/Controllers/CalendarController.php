@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\Clas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\ClassUserRole;
@@ -34,12 +35,7 @@ class CalendarController extends Controller
             $cursor->addDay();
         }
 
-        $managedClasses = $user->managedClasses()
-            ->whereHas('course')            // excludes soft-deleted and missing courses
-            ->with('course')
-            ->get()
-            ->sortBy(fn($class) => $class->course->name)
-            ->values();
+        $managedClasses = $this->classesAvailableForEvent($user);
 
         return view('calendar.index', compact(
             'days',
@@ -68,9 +64,8 @@ class CalendarController extends Controller
 
         $classIds = collect($validated['class_ids'] ?? [])->unique();
 
-        // only classes this user manages can be chosen
-        $managedClassIds = auth()->user()->managedClasses()->pluck('classes.id');
-        abort_if($classIds->diff($managedClassIds)->isNotEmpty(), 403);
+        $availableClassIds = $this->classesAvailableForEvent(auth()->user())->pluck('id');
+        abort_if($classIds->diff($availableClassIds)->isNotEmpty(), 403);
 
         $startsAt = Carbon::parse($validated['event_date'] . ' ' . $validated['starts_time']);
         $endsAt = $validated['ends_time']
@@ -169,6 +164,33 @@ class CalendarController extends Controller
         return ClassUserRole::whereIn('class_id', $user->managedClasses()->pluck('classes.id'))
             ->whereIn('user_id', $otherParticipantIds)
             ->exists();
+    }
+
+    private function classesAvailableForEvent($user)
+    {
+        $classes = $user->managedClasses()
+            ->whereHas('course')
+            ->with('course')
+            ->get();
+
+        $adminCourseIds = $classes
+            ->filter(fn($class) => $class->pivot->role === 'admin')
+            ->pluck('course_id')
+            ->unique();
+
+        if ($adminCourseIds->isNotEmpty()) {
+            $classes = $classes->merge(
+                Clas::whereIn('course_id', $adminCourseIds)
+                    ->whereHas('course')
+                    ->with('course')
+                    ->get()
+            );
+        }
+
+        return $classes
+            ->unique('id')
+            ->sortBy(fn($class) => $class->course->name)
+            ->values();
     }
 
     public function update(Request $request, Activity $activity)
