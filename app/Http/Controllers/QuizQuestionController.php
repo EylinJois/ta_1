@@ -104,7 +104,12 @@ class QuizQuestionController extends Controller
 
         $quizQuestion = QuizQuestion::where('quiz_id', $quiz->id)
             ->where('question_id', $question->id)
-            ->firstOrFail();
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$quizQuestion) {
+            return back()->with('success', 'Question was already removed from this quiz.');
+        }
 
         $quizQuestion->delete();
 

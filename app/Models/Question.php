@@ -31,7 +31,8 @@ class Question extends Model
     {
         return $this->belongsToMany(Quiz::class, 'quiz_questions')
             ->withPivot('id', 'point_override', 'order_index')
-            ->withTimestamps();
+            ->withTimestamps()
+            ->wherePivotNull('deleted_at');
     }
 
     // public function answers()

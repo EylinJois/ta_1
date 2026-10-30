@@ -43,6 +43,7 @@ class Quiz extends Model
         return $this->belongsToMany(Question::class, 'quiz_questions')
             ->withPivot('id', 'point_override', 'order_index')
             ->withTimestamps()
+            ->wherePivotNull('deleted_at')
             ->orderBy('quiz_questions.order_index');
     }
 
