@@ -7,7 +7,6 @@
 .attempt-sidebar {
     width: 260px;
     flex-shrink: 0;
-    position: sticky;
     top: 20px;
 }
 
@@ -50,12 +49,6 @@
     color: #666;
     cursor: pointer;
     transition: 0.2s;
-}
-
-.question-nav-btn.answered {
-    background: rgba(214, 40, 40, 0.1);
-    color: #d62828;
-    border-color: rgba(214, 40, 40, 0.2);
 }
 
 .question-nav-btn.current {
@@ -103,6 +96,11 @@
     color: #2e7d32;
 }
 
+#submitQuizBtn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
 @media (max-width: 900px) {
     .attempt-layout {
         flex-direction: column;
@@ -117,6 +115,18 @@
 
     .attempt-main {
         width: 100%;
+    }
+
+    .attempt-title-card {
+        flex-direction: column;
+    }
+
+    .attempt-title-card #submitQuizBtn {
+        align-self: flex-end;
+        flex: 0 0 auto;
+        width: auto;
+        font-size: 0.875rem;
+        white-space: nowrap;
     }
 
     .timer-box {
@@ -141,13 +151,13 @@
         font-size: 22px;
     }
 
-    /* One scrollable row of numbers instead of a tall grid */
+    /* Let question numbers wrap onto additional rows on narrow screens. */
     .question-nav-grid {
         display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        min-width: 0;
         gap: 8px;
-        overflow-x: auto;
-        padding-bottom: 6px;
-        -webkit-overflow-scrolling: touch;
     }
 
     .question-nav-btn {

@@ -9,29 +9,12 @@ use App\Models\Question;
 use App\Models\AttemptAnswer;
 use Illuminate\Support\Facades\DB;
 use App\Models\MediaAsset;
+use App\Models\QuizQuestion;
 use Illuminate\Support\Facades\Storage;
 
 class AttemptController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
+    //to start or resume an attempt
     public function store(Quiz $quiz)
     {
         $user = auth()->user();
@@ -77,49 +60,17 @@ class AttemptController extends Controller
         return redirect()->route('attempts.take', $attempt);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Authorization helpers
     |--------------------------------------------------------------------------
     */
 
-    // True once the quiz timer or due date has passed (30s grace for network lag)
+    // True once the quiz timer or due date has passed
     private function attemptExpired(Attempt $attempt): bool
     {
         $quiz = $attempt->quiz;
-        $grace = 30;
+        $grace = 10;
 
         if ($quiz->duration && $attempt->started_at->copy()->addSeconds($quiz->duration + $grace)->isPast()) {
             return true;
@@ -132,8 +83,7 @@ class AttemptController extends Controller
     private function assertQuestionInQuiz(Attempt $attempt, int $quizQuestionId): void
     {
         abort_unless(
-            DB::table('quiz_questions')
-                ->where('id', $quizQuestionId)
+            QuizQuestion::where('id', $quizQuestionId)
                 ->where('quiz_id', $attempt->quiz_id)
                 ->exists(),
             422
@@ -165,10 +115,8 @@ class AttemptController extends Controller
 
         $quiz = $attempt->quiz;
 
-        $quizQuestions = DB::table('quiz_questions')
-            ->where('quiz_id', $quiz->id)
-            ->orderBy('order_index')
-            ->get();
+        $quizQuestions = QuizQuestion::where('quiz_id', $quiz->id)
+            ->orderBy('order_index', 'asc')->get();
 
         $questionIds = $quizQuestions->pluck('question_id');
 
@@ -177,8 +125,6 @@ class AttemptController extends Controller
             ->get()
             ->keyBy('id');
 
-        // Attach each question's own quiz_questions.id + point_override,
-        // in the order quiz_questions defines.
         $orderedQuestions = $quizQuestions->map(function ($qq) use ($questions) {
             $question = $questions->get($qq->question_id);
             if (!$question) return null;
@@ -187,11 +133,9 @@ class AttemptController extends Controller
             return $question;
         })->filter()->values();
 
-        // Stable per-attempt shuffle — seeded on the attempt id so reloading
-        // the page doesn't reshuffle mid-attempt.
+
         if ($quiz->shuffle_questions) {
-            mt_srand($attempt->id);
-            $orderedQuestions = $orderedQuestions->shuffle();
+            $orderedQuestions = $orderedQuestions->shuffle($attempt->id);
         }
 
         // Seeded per-question option shuffle (attempt id + question id).
@@ -210,11 +154,19 @@ class AttemptController extends Controller
             ->get()
             ->keyBy('quiz_question_id');
 
-        $remainingSeconds = null;
+        $now = now();
+        $remainingTimes = [];
+
         if ($quiz->duration) {
-            $elapsed = now()->diffInSeconds($attempt->started_at);
-            $remainingSeconds = max(0, $quiz->duration - $elapsed);
+            $elapsed = $now->diffInSeconds($attempt->started_at);
+            $remainingTimes[] = max(0, $quiz->duration - $elapsed);
         }
+
+        if ($quiz->due_at) {
+            $remainingTimes[] = max(0, $now->diffInSeconds($quiz->due_at, false));
+        }
+
+        $remainingSeconds = $remainingTimes ? min($remainingTimes) : null;
 
         return view('quiz.attempt.take', compact(
             'attempt',
@@ -247,8 +199,7 @@ class AttemptController extends Controller
         $this->assertQuestionInQuiz($attempt, $validated['quiz_question_id']);
 
         // Submitted options must belong to this question (they carry score_percent)
-        $questionId = DB::table('quiz_questions')
-            ->where('id', $validated['quiz_question_id'])
+        $questionId = QuizQuestion::where('id', $validated['quiz_question_id'])
             ->value('question_id');
 
         $validOptionIds = Question::findOrFail($questionId)->options()->pluck('id');
@@ -297,7 +248,7 @@ class AttemptController extends Controller
 
         $file = $request->file('file');
 
-        $quizQuestion = DB::table('quiz_questions')->find($validated['quiz_question_id']);
+        $quizQuestion = QuizQuestion::find($validated['quiz_question_id']);
         $question = Question::find($quizQuestion->question_id);
 
         $answer = AttemptAnswer::firstOrCreate(
@@ -321,8 +272,6 @@ class AttemptController extends Controller
         }
 
         if ($question->file_allowed) {
-            // Extension guessed from the file's real MIME type, falling back
-            // to the client-supplied one if it can't be guessed.
             $ext = strtolower($file->extension() ?: $file->getClientOriginalExtension());
             if (!in_array($ext, $question->file_allowed)) {
                 return response()->json(['message' => 'File type not allowed for this question.'], 422);
@@ -331,16 +280,21 @@ class AttemptController extends Controller
 
         $path = $file->store('attempt-answers', 'public');
 
-        $mediaAsset = MediaAsset::create([
-            'file_path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'uploaded_by' => auth()->id(),
-            'mime' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
 
-        $answer->mediaAssets()->attach($mediaAsset->id);
-        $answer->update(['answered_at' => now()]);
+        $mediaAsset = DB::transaction(function () use ($path, $file, $answer) {
+            $mediaAsset = MediaAsset::create([
+                'file_path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'uploaded_by' => auth()->id(),
+                'mime' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+
+            $answer->mediaAssets()->attach($mediaAsset->id);
+            $answer->update(['answered_at' => now()]);
+
+            return $mediaAsset;
+        });
 
         return response()->json([
             'status' => 'ok',
@@ -361,18 +315,13 @@ class AttemptController extends Controller
 
         $answer->mediaAssets()->detach($mediaAsset->id);
 
-        // Delete the underlying file/row too — it's not referenced anywhere
-        // else once detached (each upload creates its own MediaAsset row).
         Storage::disk('public')->delete($mediaAsset->file_path);
         $mediaAsset->delete();
 
         return response()->json(['status' => 'ok']);
     }
 
-    /**
-     * Not blocked when expired on purpose, so the timer's auto-submit works.
-     * Answers saved after expiry are already rejected in saveAnswer/upload.
-     */
+
     public function submit(Attempt $attempt)
     {
         $this->authorize('update', $attempt);
@@ -442,7 +391,6 @@ class AttemptController extends Controller
                     case 'written':
                     case 'file':
                     case 'both':
-                        // Needs a human — leave score null for now.
                         $needsManualGrading = true;
                         break;
                 }
@@ -492,8 +440,7 @@ class AttemptController extends Controller
     {
         $quiz = $attempt->quiz;
 
-        $quizQuestions = DB::table('quiz_questions')
-            ->where('quiz_id', $quiz->id)
+        $quizQuestions = QuizQuestion::where('quiz_id', $quiz->id)
             ->orderBy('order_index')
             ->get();
 
@@ -522,16 +469,13 @@ class AttemptController extends Controller
     {
         $this->authorize('grade', $attempt);
 
-        // Build per-question max-point rules dynamically, since each question
-        // has its own point value (with quiz_questions.point_override taking
-        // precedence over questions.point).
-        $maxPoints = DB::table('quiz_questions')
-            ->join('questions', 'questions.id', '=', 'quiz_questions.question_id')
-            ->where('quiz_questions.quiz_id', $attempt->quiz_id)
-            ->select('quiz_questions.id as quiz_question_id', 'quiz_questions.point_override', 'questions.point')
+        $maxPoints = QuizQuestion::where('quiz_id', $attempt->quiz_id)
+            ->with('question')
             ->get()
-            ->mapWithKeys(fn($quizq) => [$quizq->quiz_question_id => $quizq->point_override ?? $quizq->point]);
-
+            ->mapWithKeys(fn($quizq) => [
+                $quizq->id => $quizq->point_override ?? $quizq->question->point
+            ]);
+            
         $rules = [
             'scores' => 'required|array',
             'feedback' => 'nullable|array',

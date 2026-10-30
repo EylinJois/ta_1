@@ -8,7 +8,17 @@
 <link rel="stylesheet" href="{{ asset('css/qbank.css') }}">
 <link rel="stylesheet" href="{{ asset('css/quiz.css') }}">
 <style>
+    .sidebar,
+    .topbar,
+    .sidebar-overlay {
+        display: none !important;
+    }
 
+    .main-content,
+    .main-content.expanded {
+        margin-left: 0;
+        width: 100%;
+    }
 </style>
 @endpush
 
@@ -34,19 +44,12 @@
                 @foreach($orderedQuestions as $index => $question)
                 <button
                     type="button"
-                    class="question-nav-btn {{ $index === 0 ? 'current' : '' }} {{ isset($existingAnswers[$question->quiz_question_id]) ? 'answered' : '' }}"
+                    class="question-nav-btn {{ $index === 0 ? 'current' : '' }}"
                     data-index="{{ $index }}"
                     id="navBtn{{ $index }}">
                     {{ $index + 1 }}
                 </button>
                 @endforeach
-            </div>
-
-            <div class="mt-3 small text-muted">
-                <span class="d-inline-block me-2">
-                    <span class="d-inline-block" style="width:10px;height:10px;background:rgba(214,40,40,.3);border-radius:3px;"></span>
-                    Answered
-                </span>
             </div>
 
         </div>
@@ -56,14 +59,14 @@
     {{-- MAIN --}}
     <div class="attempt-main">
 
-        <div class="table-card mb-3 d-flex justify-content-between align-items-center">
+        <div class="table-card attempt-title-card mb-3 d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="mb-0">{{ $quiz->name }}</h5>
                 <span class="autosave-indicator" id="autosaveIndicator">All changes saved</span>
             </div>
             <button type="button" class="btn btn-theme" id="submitQuizBtn" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
                 <i class="bi bi-check-circle"></i>
-                Submit Quiz
+                Finish
             </button>
         </div>
 
@@ -189,7 +192,6 @@
             </div>
             <div class="modal-body">
                 <p>
-                    You've answered <span id="answeredCountText">0</span> of {{ $orderedQuestions->count() }} questions.
                     Once submitted, you won't be able to change your answers.
                 </p>
             </div>
@@ -219,8 +221,6 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const autosaveIndicator = document.getElementById('autosaveIndicator');
-        const answeredCountText = document.getElementById('answeredCountText');
-
         let currentIndex = 0;
 
         /* ===================== TINYMCE for written/both ===================== */
@@ -238,7 +238,6 @@
                     const panel = editor.getElement().closest('.attempt-question-panel');
 
                     if (panel) {
-                        markAnswered(panel);
                         scheduleAutosave(panel);
                     }
                 });
@@ -288,6 +287,8 @@
         panels.forEach(function(panel) {
 
             const type = panel.dataset.type;
+            const shortAnswerInput = panel.querySelector('.short-answer-input');
+            const fileInput = panel.querySelector('.file-answer-input');
 
             if (type === 'choice') {
                 panel.querySelectorAll('.option-row-select').forEach(function(row) {
@@ -298,7 +299,6 @@
                         });
                         row.classList.add('selected');
                         row.querySelector('input').checked = true;
-                        markAnswered(panel);
                         scheduleAutosave(panel);
                     });
                 });
@@ -311,27 +311,17 @@
                             row.querySelector('input').checked = !row.querySelector('input').checked;
                         }
                         row.classList.toggle('selected', row.querySelector('input').checked);
-                        markAnswered(panel);
                         scheduleAutosave(panel);
                     });
                 });
             }
 
-            const shortAnswerInput = panel.querySelector('.short-answer-input');
-
             if (shortAnswerInput) {
                 shortAnswerInput.addEventListener('input', function() {
-                    if (shortAnswerInput.value.trim() !== '') {
-                        markAnswered(panel);
-                    } else {
-                        updateQuestionStatus(panel);
-                    }
-
                     scheduleAutosave(panel);
                 });
             }
 
-            const fileInput = panel.querySelector('.file-answer-input');
             if (fileInput) {
                 fileInput.addEventListener('change', function() {
                     uploadFile(panel);
@@ -339,41 +329,6 @@
             }
 
         });
-
-        function markAnswered(panel) {
-            const index = parseInt(panel.dataset.index);
-            navButtons[index].classList.add('answered');
-            updateAnsweredCount();
-        }
-
-        function updateQuestionStatus(panel) {
-            const index = parseInt(panel.dataset.index);
-            const type = panel.dataset.type;
-            let answered = false;
-
-            if (type === 'choice') {
-                answered = !!panel.querySelector('input[type="radio"]:checked');
-            } else if (type === 'multiple_select') {
-                answered = panel.querySelectorAll('input[type="checkbox"]:checked').length > 0;
-            } else if (type === 'short_answer') {
-                const input = panel.querySelector('.short-answer-input');
-                answered = !!input && input.value.trim() !== '';
-            } else if (type === 'written' || type === 'both') {
-                const editor = panel.querySelector('.tinymce-editor');
-                const editorInstance = editor ? tinymce.get(editor.id) : null;
-                answered = !!editorInstance && editorInstance.getContent({
-                    format: 'text'
-                }).trim() !== '';
-            }
-
-            if (type === 'file' || type === 'both') {
-                const fileList = panel.querySelector('[id^="fileList"]');
-                answered = answered || !!(fileList && fileList.querySelector('li'));
-            }
-
-            navButtons[index].classList.toggle('answered', answered);
-            updateAnsweredCount();
-        }
 
         /* ===================== AUTOSAVE ===================== */
 
@@ -465,12 +420,17 @@
             fetch('/attempts/' + attemptId + '/answer/file', {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: formData,
                 })
                 .then(async function(r) {
-                    const body = await r.json();
+                    const contentType = r.headers.get('content-type') || '';
+                    const body = contentType.includes('application/json') ? await r.json() : null;
+                    if (!body) {
+                        throw new Error('The server returned an unexpected response. Check whether your session is still valid.');
+                    }
                     if (!r.ok) {
                         throw new Error(body.message || 'Upload failed');
                     }
@@ -485,24 +445,12 @@
                         '</button>';
                     listEl.appendChild(li);
 
-                    updateQuestionStatus(panel);
                     fileInput.value = '';
                 })
                 .catch(function(err) {
                     alert(err.message);
                     fileInput.value = '';
                 });
-        }
-
-        function updateAnsweredCount() {
-            const total = document.querySelectorAll('.attempt-question-panel').length;
-            const answered = document.querySelectorAll('.question-nav-btn.answered').length;
-
-            const counter = document.getElementById('answeredCountText');
-
-            if (counter) {
-                counter.textContent = `${answered} out of ${total} questions answered`;
-            }
         }
 
         document.addEventListener('click', function(e) {
@@ -521,13 +469,7 @@
                 })
                 .then(function(r) {
                     if (r.ok) {
-                        const panel = btn.closest('.attempt-question-panel');
-
                         btn.closest('li').remove();
-
-                        if (panel) {
-                            updateQuestionStatus(panel);
-                        }
                     }
                 });
         });
@@ -544,7 +486,7 @@
 
         if (remainingSecondsInitial !== null) {
 
-            let remaining = remainingSecondsInitial;
+            const timerDeadline = Date.now() + remainingSecondsInitial * 1000;
             const timerValue = document.getElementById('timerValue');
             const timerBox = document.getElementById('timerBox');
 
@@ -557,14 +499,12 @@
                 }).join(':');
             }
 
-            timerValue.textContent = formatTime(remaining);
-
-            const timerInterval = setInterval(function() {
-                remaining--;
+            function updateTimer() {
+                const remaining = Math.max(0, Math.ceil((timerDeadline - Date.now()) / 1000));
+                timerValue.textContent = formatTime(remaining);
 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
-                    timerValue.textContent = '00:00:00';
                     autosaveIndicator.textContent = 'Time is up — submitting...';
                     document.getElementById('finalSubmitForm').submit();
                     return;
@@ -573,9 +513,10 @@
                 if (remaining <= 60) {
                     timerBox.classList.add('warning');
                 }
+            }
 
-                timerValue.textContent = formatTime(remaining);
-            }, 1000);
+            const timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
         }
 
     });

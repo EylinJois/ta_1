@@ -67,9 +67,18 @@
                 </div>
             </div>
 
-            <div id="availableList" class="mb-3" style="max-height: 400px; overflow-y: auto;">
-                <p class="text-muted text-center py-3">Loading questions...</p>
-            </div>
+            <p class="text-muted text-center py-3 mb-3" id="availableStatus">Select a question bank above to see its questions.</p>
+            <div id="availableList" class="mb-3" style="max-height: 400px; overflow-y: auto;"></div>
+
+            <template id="availableQuestionTemplate">
+                <div class="form-check border-bottom py-2">
+                    <input class="form-check-input available-question-checkbox" type="checkbox">
+                    <label class="form-check-label d-block">
+                        <span class="available-question-text"></span>
+                        <span class="badge bg-light text-dark ms-1 available-question-type"></span>
+                    </label>
+                </div>
+            </template>
 
             <button type="button" id="addSelectedBtn" class="btn btn-theme w-100" disabled>
                 <i class="bi bi-plus-circle"></i>
@@ -214,15 +223,25 @@
         const selectedCountEl = document.getElementById('selectedCount');
         const addSelectedBtn = document.getElementById('addSelectedBtn');
         const quizQuestionList = document.getElementById('quizQuestionList');
+        const availableStatus = document.getElementById('availableStatus');
+        const availableQuestionTemplate = document.getElementById('availableQuestionTemplate');
 
         let selectedIds = new Set();
+
+        function showAvailableStatus(message) {
+            availableList.replaceChildren();
+            availableStatus.textContent = message;
+            availableStatus.classList.remove('d-none');
+        }
 
         function loadAvailable() {
             const manualBankId = document.getElementById('manualBankCodeSelectedId')?.value;
             if (!manualBankId) {
-                availableList.innerHTML = '<p class="text-muted text-center py-3">Select a question bank above to see its questions.</p>';
+                showAvailableStatus('Select a question bank above to see its questions.');
                 return;
             }
+
+            showAvailableStatus('Loading questions...');
 
             const params = new URLSearchParams();
             params.set('question_bank_id', manualBankId);
@@ -230,33 +249,32 @@
             fetch(`/quizzes/${quizId}/questions/available?${params.toString()}`)
                 .then(r => r.json())
                 .then(questions => {
-
                     if (questions.length === 0) {
-                        availableList.innerHTML = '<p class="text-muted text-center py-3">No matching questions.</p>';
+                        showAvailableStatus('No matching questions.');
                         return;
                     }
 
-                    availableList.innerHTML = questions.map(q => `
-                <div class="form-check border-bottom py-2">
-                    <input
-                        class="form-check-input available-question-checkbox"
-                        type="checkbox"
-                        value="${q.id}"
-                        id="q${q.id}"
-                        ${selectedIds.has(q.id) ? 'checked' : ''}>
-                    <label class="form-check-label d-block" for="q${q.id}">
-                        ${escapeHtml(q.question).slice(0, 100)}
-                        <span class="badge bg-light text-dark ms-1">${q.type.replace('_', ' ')}</span>
-                    </label>
-                </div>
-            `).join('');
-                });
-        }
+                    const rows = document.createDocumentFragment();
+                    questions.forEach(function(q) {
+                        const row = availableQuestionTemplate.content.firstElementChild.cloneNode(true);
+                        const checkbox = row.querySelector('.available-question-checkbox');
+                        const questionId = `q${q.id}`;
 
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
+                        checkbox.value = q.id;
+                        checkbox.id = questionId;
+                        checkbox.checked = selectedIds.has(Number(q.id));
+                        row.querySelector('label').htmlFor = questionId;
+                        row.querySelector('.available-question-text').textContent = String(q.question).slice(0, 100);
+                        row.querySelector('.available-question-type').textContent = String(q.type).replace('_', ' ');
+                        rows.appendChild(row);
+                    });
+
+                    availableList.replaceChildren(rows);
+                    availableStatus.classList.add('d-none');
+                })
+                .catch(function() {
+                    showAvailableStatus('Could not load questions. Please try again.');
+                });
         }
 
         availableList.addEventListener('change', function(e) {

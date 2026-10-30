@@ -118,7 +118,7 @@
     @if($submissions->isNotEmpty())
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle text-center">
+        <table class="table table-hover align-middle text-center assignment-submissions-table">
             <thead>
                 <tr>
                     <th>Student</th>
@@ -131,12 +131,14 @@
             <tbody>
                 @foreach($submissions as $sub)
                 <tr>
-                    <td>
-                        <div class="fw-semibold">{{ $sub->user->name }}</div>
-                        <div class="text-muted small">{{ $sub->user->email }}</div>
+                    <td data-label="Student">
+                        <div class="assignment-student-details">
+                            <div class="fw-semibold">{{ $sub->user->name }}</div>
+                            <div class="text-muted small">{{ $sub->user->email }}</div>
+                        </div>
                     </td>
 
-                    <td>
+                    <td data-label="Status">
                         @switch($sub->status)
                         @case('draft')
                         <span class="badge bg-secondary">Draft</span>
@@ -153,15 +155,15 @@
                         @endswitch
                     </td>
 
-                    <td>
+                    <td data-label="Score">
                         {{ !is_null($sub->score) ? rtrim(rtrim(number_format($sub->score, 2), '0'), '.') : '—' }}
                     </td>
 
-                    <td>
+                    <td data-label="Submitted">
                         {{ $sub->submitted_at ? $sub->submitted_at->format('d M Y, H:i') : '—' }}
                     </td>
 
-                    <td>
+                    <td data-label="Actions" class="assignment-submission-actions">
 
                         @if($sub->status !== 'draft')
                         <a href="{{ route('submissions.edit', $sub) }}" class="btn edit-btn">
@@ -206,7 +208,7 @@
 @endif
 
 @if($submission && $submission->status === 'graded')
-<div class="table-card student-submission-card">
+<div class="table-card student-submission-card mb-4">
     <h5 class="mb-3"><i class="bi bi-clipboard-check"></i> Grade</h5>
     <div class="d-flex align-items-center gap-3 mb-3">
         <h2 class="mb-0">{{ rtrim(rtrim(number_format($submission->score, 2), '0'), '.') }}</h2>

@@ -146,7 +146,7 @@
     @if($attempts->isNotEmpty())
 
     <div class="table-responsive">
-        <table class="table align-middle">
+        <table class="table align-middle attempts-table">
             <thead>
                 <tr>
                     <th>Student</th>
@@ -162,14 +162,16 @@
             <tbody>
                 @foreach($attempts as $attempt)
                 <tr>
-                    <td>
-                        <div class="fw-semibold">{{ $attempt->user->name }}</div>
-                        <div class="text-muted small">{{ $attempt->user->email }}</div>
+                    <td data-label="Student">
+                        <div class="attempt-student-details">
+                            <div class="fw-semibold">{{ $attempt->user->name }}</div>
+                            <div class="text-muted small">{{ $attempt->user->email }}</div>
+                        </div>
                     </td>
 
-                    <td>{{ $attempt->attempt_no }}</td>
+                    <td data-label="Attempt #">{{ $attempt->attempt_no }}</td>
 
-                    <td>
+                    <td data-label="Status">
                         @switch($attempt->status)
                         @case('in_progress')
                         <span class="badge bg-warning text-dark">In Progress</span>
@@ -183,22 +185,24 @@
                         @endswitch
                     </td>
 
-                    <td>
+                    <td data-label="Score">
                         @if(!is_null($attempt->score))
-                        {{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}
-                        @if($quiz->pass_score)
-                        @if($attempt->score >= $quiz->pass_score)
-                        <span class="badge bg-success ms-1">Pass</span>
-                        @else
-                        <span class="badge bg-danger ms-1">Fail</span>
-                        @endif
-                        @endif
+                        <div class="attempt-score">
+                            <span class="attempt-score-value">{{ rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') }}</span>
+                            @if($quiz->pass_score)
+                            @if($attempt->score >= $quiz->pass_score)
+                            <span class="badge bg-success">Pass</span>
+                            @else
+                            <span class="badge bg-danger">Fail</span>
+                            @endif
+                            @endif
+                        </div>
                         @else
                         —
                         @endif
                     </td>
 
-                    <td>
+                    <td data-label="Duration">
                         @if(!is_null($attempt->duration_seconds))
                         {{ gmdate('H:i:s', $attempt->duration_seconds) }}
                         @else
@@ -206,13 +210,14 @@
                         @endif
                     </td>
 
-                    <td>{{ $attempt->started_at->format('d M Y, H:i') }}</td>
-                    <td>{{ $attempt->submitted_at ? $attempt->submitted_at->format('d M Y, H:i') : '—' }}</td>
-                    <td>
-                        <a href="{{ route('attempts.grade', $attempt) }}" class="icon-action-btn edit-btn btn-sm">
+                    <td data-label="Started">{{ $attempt->started_at->format('d M Y, H:i') }}</td>
+                    <td data-label="Submitted">{{ $attempt->submitted_at ? $attempt->submitted_at->format('d M Y, H:i') : '—' }}</td>
+                    <td data-label="Action" class="attempt-action-cell">
+                        <a href="{{ route('attempts.grade', $attempt) }}" class="btn btn-sm edit-btn attempt-grade-btn">
                             <i class="bi bi-pencil-fill"></i>
+                            Grade
+                        </a>
                     </td>
-                    </a>
                 </tr>
                 @endforeach
             </tbody>

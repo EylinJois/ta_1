@@ -141,8 +141,8 @@
                                 <div class="photo-preview-thumb" data-file-id="{{ $file->id }}">
                                     @if($file->mediaAsset)
                                     @php $url = Storage::disk($file->mediaAsset->storage_disk)->url($file->mediaAsset->file_path); @endphp
-                                    <img src="{{ $url }}" alt="{{ $file->original_name }}"
-                                        data-full="{{ $url }}" data-name="{{ $file->original_name }}">
+                                    <img src="{{ $url }}" alt="{{ $file->mediaAsset->original_name }}"
+                                        data-full="{{ $url }}" data-name="{{ $file->mediaAsset->original_name }}">
                                     @else
                                     <div class="photo-preview-missing">
                                         <i class="bi bi-file-earmark-image"></i>

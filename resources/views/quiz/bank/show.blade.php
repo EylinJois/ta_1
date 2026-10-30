@@ -362,22 +362,12 @@
         if (questionList && typeof Sortable !== 'undefined') {
 
             Sortable.create(questionList, {
-
                 animation: 200,
-
                 handle: '.drag-handle',
-
-                // Only .question-item rows have a .drag-handle, so the
-                // empty-state placeholders (#noTypeMatch / "No Questions Yet")
-                // can never be picked up - no extra filter needed.
-
                 onEnd: function() {
-
                     let order = [];
-
                     questionList.querySelectorAll('.question-item')
                         .forEach((item, index) => {
-
                             order.push({
                                 id: item.dataset.id,
                                 order_idx: index + 1

@@ -46,7 +46,7 @@
         @foreach($photoPreview as $file)
         <div class="note-card-photo">
             <img src="{{ Storage::disk($file->mediaAsset->storage_disk)->url($file->mediaAsset->file_path) }}"
-                alt="{{ $file->original_name }}">
+                alt="{{ $file->mediaAsset->original_name }}">
         </div>
         @endforeach
 

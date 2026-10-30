@@ -13,7 +13,6 @@ class NoteFile extends Model
     protected $fillable = [
         'media_asset_id',
         'note_id',
-        'original_name'
     ];
 
     protected $casts = [

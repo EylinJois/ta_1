@@ -94,16 +94,16 @@ public function edit(Note $note)
     {
         abort_unless($note->user_id === auth()->id(), 403);
 
-        $note->load(['files.mediaAsset']);
+        $note->load(['noteFiles.mediaAsset']);
 
         return response()->json([
             'id' => $note->id,
             'title' => $note->title,
             'content' => $note->content,
             'pinned' => $note->pinned,
-            'files' => $note->files->filter(fn($f) => $f->mediaAsset)->map(fn($f) => [
+            'files' => $note->noteFiles->filter(fn($f) => $f->mediaAsset)->map(fn($f) => [
                 'id' => $f->id,
-                'original_name' => $f->original_name,
+                'original_name' => $f->mediaAsset->original_name,
                 'url' => Storage::disk($f->mediaAsset->storage_disk)->url($f->mediaAsset->file_path),
             ])->values(),
         ]);
@@ -213,7 +213,6 @@ public function edit(Note $note)
             NoteFile::create([
                 'note_id' => $note->id,
                 'media_asset_id' => $mediaAsset->id,
-                'original_name' => $photo->getClientOriginalName(),
             ]);
         }
     }
