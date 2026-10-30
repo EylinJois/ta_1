@@ -96,6 +96,7 @@
                         <input type="email"
                             name="email"
                             class="form-control"
+                            readonly
                             value="{{ old('email', auth()->user()->email) }}"
                             required>
 
