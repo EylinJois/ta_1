@@ -349,31 +349,6 @@
                 });
         });
 
-        let pointOverrideDebounce;
-
-        quizQuestionList.addEventListener('input', function(e) {
-            if (!e.target.classList.contains('point-override-input')) return;
-
-            clearTimeout(pointOverrideDebounce);
-
-            const row = e.target.closest('.quiz-question-row');
-            const questionId = row.dataset.questionId;
-            const value = e.target.value;
-
-            pointOverrideDebounce = setTimeout(() => {
-                fetch(`/quizzes/${quizId}/questions/${questionId}/point-override`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({
-                        point_override: value || null
-                    }),
-                });
-            }, 500);
-        });
-
         new Sortable(quizQuestionList, {
             handle: '.drag-handle',
             animation: 150,
