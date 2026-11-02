@@ -3,73 +3,70 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 use Overtrue\Pinyin\Pinyin;
 use Afaya\EdgeTTS\Service\EdgeTTS;
 
 class TTSController extends Controller
 {
-    const STREAM_LIMIT = 200;      // Hanzi; above this the audio is served as a temp file
-    const TEMP_DIR = 'tts-temp';
-    const TTL_MINUTES = 30;
+    protected function logTtsError(string $context, \Throwable $e): void
+    {
+        Log::error($context . ': ' . $e->getMessage(), [
+            'exception' => $e,
+        ]);
+    }
 
     public function generate(Request $request)
     {
-        $request->validate([
-            'text' => 'required|string|max:5000',
-        ]);
+        try {
+            $request->validate([
+                'text' => 'required|string|max:5000',
+            ]);
 
-        $text = trim($request->text);
+            $text = trim($request->text);
 
-        $pinyin = implode(' ', (new Pinyin())->sentence($text)->toArray());
-        $pinyin = preg_replace('/\s+([，。！？；：])/u', '$1', $pinyin);
+            if ($text === '') {
+                return response()->json([
+                    'message' => 'Text cannot be empty.',
+                ], 422);
+            }
 
-        $hanziCount = preg_match_all('/\p{Han}/u', $text);
+            $pinyin = implode(' ', (new Pinyin())->sentence($text)->toArray());
+            $pinyin = preg_replace('/\s+([，。！？；：])/u', '$1', $pinyin);
 
-        $tts = new EdgeTTS();
-        $tts->synthesize($text, 'zh-CN-XiaoxiaoNeural');
-        $audio = $tts->toRaw();
+            $hanziCount = preg_match_all('/\p{Han}/u', $text);
 
-        $payload = [
-            'hanzi' => $text,
-            'pinyin' => $pinyin,
-            'hanzi_count' => $hanziCount,
-        ];
+            $tts = new EdgeTTS();
+            $tts->synthesize($text, 'zh-CN-XiaoxiaoNeural');
+            $audio = $tts->toRaw();
 
-        // SHORT TEXT: Base64 in the JSON, nothing touches the disk
-        if ($hanziCount <= self::STREAM_LIMIT) {
+            if (empty($audio)) {
+                return response()->json([
+                    'message' => 'Unable to generate audio right now.',
+                ], 500);
+            }
+
+            $payload = [
+                'hanzi' => $text,
+                'pinyin' => $pinyin,
+                'hanzi_count' => $hanziCount,
+            ];
+
             return response()->json($payload + [
                 'audio' => base64_encode($audio),
                 'type' => 'stream',
             ]);
+        } catch (Throwable $e) {
+            Log::error('TTS generation failed', [
+                'message' => $e->getMessage(),
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'message' => 'Unable to generate audio. Please try again later.',
+            ], 500);
         }
-
-        $id = (string) Str::uuid();
-        Storage::disk('local')->put(self::TEMP_DIR . "/{$id}.mp3", $audio);
-
-        return response()->json($payload + [
-            'audio' => URL::temporarySignedRoute(
-                'tts.audio',
-                now()->addMinutes(self::TTL_MINUTES),
-                ['id' => $id]
-            ),
-            'type' => 'file',
-        ]);
-    }
-
-    public function audio(string $id)
-    {
-        abort_unless(Str::isUuid($id), 404);
-
-        $path = self::TEMP_DIR . "/{$id}.mp3";
-
-        abort_unless(Storage::disk('local')->exists($path), 404);
-
-        return response()->file(Storage::disk('local')->path($path), [
-            'Content-Type' => 'audio/mpeg',
-        ]);
     }
 
     public function index()

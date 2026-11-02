@@ -194,7 +194,6 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::get('/tts', [TTSController::class, 'index'])->name('tts.index');
     Route::post('/tts/generate', [TTSController::class, 'generate'])->name('tts.generate');
-    Route::get('tts/audio/{id}', [TTSController::class, 'audio'])->name('tts.audio')->middleware('signed');
 
     /*
     |----------------------------------------------------------------------

@@ -613,8 +613,8 @@
             </div>
 
             <div class="mb-2">
-                <label class="form-label">Pinyin <small class="text-muted">(auto-generated on save)</small></label>
-                <input type="text" class="form-control sentence-pinyin-preview" value="${(data.pinyin || '').replace(/"/g, '&quot;')}" disabled>
+                <label class="form-label">Pinyin <small class="text-muted">(auto-generated)</small></label>
+                <input type="text" class="form-control sentence-pinyin-preview" value="${(data.pinyin || '').replace(/"/g, '&quot;')}">
             </div>
 
             <div class="mb-3">
@@ -664,6 +664,7 @@
             document.querySelectorAll('.sentence-card').forEach(function(card, i) {
                 const fields = {
                     hanzi: card.querySelector('.sentence-hanzi').value,
+                    pinyin: card.querySelector('.sentence-pinyin-preview').value,
                     meaning: card.querySelector('.sentence-meaning').value,
                 };
                 Object.entries(fields).forEach(function([key, value]) {

@@ -283,6 +283,63 @@
                         </div>
                     </div>
 
+                    <template class="option-row-template">
+                        <div class="option-row card mb-3">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control option-text-input" name="option_text[]"
+                                            placeholder="Option text" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input type="number" class="form-control option-score-input"
+                                                name="score_percent[]" value="0" min="-100" max="100" step="1">
+                                            <label class="form-check-label">Score (%)</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-danger remove-option">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template class="accepted-answer-template">
+                        <div class="accepted-answer-row card mb-3">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control accepted-answer-input"
+                                            placeholder="Accepted answer" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input type="hidden" class="ignore-case-hidden" value="0">
+                                            <input type="checkbox" class="form-check-input ignore-case-checkbox" value="1">
+                                            <label class="form-check-label small">Ignore case</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-check">
+                                            <input type="hidden" class="ignore-space-hidden" value="0">
+                                            <input type="checkbox" class="form-check-input ignore-space-checkbox" value="1">
+                                            <label class="form-check-label small">Ignore spaces</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-danger remove-answer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
                 </div>
 
                 <div class="modal-footer">
@@ -315,6 +372,8 @@
 
             const optionsContainer = modal.querySelector('.options-container');
             const answersContainer = modal.querySelector('.answers-container');
+            const optionRowTemplate = modal.querySelector('.option-row-template');
+            const acceptedAnswerTemplate = modal.querySelector('.accepted-answer-template');
 
             const addOptionBtn = modal.querySelector('.add-option-btn');
             const addAnswerBtn = modal.querySelector('.add-answer-btn');
@@ -400,31 +459,9 @@
 
             function createOption(text = '', scorePercent = 0) {
 
-                const option = document.createElement('div');
-                option.className = 'option-row card mb-3';
-
-                option.innerHTML = `
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <input type="text" class="form-control" name="option_text[]"
-                        placeholder="Option text" value="${text.replace(/"/g, '&quot;')}" required>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-check">
-                        <input type="number" class="form-control"
-                            name="score_percent[]" value="${scorePercent}" min="-100" max="100" step="1">
-                        <label class="form-check-label">Score (%)</label>
-                    </div>
-                </div>
-                <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-danger remove-option">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+                const option = optionRowTemplate.content.firstElementChild.cloneNode(true);
+                option.querySelector('.option-text-input').value = text;
+                option.querySelector('.option-score-input').value = scorePercent;
 
                 optionsContainer.appendChild(option);
                 updateScoreTotal();
@@ -477,41 +514,21 @@
             function createAnswer(answer = '', ignoreCase = true, ignoreSpace = true) {
 
                 const rowIndex = answerRowCounter++;
+                const row = acceptedAnswerTemplate.content.firstElementChild.cloneNode(true);
+                const answerInput = row.querySelector('.accepted-answer-input');
+                const ignoreCaseHidden = row.querySelector('.ignore-case-hidden');
+                const ignoreCaseCheckbox = row.querySelector('.ignore-case-checkbox');
+                const ignoreSpaceHidden = row.querySelector('.ignore-space-hidden');
+                const ignoreSpaceCheckbox = row.querySelector('.ignore-space-checkbox');
 
-                const row = document.createElement('div');
-                row.className = 'accepted-answer-row card mb-3';
-
-                row.innerHTML = `
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <input type="text" class="form-control" name="accepted_answers[${rowIndex}]"
-                            placeholder="Accepted answer" value="${answer.replace(/"/g, '&quot;')}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-check">
-                            <input type="hidden" name="ignore_case[${rowIndex}]" value="0">
-                            <input type="checkbox" class="form-check-input" name="ignore_case[${rowIndex}]"
-                                value="1" ${ignoreCase ? 'checked' : ''}>
-                            <label class="form-check-label small">Ignore case</label>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-check">
-                            <input type="hidden" name="ignore_space[${rowIndex}]" value="0">
-                            <input type="checkbox" class="form-check-input" name="ignore_space[${rowIndex}]"
-                                value="1" ${ignoreSpace ? 'checked' : ''}>
-                            <label class="form-check-label small">Ignore spaces</label>
-                        </div>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <button type="button" class="btn btn-danger remove-answer">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+                answerInput.name = `accepted_answers[${rowIndex}]`;
+                answerInput.value = answer;
+                ignoreCaseHidden.name = `ignore_case[${rowIndex}]`;
+                ignoreCaseCheckbox.name = `ignore_case[${rowIndex}]`;
+                ignoreCaseCheckbox.checked = ignoreCase;
+                ignoreSpaceHidden.name = `ignore_space[${rowIndex}]`;
+                ignoreSpaceCheckbox.name = `ignore_space[${rowIndex}]`;
+                ignoreSpaceCheckbox.checked = ignoreSpace;
 
                 answersContainer.appendChild(row);
             }

@@ -89,6 +89,7 @@ class MaterialController extends Controller
                         'intro_text' => 'nullable|string',
                         'sentences' => 'nullable|array',
                         'sentences.*.hanzi' => 'required_with:sentences|string',
+                        'sentences.*.pinyin' => 'nullable|string|max:255',
                         'sentences.*.meaning' => 'required_with:sentences|string',
                     ]);
 
@@ -103,7 +104,7 @@ class MaterialController extends Controller
                         Sentence::create([
                             'material_page_id' => $page->material_id,
                             'hanzi' => $sentence['hanzi'],
-                            'pinyin' => Pinyin::sentence($sentence['hanzi'])->join(' '),
+                            'pinyin' => $sentence['pinyin'] ?? null,
                             'meaning' => $sentence['meaning'],
                             'order_idx' => $index,
                         ]);
@@ -366,6 +367,7 @@ class MaterialController extends Controller
                         'intro_text' => 'nullable|string',
                         'sentences' => 'nullable|array',
                         'sentences.*.hanzi' => 'required_with:sentences|string',
+                        'sentences.*.pinyin' => 'nullable|string|max:255',
                         'sentences.*.meaning' => 'required_with:sentences|string',
                     ]);
 
@@ -380,7 +382,7 @@ class MaterialController extends Controller
                         Sentence::create([
                             'material_page_id' => $page->material_id,
                             'hanzi' => $sentence['hanzi'],
-                            'pinyin' => Pinyin::sentence($sentence['hanzi'])->join(' '),
+                            'pinyin' => $sentence['pinyin'] ?? null,
                             'meaning' => $sentence['meaning'],
                             'order_idx' => $index,
                         ]);

@@ -15,7 +15,9 @@ class Sentence extends Model
     protected static function booted()
     {
         static::saving(function (Sentence $sentence) {
-            $sentence->pinyin = Pinyin::sentence($sentence->hanzi)->join(' ');
+            if (blank($sentence->pinyin)) {
+                $sentence->pinyin = Pinyin::sentence($sentence->hanzi)->join(' ');
+            }
         });
     }
 

@@ -105,7 +105,7 @@
                 audio.play();
             })
             .catch(() => {
-                alert('Could not generate audio. Please try again.');
+                alert('Could not generate audio. Please try again with a shorter text.');
             })
             .finally(() => {
                 setLoading(false);
