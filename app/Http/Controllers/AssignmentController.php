@@ -43,11 +43,6 @@ class AssignmentController extends Controller
 
         $canEdit = $this->computeCanEdit($assignment, $submission, $isPastDue);
 
-        // Auto-finalize: a draft left sitting once the window has genuinely
-        // closed (past due AND no longer editable) gets submitted as-is,
-        // rather than staying an invisible draft forever. Only applies to
-        // students who actually started something — see store() for the
-        // separate rule blocking brand-new submissions after this point.
         if ($submission && $submission->status === 'draft' && $isPastDue && !$canEdit) {
             $submission->update([
                 'status' => 'late',
@@ -77,23 +72,12 @@ class AssignmentController extends Controller
                     $classQuery->where('classes.id', $classId)
                         ->where('class_user_role.role', 'student');
                 });
-            })
-            ->orderByRaw("FIELD(status, 'submitted', 'late', 'graded', 'draft')")
-            ->orderByDesc('submitted_at')
-            ->get()
-            : collect();
+            })->orderByRaw("FIELD(status, 'submitted', 'late', 'graded', 'draft')")
+            ->orderByDesc('submitted_at')->get(): collect();
 
         return view('assignments.show', compact(
-            'assignment',
-            'submission',
-            'isOpen',
-            'isPastDue',
-            'canEdit',
-            'canSubmitLate',
-            'isManager',
-            'submissions',
-            'classes',
-            'classId'
+            'assignment','submission','isOpen', 'isPastDue','canEdit',
+            'canSubmitLate','isManager','submissions','classes','classId'
         ));
     }
 
@@ -138,7 +122,6 @@ class AssignmentController extends Controller
 
         $assignment = Assignment::create(array_merge($validated, [
             'section_id' => $section->id,
-            'created_by' => auth()->id(),
         ]));
 
         if ($assignment->opened_at) {
@@ -291,26 +274,19 @@ class AssignmentController extends Controller
         $this->authorize('delete', $assignment);
 
         DB::transaction(function () use ($assignment) {
-
             $submissions = Submission::with('mediaAssets')
                 ->where('assignment_id', $assignment->id)
                 ->get();
 
             foreach ($submissions as $submission) {
-
-                // Delete each attached file off disk before removing the DB
-                // rows, so nothing orphaned is left behind on storage.
                 foreach ($submission->mediaAssets as $mediaAsset) {
                     Storage::disk('public')->delete($mediaAsset->file_path);
-                    $mediaAsset->delete(); // also removes the submission_files pivot rows via cascade
+                    $mediaAsset->delete(); 
                 }
-
                 $submission->delete();
             }
-
             $assignment->delete();
         });
-
         return back()->with('success', 'Assignment and all related submissions deleted.');
     }
 }

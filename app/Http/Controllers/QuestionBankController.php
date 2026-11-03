@@ -94,12 +94,8 @@ class QuestionBankController extends Controller
         $this->authorize('view', $questionBank);
 
         $questionBank->load('questions.options', 'questions.acceptedAnswers');
-        $user = auth()->user();
-        $courses = Course::whereHas('classes.users', fn($query) => $query->where('users.id', $user->id))
-            ->with('classes.users')
-            ->get();
 
-        return view('quiz.bank.show', compact('questionBank', 'courses'));
+        return view('quiz.bank.show', compact('questionBank'));
     }
 
     public function update($id, Request $request)

@@ -98,16 +98,8 @@ class ProgressController extends Controller
             ->orderByDesc('submitted_at')
             ->get();
 
-
-        return view('progress.show', compact(
-            'course',
-            'student',
-            'reports',
-            'isManager',
-            'attempts',
-            'submissions',
-            'fromCourse',
-            'url',
+        return view('progress.show', compact('course','student','reports',
+            'isManager','attempts','submissions','fromCourse','url',
         ));
     }
 
@@ -145,10 +137,10 @@ class ProgressController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'title' => 'required|string|max:255',
-            'start_period' => 'nullable|date',
-            'end_period' => 'nullable|date|after_or_equal:start_period',
+            'start_period' => 'required|date',
+            'end_period' => 'required|date|after_or_equal:start_period',
             'progress' => 'nullable|integer|min:0|max:100',
-            'comment' => 'nullable|string',
+            'comment' => 'required|string',
         ]);
 
         $student = User::findOrFail($validated['user_id']);

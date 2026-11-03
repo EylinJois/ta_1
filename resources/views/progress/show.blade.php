@@ -226,11 +226,11 @@
                     <div class="row">
                         <div class="col-6 mb-4">
                             <label class="form-label fw-semibold">Start Period</label>
-                            <input type="date" name="start_period" class="form-control">
+                            <input type="date" name="start_period" class="form-control" required>
                         </div>
                         <div class="col-6 mb-4">
                             <label class="form-label fw-semibold">End Period</label>
-                            <input type="date" name="end_period" class="form-control">
+                            <input type="date" name="end_period" class="form-control" required>
                         </div>
                     </div>
 
@@ -246,7 +246,7 @@
 
                     <div class="mb-2">
                         <label class="form-label fw-semibold">Comment</label>
-                        <textarea name="comment" class="form-control" rows="3"></textarea>
+                        <textarea name="comment" class="form-control" rows="3" required></textarea>
                     </div>
 
                 </div>

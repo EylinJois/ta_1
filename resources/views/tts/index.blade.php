@@ -97,11 +97,7 @@
             })
             .then(data => {
                 pinyinText.value = data.pinyin;
-
-                audio.src = data.type === 'stream'
-                    ? "data:audio/mpeg;base64," + data.audio
-                    : data.audio;
-
+                audio.src = "data:audio/mpeg;base64," + data.audio;
                 audio.play();
             })
             .catch(() => {

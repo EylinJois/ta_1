@@ -12,8 +12,7 @@ class Assignment extends Model
     use SoftDeletes;
 
     protected $fillable=['name','description','visibility','submission_type','due_at',
-    'opened_at','accepted_mime','max_size','edit_submission',
-    'created_by','section_id','allow_late_submission'];
+    'opened_at','accepted_mime','max_size','edit_submission','section_id','allow_late_submission'];
 
     protected $casts = [
     'accepted_mime' => 'array',
@@ -24,7 +23,6 @@ class Assignment extends Model
     'visibility' => 'boolean',
 ];
     public function section() { return $this->belongsTo(Section::class); }
-    public function creator() { return $this->belongsTo(User::class, 'created_by'); }
     public function submissions() { return $this->hasMany(Submission::class); }
 
 }

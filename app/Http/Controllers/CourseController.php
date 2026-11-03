@@ -178,7 +178,6 @@ class CourseController extends Controller
         $this->authorize('view', $course);
         $user   = auth()->user();
 
-
         $classes = $course->classes()
             ->whereHas('users', fn($query) => $query->where('users.id', $user->id))
             ->with('users')
@@ -193,8 +192,6 @@ class CourseController extends Controller
             ->with('materials')
             ->orderBy('order_idx', 'asc')
             ->get();
-
-
 
         return view('courses.show', compact('course', 'classes', 'users', 'sections', 'url'));
     }

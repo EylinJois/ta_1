@@ -344,6 +344,10 @@ class AttemptController extends Controller
             $needsManualGrading = false;
 
             $answers = AttemptAnswer::where('attempt_id', $attempt->id)
+                ->whereHas('quizQuestion', function ($query) use ($attempt) {
+                    $query->where('quiz_id', $attempt->quiz_id)
+                        ->whereNull('deleted_at');
+                })
                 ->with(['quizQuestion.question.acceptedAnswers', 'quizQuestion.question.options', 'selectedOptions', 'mediaAssets'])
                 ->get();
 
@@ -441,6 +445,7 @@ class AttemptController extends Controller
         $quiz = $attempt->quiz;
 
         $quizQuestions = QuizQuestion::where('quiz_id', $quiz->id)
+            ->whereNull('deleted_at')
             ->orderBy('order_index')
             ->get();
 
@@ -470,6 +475,7 @@ class AttemptController extends Controller
         $this->authorize('grade', $attempt);
 
         $maxPoints = QuizQuestion::where('quiz_id', $attempt->quiz_id)
+            ->whereNull('deleted_at')
             ->with('question')
             ->get()
             ->mapWithKeys(fn($quizq) => [
@@ -488,7 +494,6 @@ class AttemptController extends Controller
 
         $validated = $request->validate($rules);
 
-        // Only accept scores for questions that belong to this quiz
         $validIds = $maxPoints->keys()->map(fn($id) => (string) $id);
         abort_if(
             collect(array_keys($validated['scores']))->map(fn($id) => (string) $id)->diff($validIds)->isNotEmpty(),
@@ -508,7 +513,7 @@ class AttemptController extends Controller
                 );
             }
 
-            $totalScore = AttemptAnswer::where('attempt_id', $attempt->id)->sum('score');
+            $totalScore = collect($validated['scores'])->sum(fn ($score) => (float) ($score ?? 0));
 
             $attempt->update([
                 'score' => $totalScore,

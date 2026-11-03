@@ -19,7 +19,6 @@ class AssignmentPolicy
 
         if (
             !$assignment->visibility
-            && $assignment->created_by !== $user->id
             && !$user->isManagerInCourse($courseId)
         ) {
             return Response::denyAsNotFound();

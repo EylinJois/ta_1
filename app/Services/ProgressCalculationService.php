@@ -36,8 +36,7 @@ class ProgressCalculationService
             ->whereHas('section', fn ($query) => $query->where('course_id', $course->id))
             ->when(!$isManager, function ($query) use ($user) {
                 $query->where(function ($query) use ($user) {
-                    $query->where('visibility', true)
-                        ->orWhere('created_by', $user->id);
+                    $query->where('visibility', true);
                 });
             })
             ->pluck('id');
