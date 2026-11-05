@@ -306,6 +306,7 @@
         }
 
         const assignmentId = {{$assignment -> id}};
+        const deleteFileUrl = @json(route('submissions.file.delete', ['assignment' => $assignment, 'mediaAsset' => '__MEDIA_ASSET__']));
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         const canEdit = @json($canEdit);
 
@@ -455,13 +456,19 @@
             const btn = e.target.closest('.remove-submission-file-btn');
             if (!btn) return;
 
-            fetch(`/attempts/${assignmentId}/submission/file/${btn.dataset.mediaId}`, {
+            fetch(deleteFileUrl.replace('__MEDIA_ASSET__', encodeURIComponent(btn.dataset.mediaId)), {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken
                 },
             }).then(function(r) {
-                if (r.ok) btn.closest('li').remove();
+                if (!r.ok) {
+                    throw new Error('Failed to remove attached file.');
+                }
+                btn.closest('li').remove();
+            }).catch(function(err) {
+                console.error(err);
+                alert(err.message);
             });
         });
 
