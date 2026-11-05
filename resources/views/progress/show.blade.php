@@ -144,7 +144,7 @@
                                     $status = $status === 'graded' ? 'Graded' : $status;
                                 @endphp
                                 <span class="badge {{ $attempt->status === 'graded' ? 'bg-success' : 'bg-secondary' }}">
-                                    {{ ucfirst($attempt->status) }}
+                                    {{ $status }}
                                 </span>
                             </td>
                             <td class="text-nowrap">{{ $attempt->created_at?->format('d M Y, H:i') ?? '—' }}</td>
