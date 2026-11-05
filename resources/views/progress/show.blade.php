@@ -137,6 +137,12 @@
                                 {{ !is_null($attempt->score) ? rtrim(rtrim(number_format($attempt->score, 2), '0'), '.') : '—' }}%
                             </td>
                             <td>
+                                @php
+                                    $status = $attempt->status;
+                                    $status = $status === 'submitted' ? 'Submitted' : $status;
+                                    $status = $status === 'in_progress' ? 'In progress' : $status;
+                                    $status = $status === 'graded' ? 'Graded' : $status;
+                                @endphp
                                 <span class="badge {{ $attempt->status === 'graded' ? 'bg-success' : 'bg-secondary' }}">
                                     {{ ucfirst($attempt->status) }}
                                 </span>
