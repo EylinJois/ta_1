@@ -716,6 +716,10 @@ textarea.form-control {
     line-height: 1.9;
 }
 
+.page-intro {
+    white-space: pre-line;
+}
+
 .html-page img {
     max-width: 100%;
 }
