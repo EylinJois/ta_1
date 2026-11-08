@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 // app/Models/AttemptAnswer.php
 class AttemptAnswer extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'quiz_question_id', 'attempt_id', 'feedback', 'answer',
         'select_option_id', 'score', 'answered_at',

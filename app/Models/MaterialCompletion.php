@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MaterialCompletion extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['user_id', 'material_id', 'completed_at'];
 
     protected $casts = [

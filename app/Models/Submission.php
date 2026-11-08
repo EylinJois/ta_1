@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 // app/Models/Submission.php
 class Submission extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id', 'assignment_id', 'submitted_text', 'status',
         'score', 'feedback', 'graded_by', 'graded_at', 'submitted_at',
@@ -25,6 +28,7 @@ class Submission extends Model
     public function mediaAssets()
 {
     return $this->belongsToMany(MediaAsset::class, 'submission_files', 'submission_id', 'media_asset_id')
-        ->withTimestamps();
+        ->withPivot('created_at')
+        ->wherePivotNull('deleted_at');
 }
 }
