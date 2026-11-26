@@ -26,9 +26,9 @@ class Course extends Model
     */
 
     public function sections(): HasMany
-    {
-        return $this->hasMany(Section::class);
-    }
+{
+    return $this->hasMany(Section::class)->orderBy('order_idx', 'asc');
+}
 
     public function activities(): HasMany
     {

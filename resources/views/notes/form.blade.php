@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
         menubar: false,
         statusbar: !isMobile,
         plugins: 'lists link',
-        toolbar: 'bold italic underline | bullist numlist | link',
+        toolbar: 'blocks | fontsize | bold italic underline strikethrough | forecolor backcolor | bullist numlist | link',
         // 16px stops iOS from zooming in when you tap the editor
         content_style: 'body { font-size: 16px; line-height: 1.6; margin: 10px; }',
     });

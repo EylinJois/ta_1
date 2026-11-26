@@ -154,7 +154,7 @@
 @if($course->sections && $course->sections->count() > 0)
 
 <div id="sectionsContainer">
-    @foreach($course->sections as $section)
+    @foreach($sections as $section)
     @can('view', $section)
     <div class="section-item section-link-wrapper"
         data-id="{{ $section->id }}"

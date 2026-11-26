@@ -188,9 +188,14 @@ class CourseController extends Controller
 
         $url = 'courses.show';
 
-        $sections = $course->sections()
+          $sections = $course->sections()
             ->with('materials')
             ->orderBy('order_idx', 'asc')
+            ->where(function ($query) use ($user, $course) {
+                if (!$user->isManagerInCourse($course->id)) {
+                    $query->where('visibility', true);
+                }
+            })
             ->get();
 
         return view('courses.show', compact('course', 'classes', 'users', 'sections', 'url'));

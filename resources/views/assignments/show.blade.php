@@ -231,10 +231,8 @@
         </h5>
         @if(!$canEdit)
         <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> Locked</span>
-        @else
-        @if($submission)
+        @elseif($submission && $submission->status !== 'draft' && $submission->submitted_at)
         <span class="qbank-badge">Submitted on {{ $submission->submitted_at->format('d M Y, H:i') }}</span>
-        @endif
         @endif
     </div>
 

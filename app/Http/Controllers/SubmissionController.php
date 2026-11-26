@@ -112,7 +112,6 @@ class SubmissionController extends Controller
             'assignment_id' => $assignment->id,
             'user_id' => $user->id,
             'status' => 'draft',
-            'submitted_at' => now(),
         ]);
 
         $this->editableGuard($assignment, $existingSubmission);

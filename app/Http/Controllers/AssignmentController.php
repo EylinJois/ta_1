@@ -43,14 +43,6 @@ class AssignmentController extends Controller
 
         $canEdit = $this->computeCanEdit($assignment, $submission, $isPastDue);
 
-        if ($submission && $submission->status === 'draft' && $isPastDue && !$canEdit) {
-            $submission->update([
-                'status' => 'late',
-                'submitted_at' => now(),
-            ]);
-            $submission->refresh();
-        }
-
         $canSubmitLate = !$isPastDue || $assignment->allow_late_submission;
 
         $classes = $isManager

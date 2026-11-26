@@ -44,7 +44,7 @@
 
             @if($page && $page->content)
             <div class="page-intro mb-4">
-                {!! $page->content !!}
+                {!! nl2br(e($page->content)) !!}
             </div>
             @endif
 
