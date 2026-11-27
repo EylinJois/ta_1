@@ -252,6 +252,11 @@ class MaterialController extends Controller
             'materialLink',
             'materialAsset.mediaAsset',
         ]);
+        $memo = $material->notes()
+            ->where('user_id', auth()->id())
+            ->with('noteFiles.mediaAsset')
+            ->orderByDesc('updated_at')
+            ->first();
 
         $section = $material->section;
         $course = $section->course;
@@ -275,7 +280,8 @@ class MaterialController extends Controller
                 'section',
                 'course',
                 'previous',
-                'next'
+                'next',
+                'memo'
             )
         );
     }

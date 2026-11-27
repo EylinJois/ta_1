@@ -19,6 +19,10 @@
         <h4 class="section-title mb-0">{{ $course->name }} Participants</h4>
         @can('manageParticipants', $course)
         <div class="participants-header-actions d-flex gap-2">
+            <button class="btn btn-secondary-custom" data-bs-toggle="modal" data-bs-target="#importParticipantsModal">
+                <i class="bi bi-upload"></i>
+                Import CSV
+            </button>
             @can('manageClasses', $course)
             <button class="btn btn-secondary-custom" data-bs-toggle="modal" data-bs-target="#classModal">
                 <i class="bi bi-diagram-3"></i>
@@ -33,6 +37,20 @@
         </div>
         @endcan
     </div>
+
+    @if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if($errors->has('csv_import'))
+    <div class="alert alert-danger">
+        <strong>CSV import was not completed.</strong>
+        <ul class="mb-0 mt-2">
+            @foreach($errors->get('csv_import') as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
     <div class="table-responsive">
         <table class="table align-middle">
@@ -296,6 +314,60 @@
 </div>
 @endcan
 
+{{-- Import Participants Modal --}}
+@can('manageParticipants', $course)
+<div class="modal fade" id="importParticipantsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+            <form action="{{ route('courses.participants.import', $course->id) }}"
+                method="POST"
+                enctype="multipart/form-data">
+                @csrf
+
+                <div class="modal-header border-0">
+                    <div>
+                        <h5 class="modal-title fw-bold">Import Participants</h5>
+                        <small class="text-muted">Add existing accounts to {{ $course->name }}</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="alert alert-info small">
+                        Use the columns <code>email,role,class</code>. Email must belong to an existing account.
+                        Enter the exact class name shown in this course; role must be <code>admin</code>,
+                        <code>teacher</code>, or <code>student</code>.
+                        <pre class="mb-0 mt-2">email,role,class
+student@example.com,student,Default Class</pre>
+                        The whole file is checked before any participants are added.
+                    </div>
+
+                    <label for="participantsCsv" class="form-label fw-semibold">CSV file</label>
+                    <input type="file"
+                        id="participantsCsv"
+                        name="csv_file"
+                        accept=".csv,text/csv"
+                        class="form-control @error('csv_file') is-invalid @enderror"
+                        required>
+                    @error('csv_file')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text">Maximum file size: 2 MB.</div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-theme">
+                        <i class="bi bi-upload"></i>
+                        Validate and Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+
 {{-- Add Class Modal --}}
 @can('manageClasses', $course)
 <div class="modal fade" id="classModal" tabindex="-1" aria-hidden="true">
@@ -455,6 +527,13 @@
 @endcan
 
 @push('scripts')
+@if($errors->has('csv_import') || $errors->has('csv_file'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        new bootstrap.Modal(document.getElementById('importParticipantsModal')).show();
+    });
+</script>
+@endif
 @if($errors->has('name'))
 <script>
     document.addEventListener('DOMContentLoaded', function() {

@@ -48,6 +48,7 @@ Route::middleware(['auth', 'course.enrolled'])->group(function () {
     Route::prefix('courses/{id}/participants')->name('courses.participants.')->group(function () {
         Route::get('/', [CourseController::class, 'indexParticipants'])->name('index');
         Route::post('/', [CourseController::class, 'addParticipant'])->name('store');
+        Route::post('/import', [CourseController::class, 'importParticipants'])->name('import');
         Route::put('/{participantId}', [CourseController::class, 'updateParticipantRole'])->name('update');
         Route::delete('/{participantId}', [CourseController::class, 'removeParticipant'])->name('destroy');
     });
@@ -92,6 +93,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/materials/create/{section}', [MaterialController::class, 'create'])->name('materials.create');
     Route::get('/media/{asset}/download', [MaterialController::class, 'download'])->name('media.download');
+    Route::post('/materials/{material}/memo', [NoteController::class, 'saveMaterialMemo'])
+        ->name('materials.memo.store');
+    Route::delete('/materials/{material}/memo', [NoteController::class, 'deleteMaterialMemo'])
+        ->name('materials.memo.destroy');
     Route::resource('materials', MaterialController::class)->except(['create']);
     Route::post('materials/vocab/pinyin-preview', [MaterialController::class, 'pinyinPreview'])->name('materials.vocab.pinyin-preview');
 

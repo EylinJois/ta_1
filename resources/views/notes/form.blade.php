@@ -124,6 +124,34 @@
                             placeholder="Write your note here...">{{ old('content', $note->content) }}</textarea>
                     </div>
 
+                    <div class="mt-3">
+                        <label for="material_id" class="form-label fw-semibold">
+                            <i class="bi bi-link-45deg"></i>
+                            Linked Material
+                        </label>
+                        <select id="material_id" name="material_id" class="form-select">
+                            <option value="">Not linked to a material</option>
+                            @foreach($materials as $material)
+                                @php
+                                    $section = $material->section;
+                                    $course = $section?->course;
+                                @endphp
+                                <option value="{{ $material->id }}"
+                                    {{ (string) old('material_id', $note->material_id) === (string) $material->id ? 'selected' : '' }}>
+                                    {{ $course?->name ?? 'Course unavailable' }} -
+                                    {{ $section?->name ?? 'Section unavailable' }} -
+                                    {{ $material->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">
+                            Optional. Choose the material this note belongs to.
+                        </div>
+                        @error('material_id')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
 
                 {{-- RIGHT: LINKS + PHOTOS + OPTIONS + ACTIONS --}}
@@ -140,7 +168,7 @@
                                 @foreach($note->noteFiles as $file)
                                 <div class="photo-preview-thumb" data-file-id="{{ $file->id }}">
                                     @if($file->mediaAsset)
-                                    @php $url = Storage::disk($file->mediaAsset->storage_disk)->url($file->mediaAsset->file_path); @endphp
+                                    @php $url = url('storage/' . ltrim($file->mediaAsset->file_path, '/')); @endphp
                                     <img src="{{ $url }}" alt="{{ $file->mediaAsset->original_name }}"
                                         data-full="{{ $url }}" data-name="{{ $file->mediaAsset->original_name }}">
                                     @else

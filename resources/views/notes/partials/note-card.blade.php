@@ -45,7 +45,7 @@
 
         @foreach($photoPreview as $file)
         <div class="note-card-photo">
-            <img src="{{ Storage::disk($file->mediaAsset->storage_disk)->url($file->mediaAsset->file_path) }}"
+            <img src="{{ url('storage/' . ltrim($file->mediaAsset->file_path, '/')) }}"
                 alt="{{ $file->mediaAsset->original_name }}">
         </div>
         @endforeach
@@ -60,6 +60,20 @@
     @endif
 
     <div class="note-card-footer">
+
+        @if($note->material)
+        <a href="{{ route('materials.show', $note->material) }}"
+            class="note-card-material badge text-decoration-none"
+            onclick="event.stopPropagation();">
+            <i class="bi bi-link-45deg"></i>
+            {{ $note->material->name }}
+        </a>
+        @else
+        <span class="note-card-material badge note-card-material-unlinked">
+            <i class="bi bi-journal-text"></i>
+            General note
+        </span>
+        @endif
 
         <span class="note-card-date">
             {{ $note->updated_at->diffForHumans() }}

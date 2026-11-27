@@ -9,15 +9,65 @@ use App\Models\MediaAsset;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Material;
 
 class NoteController extends Controller
 {
+    public function saveMaterialMemo(Request $request, Material $material)
+    {
+        $this->authorize('view', $material);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'nullable|string',
+            'pinned' => 'sometimes|boolean',
+        ]);
+
+        $memo = $material->notes()
+            ->where('user_id', auth()->id())
+            ->orderByDesc('updated_at')
+            ->first();
+
+        if (!$memo) {
+            $memo = new Note([
+                'user_id' => auth()->id(),
+            ]);
+            $material->notes()->save($memo);
+        }
+
+        $memo->update([
+            'title' => $validated['title'],
+            'content' => $validated['content'] ?? null,
+            'pinned' => $request->boolean('pinned'),
+        ]);
+
+        return redirect()
+            ->route('materials.show', $material)
+            ->with('success', 'Your material memo was saved.');
+    }
+
+    public function deleteMaterialMemo(Material $material)
+    {
+        $this->authorize('view', $material);
+
+        $memo = $material->notes()
+            ->where('user_id', auth()->id())
+            ->orderByDesc('updated_at')
+            ->firstOrFail();
+        $memo->delete();
+
+        return redirect()
+            ->route('materials.show', $material)
+            ->with('success', 'Your material memo was deleted.');
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $notes = Note::where('user_id', auth()->id())
+            ->with(['material.section.course'])
             ->orderByDesc('pinned')
             ->orderByDesc('updated_at')
             ->get();
@@ -31,16 +81,19 @@ class NoteController extends Controller
     public function create()
 {
     return view('notes.form', [
-        'note'      => new Note()
+        'note' => new Note(),
+        'materials' => $this->availableMaterials(),
     ]);
 }
 
 public function edit(Note $note)
 {
+    abort_unless($note->user_id === auth()->id(), 403);
     $note->load('noteFiles.mediaAsset');
 
     return view('notes.form', [
-        'note'      => $note
+        'note' => $note,
+        'materials' => $this->availableMaterials(),
     ]);
 }
 
@@ -101,10 +154,11 @@ public function edit(Note $note)
             'title' => $note->title,
             'content' => $note->content,
             'pinned' => $note->pinned,
+            'material_id' => $note->material_id,
             'files' => $note->noteFiles->filter(fn($f) => $f->mediaAsset)->map(fn($f) => [
                 'id' => $f->id,
                 'original_name' => $f->mediaAsset->original_name,
-                'url' => Storage::disk($f->mediaAsset->storage_disk)->url($f->mediaAsset->file_path),
+                'url' => url('storage/' . ltrim($f->mediaAsset->file_path, '/')),
             ])->values(),
         ]);
     }
@@ -114,9 +168,14 @@ public function edit(Note $note)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
+            'material_id' => 'nullable|integer|exists:materials,id',
             'photos' => 'nullable|array',
             'photos.*' => 'image|max:10240', 
         ]);
+
+        if (!empty($validated['material_id'])) {
+            $this->authorize('view', Material::findOrFail($validated['material_id']));
+        }
 
         $note = DB::transaction(function () use ($request, $validated) {
 
@@ -125,6 +184,7 @@ public function edit(Note $note)
                 'content' => $validated['content'] ?? null,
                 'pinned' => $request->boolean('pinned'),
                 'user_id' => auth()->id(),
+                'material_id' => $validated['material_id'] ?: null,
             ]);
 
             $this->attachPhotos($request, $note);
@@ -149,11 +209,16 @@ public function edit(Note $note)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
+            'material_id' => 'nullable|integer|exists:materials,id',
             'photos' => 'nullable|array',
             'photos.*' => 'image|max:10240',
             'remove_file_ids' => 'nullable|array',
             'remove_file_ids.*' => 'exists:note_files,id',
         ]);
+
+        if (!empty($validated['material_id'])) {
+            $this->authorize('view', Material::findOrFail($validated['material_id']));
+        }
 
         DB::transaction(function () use ($request, $validated, $note) {
 
@@ -161,6 +226,7 @@ public function edit(Note $note)
                 'title' => $validated['title'],
                 'content' => $validated['content'] ?? null,
                 'pinned' => $request->boolean('pinned'),
+                'material_id' => $validated['material_id'] ?: null,
             ]);
 
             if (!empty($validated['remove_file_ids'])) {
@@ -185,6 +251,34 @@ public function edit(Note $note)
         return redirect()
             ->route('notes.edit', ['note' => $note->id])
             ->with('success', 'Note updated successfully.');
+    }
+
+    private function availableMaterials()
+    {
+        $user = auth()->user();
+        $courseIds = $user->classes()->pluck('classes.course_id')->unique();
+
+        $managerCourseIds = $user->managedClasses()
+            ->pluck('classes.course_id')
+            ->unique();
+
+        return Material::whereIn('section_id', function ($query) use ($courseIds) {
+                $query->select('id')
+                    ->from('sections')
+                    ->whereIn('course_id', $courseIds);
+            })
+            ->where(function ($query) use ($managerCourseIds) {
+                $query->where('visibility', true);
+
+                if ($managerCourseIds->isNotEmpty()) {
+                    $query->orWhereHas('section', function ($sectionQuery) use ($managerCourseIds) {
+                        $sectionQuery->whereIn('course_id', $managerCourseIds);
+                    });
+                }
+            })
+            ->with(['section.course'])
+            ->orderBy('name')
+            ->get();
     }
 
     /**

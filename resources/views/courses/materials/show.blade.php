@@ -6,6 +6,44 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/course.css') }}">
+<style>
+    .material-memo-images {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+    }
+
+    .material-memo-image {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+    }
+
+    .material-memo-actions {
+        gap: 12px;
+    }
+
+    .material-memo-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    @media (max-width: 575.98px) {
+        .material-memo-actions {
+            align-items: stretch !important;
+            flex-direction: column;
+        }
+
+        .material-memo-buttons {
+            flex-direction: column;
+        }
+
+        .material-memo-buttons .btn {
+            width: 100%;
+        }
+    }
+</style>
 @endpush
 
 @section('content')
@@ -155,6 +193,104 @@
     </div>
 </div>
 
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-1"><i class="bi bi-journal-text me-2"></i>Your Memo</h5>
+                <p class="text-muted small mb-0">Private to you and linked to this material.</p>
+            </div>
+            @if($memo && $memo->pinned)
+            <span class="badge text-bg-warning"><i class="bi bi-pin-angle-fill me-1"></i>Pinned</span>
+            @endif
+        </div>
+
+        @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        @if($memo)
+            @php
+                $memoImages = $memo->noteFiles
+                    ->filter(fn($file) => $file->mediaAsset);
+            @endphp
+            @if($memoImages->isNotEmpty())
+            <div class="material-memo-images mb-3">
+                @foreach($memoImages as $file)
+                <img
+                    src="{{ url('storage/' . ltrim($file->mediaAsset->file_path, '/')) }}"
+                    alt="{{ $file->mediaAsset->original_name }}"
+                    class="material-memo-image rounded border">
+                @endforeach
+            </div>
+            @endif
+        @endif
+
+        <form action="{{ route('materials.memo.store', $material) }}" method="POST">
+            @csrf
+            <div class="mb-3">
+                <label for="memoTitle" class="form-label">Title</label>
+                <input type="text"
+                    id="memoTitle"
+                    name="title"
+                    value="{{ old('title', $memo->title ?? 'Memo: ' . $material->name) }}"
+                    class="form-control @error('title') is-invalid @enderror"
+                    maxlength="255"
+                    required>
+                @error('title')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="mb-3">
+                <label for="memoContent" class="form-label">Memo</label>
+                <textarea id="memoContent"
+                    name="content"
+                    rows="5"
+                    class="form-control tinymce-editor @error('content') is-invalid @enderror"
+                    placeholder="Write a private reminder about this material...">{{ old('content', $memo->content ?? '') }}</textarea>
+                @error('content')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center material-memo-actions">
+                <label class="form-check">
+                    <input type="checkbox"
+                        name="pinned"
+                        value="1"
+                        class="form-check-input"
+                        @checked(old('pinned', $memo->pinned ?? false))>
+                    <span class="form-check-label">Pin this memo</span>
+                </label>
+                <div class="material-memo-buttons">
+                    @if($memo)
+                    <button type="submit"
+                        form="deleteMaterialMemoForm"
+                        class="btn btn-outline-danger"
+                        onclick="return confirm('Delete your memo for this material?')">
+                        Delete Memo
+                    </button>
+                    @endif
+                    <button type="submit" class="btn btn-theme">
+                        <i class="bi bi-save me-1"></i>{{ $memo ? 'Update Memo' : 'Save Memo' }}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if($memo)
+        <form id="deleteMaterialMemoForm"
+            action="{{ route('materials.memo.destroy', $material) }}"
+            method="POST"
+            class="d-none">
+            @csrf
+            @method('DELETE')
+        </form>
+        @endif
+    </div>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mt-5 material-nav-row">
 
     <div class="nav-prev">
@@ -175,6 +311,29 @@
 </div>
 
 @push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof tinymce !== 'undefined') {
+            const isMobile = window.matchMedia('(max-width: 767.98px)').matches;
+
+            tinymce.init({
+                selector: '#memoContent',
+                height: isMobile ? 260 : 320,
+                menubar: false,
+                statusbar: !isMobile,
+                plugins: 'lists link',
+                toolbar: 'bold italic underline | bullist numlist | link',
+                content_style: 'body { font-size: 16px; line-height: 1.6; margin: 10px; }'
+            });
+
+            const memoForm = document.querySelector('form[action="{{ route('materials.memo.store', $material) }}"]');
+            memoForm?.addEventListener('submit', function () {
+                tinymce.triggerSave();
+            });
+        }
+    });
+</script>
+
 <script>
     (function() {
         const materialId = {{$material->id}};

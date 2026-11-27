@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Clas;
 use App\Models\MediaAsset;
 use Illuminate\Validation\Rule;
+use RuntimeException;
 
 class CourseController extends Controller
 {
@@ -253,6 +254,158 @@ class CourseController extends Controller
         ]);
 
         return back()->with('success', 'Participant added.');
+    }
+
+    public function importParticipants(Request $request, $id)
+    {
+        $course = Course::findOrFail($id);
+        $this->authorize('manageParticipants', $course);
+
+        $validated = $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $handle = fopen($validated['csv_file']->getRealPath(), 'r');
+        if ($handle === false) {
+            throw new RuntimeException('Unable to read the uploaded CSV file.');
+        }
+
+        $records = [];
+        $errors = [];
+
+        try {
+            $header = fgetcsv($handle, 0, ',', '"', '\\');
+            if ($header === false) {
+                return back()->withErrors(['csv_import' => 'The CSV file is empty.']);
+            }
+
+            $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header[0]);
+            $headers = array_map(fn ($column) => strtolower(trim((string) $column)), $header);
+            $requiredHeaders = ['email', 'role', 'class'];
+            $headerIndexes = [];
+
+            foreach ($requiredHeaders as $requiredHeader) {
+                $matches = array_keys($headers, $requiredHeader, true);
+                if (\count($matches) !== 1) {
+                    return back()->withErrors([
+                        'csv_import' => 'The CSV must contain exactly one email, role, and class column.',
+                    ]);
+                }
+                $headerIndexes[$requiredHeader] = $matches[0];
+            }
+
+            $seenEmails = [];
+            $rowNumber = 1;
+            while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
+                $rowNumber++;
+                if (\count(array_filter($row, fn ($value) => trim((string) $value) !== '')) === 0) {
+                    continue;
+                }
+
+                $row = array_pad($row, \count($headers), '');
+                $email = strtolower(trim((string) $row[$headerIndexes['email']]));
+                $role = strtolower(trim((string) $row[$headerIndexes['role']]));
+                $className = trim((string) $row[$headerIndexes['class']]);
+                $rowErrors = [];
+
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $rowErrors[] = 'enter a valid email address';
+                } elseif (isset($seenEmails[$email])) {
+                    $rowErrors[] = 'email is duplicated in the CSV';
+                } else {
+                    $seenEmails[$email] = true;
+                }
+
+                if (!\in_array($role, ['admin', 'teacher', 'student'], true)) {
+                    $rowErrors[] = 'role must be admin, teacher, or student';
+                }
+
+                if ($className === '') {
+                    $rowErrors[] = 'class is required';
+                }
+
+                if ($rowErrors) {
+                    $errors[] = 'Row ' . $rowNumber . ': ' . implode('; ', $rowErrors) . '.';
+                    continue;
+                }
+
+                $records[] = [
+                    'row' => $rowNumber,
+                    'email' => $email,
+                    'role' => $role,
+                    'class_name' => $className,
+                ];
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        if (!$records && !$errors) {
+            $errors[] = 'The CSV contains no participant rows.';
+        }
+
+        $courseClasses = $course->classes()->get();
+        $classesByName = $courseClasses
+            ->groupBy(fn (Clas $class) => strtolower(trim($class->name)));
+        $emails = array_values(array_unique(array_column($records, 'email')));
+        $usersByEmail = User::query()
+            ->whereIn(DB::raw('LOWER(email)'), $emails)
+            ->get()
+            ->keyBy(fn (User $user) => strtolower($user->email));
+
+        $existingUserIds = ClassUserRole::query()
+            ->whereIn('class_id', $courseClasses->pluck('id'))
+            ->whereIn('user_id', $usersByEmail->pluck('id'))
+            ->pluck('user_id')
+            ->all();
+        $existingUserIds = array_fill_keys($existingUserIds, true);
+        $importRows = [];
+
+        foreach ($records as $record) {
+            $rowErrors = [];
+            $user = $usersByEmail->get($record['email']);
+            $matchingClasses = $classesByName->get(strtolower($record['class_name']), collect());
+            $class = $matchingClasses->count() === 1 ? $matchingClasses->first() : null;
+
+            if (!$user) {
+                $rowErrors[] = 'no existing account was found for ' . $record['email'];
+            }
+
+            if (!$class) {
+                $rowErrors[] = $matchingClasses->isEmpty()
+                    ? 'class "' . $record['class_name'] . '" does not exist in this course'
+                    : 'class "' . $record['class_name'] . '" is ambiguous; use a unique class name';
+            }
+
+            if ($user && isset($existingUserIds[$user->id])) {
+                $rowErrors[] = $record['email'] . ' is already enrolled in this course';
+            }
+
+            if ($rowErrors) {
+                $errors[] = 'Row ' . $record['row'] . ': ' . implode('; ', $rowErrors) . '.';
+                continue;
+            }
+
+            $importRows[] = [
+                'class' => $class,
+                'user' => $user,
+                'role' => $record['role'],
+            ];
+        }
+
+        if ($errors) {
+            return back()->withErrors(['csv_import' => $errors]);
+        }
+
+        DB::transaction(function () use ($importRows) {
+            foreach ($importRows as $importRow) {
+                $importRow['class']->users()->attach($importRow['user']->id, [
+                    'role' => $importRow['role'],
+                ]);
+            }
+        });
+
+        return back()->with('success', \count($importRows) . ' participant(s) imported successfully.');
     }
 
     public function updateParticipantRole(Request $request, $id, $participantId)
